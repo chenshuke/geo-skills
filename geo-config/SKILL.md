@@ -3,9 +3,11 @@ name: geo-config
 description: GEO平台配置管理工具，统一管理API认证信息、默认公司/产品ID等配置项
 ---
 
+> **外部依赖**: GEO 平台 openKey
+
 # GEO 配置管理
 
-统一管理 GEO 平台的所有 API 配置信息，包括认证密钥、API 基础地址、默认公司/产品 ID。所有 GEO 技能均从此模块读取配置，是整个 GEO 技能体系的配置基座。
+统一管理 GEO 平台的所有 API 配置信息，包括认证密钥、API 基础地址、Referer 来源、默认公司/产品 ID。所有 GEO 技能均从此模块读取配置，是整个 GEO 技能体系的配置基座。
 
 ---
 
@@ -26,20 +28,24 @@ description: GEO平台配置管理工具，统一管理API认证信息、默认�
 ```json
 {
   "geo": {
-    "apiBaseUrl": "https://nbgeo.aimusiclj.com",
+    "baseUrl": "https://nbgeo.aimusiclj.com",
     "openKey": "your-openKey-here",
-    "defaultCompanyId": 36,
-    "defaultProductId": 88
+    "referer": "https://geo.bihuoai.com/"
+  },
+  "defaults": {
+    "companyId": 0,
+    "productId": 0
   }
 }
 ```
 
 | 配置项 | 说明 | 示例值 |
 |--------|------|--------|
-| geo.apiBaseUrl | API 基础地址 | https://nbgeo.aimusiclj.com |
+| geo.baseUrl | API 基础地址 | https://nbgeo.aimusiclj.com |
 | geo.openKey | 接口密钥（管理平台 > 密钥管理 > 创建） | sk-xxxxxxxx |
-| geo.defaultCompanyId | 默认公司 ID | 36 |
-| geo.defaultProductId | 默认产品 ID | 88 |
+| geo.referer | 请求来源标识 | https://geo.bihuoai.com/ |
+| defaults.companyId | 默认公司 ID（0 表示未设置） | 从 API 获取 |
+| defaults.productId | 默认产品 ID（0 表示未设置） | 从 API 获取 |
 
 > openKey 获取方式：登录 GEO 管理平台 > 密钥管理 > 创建新密钥
 
@@ -49,9 +55,20 @@ description: GEO平台配置管理工具，统一管理API认证信息、默认�
 
 所有 GEO 技能使用相同的请求头：
 
+```bash
+curl -H "Authorization: Bearer ${geo.openKey}" \
+     -H "Referer: ${geo.referer}" \
+     "${geo.baseUrl}/v1/..."
 ```
-Authorization: Bearer ${openKey}
-Referer: https://geo.bihuoai.com/
+
+配置读取方式：
+```json
+// 从 geo-config.json 读取
+baseUrl = geo.baseUrl
+openKey = geo.openKey
+referer = geo.referer
+companyId = defaults.companyId
+productId = defaults.productId
 ```
 
 ---
@@ -62,8 +79,9 @@ Referer: https://geo.bihuoai.com/
 |------|------|------|--------|
 | `--action` | 操作类型：view / update / reset | 是 | view |
 | `--openKey` | 新的接口密钥 | action=update 时建议 | - |
-| `--company-id` | 默认公司 ID | 否 | 36 |
-| `--product-id` | 默认产品 ID | 否 | 88 |
+| `--referer` | 新的 Referer 来源 | 否 | https://geo.bihuoai.com/ |
+| `--company-id` | 默认公司 ID | 否 | 0 |
+| `--product-id` | 默认产品 ID | 否 | 0 |
 | `--api-url` | API 基础地址 | 否 | https://nbgeo.aimusiclj.com |
 
 ---
@@ -72,18 +90,20 @@ Referer: https://geo.bihuoai.com/
 
 ### action=view（查看配置）
 
-使用 Read 工具读取 `geo-config.json`，展示当前配置信息。
+1. 使用 Read 工具读取 `geo-config/geo-config.json`
+2. 展示当前配置信息（openKey 部分脱敏显示，如 `2ebd****b294d`）
+3. 如果 companyId 或 productId 为 0，提示用户需要设置
 
 ### action=update（更新配置）
 
 1. 读取当前 `geo-config.json`
-2. 更新指定配置项
+2. 更新指定配置项（仅更新用户指定的字段，其他保持不变）
 3. 写回文件
 4. 显示更新结果
 
 ### action=reset（重置配置）
 
-1. 恢复默认配置结构
+1. 恢复默认配置结构（openKey 置空，companyId/productId 置 0）
 2. 写入文件
 3. 提示用户填入新的 openKey
 
@@ -93,19 +113,27 @@ Referer: https://geo.bihuoai.com/
 
 调用任何需要 API 的 GEO 技能前，**必须先完成配置引导**：
 
-1. 从 `geo-config.json` 读取 `openKey`、`baseUrl`、`referer`
-2. 检查 `defaultCompanyId` 和 `defaultProductId` 是否为 0
+1. 从 `geo-config.json` 读取 `geo.openKey`、`geo.baseUrl`、`geo.referer`
+2. 检查 `defaults.companyId` 和 `defaults.productId` 是否为 0
 3. 若为 0，调用 API 获取列表供用户选择：
-   - `GET /v1/geo-company` → 获取公司列表 → 用户选择 companyId
-   - `GET /v1/geo-product` → 获取产品列表 → 用户选择 productId
+   - `GET /v1/geo-company?page=1&limit=10` → 获取公司列表 → 用户选择 companyId
+   - `GET /v1/geo-product?page=1&limit=10&companyId=${companyId}` → 获取产品列表 → 用户选择 productId
+   > **注意**：这两个接口必须传 `page` 和 `limit` 参数，否则返回 NaN 错误
 4. 将选择结果写回 `geo-config.json` 的 `defaults` 字段
 5. 后续子技能调用自动携带 companyId 和 productId
+
+> **注意**：`/geo-hub` 和 `/geo-workflow-hub` 已内置此流程（Step 0），会自动执行。直接调用子技能时也需遵守此规则。
 
 ---
 
 ## 错误处理
 
-当 API 返回 401 或 403 时，提示用户更新 openKey：
+| 错误码 | 含义 | 处理方式 |
+|--------|------|---------|
+| 401 / 403 | openKey 无效或过期 | 提示用户更新 openKey |
+| 无响应 | baseUrl 不可达 | 提示用户检查网络和 baseUrl |
+
+更新 openKey：
 ```
 /skill geo-config --action=update --openKey="新的openKey"
 ```
@@ -116,4 +144,6 @@ Referer: https://geo.bihuoai.com/
 
 1. **密钥安全**：geo-config.json 包含敏感信息，请勿提交到 git（已加入 .gitignore）
 2. **配置同步**：更新配置后，所有技能自动使用新值
-3. **统一认证**：所有 GEO 技能共用 Bearer + Referer 双重认证
+3. **统一认证**：所有 GEO 技能共用 Bearer openKey + Referer 双重认证
+4. **模板发布**：发布技能包时，openKey 会被自动替换为 `your-openKey-here`
+5. **Python 脚本凭证**：所有 Python 脚本统一通过 `shared/credentials.py` 加载凭证，支持三级回退（环境变量 > 配置文件 > 密钥文件）。脚本开发者请优先 `from shared.credentials import get_geo_config, get_geo_headers`

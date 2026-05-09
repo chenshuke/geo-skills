@@ -3,6 +3,8 @@ name: geo-account
 description: GEO平台账户与资源管理模块，包含发布账号查询、数据总览、套餐/SKU管理、视频管理
 ---
 
+> **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
+
 # GEO 账户与资源管理
 
 本模块整合了 GEO 平台的账户信息查询、运营数据总览、套餐与 SKU 管理、视频资产管理能力。帮助用户全面掌握平台账号资源、套餐配额、使用情况，为运营决策提供数据支撑。
@@ -20,16 +22,14 @@ description: GEO平台账户与资源管理模块，包含发布账号查询、�
 
 ## API 接口汇总
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | /v1/publication-account | 获取发布账号列表 |
-| GET | /v1/dashboard/summary | 数据总览（周统计） |
-| GET | /v1/package | 获取套餐列表 |
-| GET | /v1/package/user | 获取用户当前套餐 |
-| GET | /v1/sku | 获取 SKU 列表 |
-| GET | /v1/sku/{id} | 获取 SKU 详情 |
-| GET | /v1/video | 查询视频列表 |
-| POST | /v1/video/import | 从 OEM 导入视频 |
+| 方法 | 路径 | 说明 | 测试状态 |
+|------|------|------|---------|
+| GET | /v1/publication-account | 获取发布账号列表 | ✅ 正常 |
+| GET | /v1/package | 获取套餐列表（需 companyId） | ✅ 正常 |
+| GET | /v1/video | 查询视频列表 | ✅ 正常 |
+| POST | /v1/video/import | 从 OEM 导入视频 | ✅ 正常 |
+
+> **注意**：以下接口在当前 API 版本中不存在：`/v1/dashboard/summary`、`/v1/package/user`、`/v1/sku`、`/v1/sku/{id}`
 
 ---
 
@@ -53,9 +53,10 @@ toutiao（今日头条）、sohu_news（搜狐号）、bilibili（B站）、zhih
 ### curl 示例
 
 ```bash
-curl -X GET "https://nbgeo.aimusiclj.com/v1/publication-account?page=1&limit=30&companyId=36" \
+# ${companyId} 从 geo-config.json 的 defaults.companyId 读取
+curl -X GET "${baseUrl}/v1/publication-account?page=1&limit=30&companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
+  -H "Referer: ${referer}"
 ```
 
 ### 响应字段
@@ -71,71 +72,27 @@ curl -X GET "https://nbgeo.aimusiclj.com/v1/publication-account?page=1&limit=30&
 
 ---
 
-## 二、数据总览
+## 二、套餐列表（GET /v1/package）
 
-### 说明
+### 查询参数
 
-无需请求参数，直接调用即可获取周统计数据。
-
-### curl 示例
-
-```bash
-curl -X GET "https://nbgeo.aimusiclj.com/v1/dashboard/summary" \
-  -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
-```
-
-### 响应字段
-
-| 字段 | 说明 |
-|------|------|
-| topicCount | 主题总数 |
-| articleCount | 文章总数 |
-| publishCount | 发布总数 |
-| indexCount | 收录总数 |
-| weeklyData[] | 周统计列表（date / topicCount / articleCount / publishCount / indexCount） |
-
----
-
-## 三、套餐与 SKU 管理
-
-### 套餐列表 — GET /v1/package
-
-查询参数：`page`、`limit`
-
-### 用户当前套餐 — GET /v1/package/user
-
-无需额外参数。返回：packageId、packageName、expireTime、topicQuota、topicUsed、articleQuota、articleUsed。
-
-### SKU 列表 — GET /v1/sku
-
-查询参数：`page`、`limit`、`packageId`（可选筛选）
-
-### SKU 详情 — GET /v1/sku/{id}
-
-路径参数：`id`（SKU 唯一标识）
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `--page` | 页码 | 1 |
+| `--limit` | 每页数量 | 10 |
+| `--company-id` | 公司 ID | 从配置读取 |
 
 ### curl 示例
 
 ```bash
-# 获取用户当前套餐
-curl -X GET "https://nbgeo.aimusiclj.com/v1/package/user" \
+curl -X GET "${baseUrl}/v1/package?page=1&limit=10&companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
-
-# 获取指定套餐的 SKU
-curl -X GET "https://nbgeo.aimusiclj.com/v1/sku?packageId=1" \
-  -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
+  -H "Referer: ${referer}"
 ```
-
-### 关键字段
-
-SKU 字段包括：id、packageId、name、price、duration、durationUnit（day/month/year）、topicQuota、articleQuota、status、features[]。
 
 ---
 
-## 四、视频管理
+## 三、视频管理
 
 ### 查询视频列表 — GET /v1/video
 
@@ -152,16 +109,16 @@ SKU 字段包括：id、packageId、name、price、duration、durationUnit（day
 
 ```bash
 # 查询视频列表
-curl -X GET "https://nbgeo.aimusiclj.com/v1/video?page=1&limit=10" \
+curl -X GET "${baseUrl}/v1/video?page=1&limit=10" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
+  -H "Referer: ${referer}"
 
-# 导入视频
-curl -X POST "https://nbgeo.aimusiclj.com/v1/video/import" \
+# 导入视频（${videoId} 为 OEM 平台视频 ID）
+curl -X POST "${baseUrl}/v1/video/import" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/" \
-  -d '{"source":"oem", "videoIds":["id1","id2"]}'
+  -H "Referer: ${referer}" \
+  -d '{"source":"oem", "videoIds":["${videoId1}","${videoId2}"]}'
 ```
 
 ### 注意事项
@@ -177,7 +134,7 @@ curl -X POST "https://nbgeo.aimusiclj.com/v1/video/import" \
 2. 根据操作选择对应 API 接口
 3. 设置统一请求头（Authorization + Referer）
 4. 拼接查询参数并发送请求
-5. 检查响应 `code` / `statusCode` 字段，解析数据
+5. 检查响应 `statusCode` 字段（0 为成功），解析数据
 6. 格式化输出结果
 
 ## 通用错误处理

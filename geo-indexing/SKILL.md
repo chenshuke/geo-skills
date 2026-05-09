@@ -3,6 +3,8 @@ name: geo-indexing
 description: GEO平台收录检测管理模块，包含收录任务导入/查询/删除/批量导入、收录结果查询、发布状态检测
 ---
 
+> **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
+
 # GEO 收录检测管理
 
 本模块整合了 GEO 平台收录检测的全部操作能力，支持在多个 AI 平台（DeepSeek、豆包、元宝、通义千问、文心一言、Kimi、智谱、ChatGPT、Gemini）上查询品牌词的收录情况，管理收录检测任务的生命周期，以及查看详细的 AI 回答和引用来源。
@@ -40,7 +42,7 @@ description: GEO平台收录检测管理模块，包含收录任务导入/查询
 {
   "data": "燃气壁挂炉推荐[海顿]",
   "platforms": ["deepseek", "doubao", "yuanbao", "qwen", "yiyan"],
-  "companyId": 36
+  "companyId": ${companyId}
 }
 ```
 
@@ -50,7 +52,7 @@ description: GEO平台收录检测管理模块，包含收录任务导入/查询
 {
   "data": "减震器品牌推荐[多耐|DN]",
   "platforms": ["deepseek", "doubao"],
-  "companyId": 36
+  "companyId": ${companyId}
 }
 ```
 
@@ -79,15 +81,16 @@ description: GEO平台收录检测管理模块，包含收录任务导入/查询
 ### curl 示例
 
 ```bash
-curl -X POST "https://nbgeo.aimusiclj.com/v1/ai-indexing-task/custom/import" \
+# ${companyId} 从 geo-config.json 的 defaults.companyId 读取
+curl -X POST "${baseUrl}/v1/ai-indexing-task/custom/import" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/" \
+  -H "Referer: ${referer}" \
   -H "Content-Type: application/json" \
-  -d '{
-    "data": "燃气壁挂炉推荐[海顿]",
-    "platforms": ["deepseek", "doubao", "yuanbao", "qwen", "yiyan", "kimi", "zhipu", "chatgpt", "gemini"],
-    "companyId": 36
-  }'
+  -d "{
+    \"data\": \"燃气壁挂炉推荐[海顿]\",
+    \"platforms\": [\"deepseek\", \"doubao\", \"yuanbao\", \"qwen\", \"yiyan\", \"kimi\", \"zhipu\", \"chatgpt\", \"gemini\"],
+    \"companyId\": ${companyId}
+  }"
 ```
 
 ### data 字段格式规范
@@ -114,9 +117,10 @@ curl -X POST "https://nbgeo.aimusiclj.com/v1/ai-indexing-task/custom/import" \
 ### curl 示例
 
 ```bash
-curl -X GET "https://nbgeo.aimusiclj.com/v1/ai-indexing-task/custom?page=1&limit=30&companyId=36" \
+# ${companyId} 从 geo-config.json 的 defaults.companyId 读取
+curl -X GET "${baseUrl}/v1/ai-indexing-task/custom?page=1&limit=30&companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
+  -H "Referer: ${referer}"
 ```
 
 ### 任务状态
@@ -150,11 +154,12 @@ curl -X GET "https://nbgeo.aimusiclj.com/v1/ai-indexing-task/custom?page=1&limit
 ### curl 示例
 
 ```bash
-curl -X DELETE "https://nbgeo.aimusiclj.com/v1/ai-indexing-task/custom?companyId=36" \
+# ${companyId} 从 geo-config.json 读取，${taskId} 为实际任务 ID
+curl -X DELETE "${baseUrl}/v1/ai-indexing-task/custom?companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/" \
+  -H "Referer: ${referer}" \
   -H "Content-Type: application/json" \
-  -d '{"ids":[14227,14228]}'
+  -d "{\"ids\":[${taskId1},${taskId2}]}"
 ```
 
 > 注意：删除不可恢复，批量建议不超过 100 个。
@@ -173,7 +178,7 @@ curl -X DELETE "https://nbgeo.aimusiclj.com/v1/ai-indexing-task/custom?companyId
 | `--file` | 关键词文本文件路径（每行一个） | - |
 | `--company` | 公司名称（必须） | - |
 | `--company-id` | 公司 ID | 从 API 获取 |
-| `--platforms` | 监测平台 | doubao,yuanbao,deepseek,qwen,yiyan |
+| `--platforms` | 监测平台 | deepseek,doubao,yuanbao,qwen,yiyan,kimi,zhipu,chatgpt,gemini |
 | `--source` | 数据来源：feishu / manual | manual |
 | `--priority` | 优先级过滤：P0/P1/P2/ALL | ALL |
 
@@ -202,15 +207,16 @@ curl -X DELETE "https://nbgeo.aimusiclj.com/v1/ai-indexing-task/custom?companyId
 ### curl 示例
 
 ```bash
+# ${companyId} 从 geo-config.json 读取
 # 查看全部结果
-curl -s "https://nbgeo.aimusiclj.com/v1/ai-indexing/custom?page=1&limit=30&companyId=36" \
+curl -s "${baseUrl}/v1/ai-indexing/custom?page=1&limit=30&companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
+  -H "Referer: ${referer}"
 
 # 按平台 + 关键词筛选
-curl -s "https://nbgeo.aimusiclj.com/v1/ai-indexing/custom?platform=deepseek&topic=多耐&companyId=36" \
+curl -s "${baseUrl}/v1/ai-indexing/custom?platform=deepseek&topic=多耐&companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
+  -H "Referer: ${referer}"
 ```
 
 ### 核心响应字段
@@ -243,9 +249,10 @@ curl -s "https://nbgeo.aimusiclj.com/v1/ai-indexing/custom?platform=deepseek&top
 ### curl 示例
 
 ```bash
-curl -s "https://nbgeo.aimusiclj.com/v1/publication?page=1&limit=30&productId=88&companyId=36" \
+# ${productId}、${companyId} 从 geo-config.json 的 defaults 读取
+curl -s "${baseUrl}/v1/publication?page=1&limit=30&productId=${productId}&companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
+  -H "Referer: ${referer}"
 ```
 
 ---
@@ -256,7 +263,7 @@ curl -s "https://nbgeo.aimusiclj.com/v1/publication?page=1&limit=30&productId=88
 2. 根据操作选择对应 API 接口
 3. 设置统一请求头（Authorization + Referer）
 4. 拼接参数并发送请求
-5. 检查响应 code/statusCode，解析数据
+5. 检查响应 `statusCode` 字段（0 为成功），解析数据
 6. 格式化输出结果
 
 ## 通用错误处理

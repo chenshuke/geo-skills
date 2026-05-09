@@ -3,6 +3,8 @@ name: geo-publish
 description: GEO平台发布任务管理模块，包含创建发布任务和删除发布任务
 ---
 
+> **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
+
 # GEO 发布任务管理
 
 本模块管理 GEO 平台的发布任务，支持将已审核通过的文章发布到多个平台账号（今日头条、搜狐号、B站、知乎、CSDN、微信公众号、小红书、抖音），支持定时发布和批量发布。
@@ -55,14 +57,14 @@ toutiao（今日头条）、sohu_news（搜狐号）、bilibili（B站）、zhih
 {
   "name": "任务名称",
   "aigc": false,
-  "productId": 88,
+  "productId": ${productId},
   "articles": [
     {
-      "articleId": 4346,
+      "articleId": ${articleId},
       "platforms": [
         {
           "platform": "sohu_news",
-          "publishAccountIds": [188],
+          "publishAccountIds": [${publishAccountId}],
           "publishTime": null,
           "config": {
             "channels": [],
@@ -75,25 +77,35 @@ toutiao（今日头条）、sohu_news（搜狐号）、bilibili（B站）、zhih
       ]
     }
   ],
-  "companyId": 36
+  "companyId": ${companyId}
 }
 ```
+
+> **config 字段说明**：
+> - `channels`：分发渠道（通常留空）
+> - `attribute`：附加属性（通常留空）
+> - `requireLogin`：是否需要登录才能阅读（false=公开）
+> - `infoSource`：信息来源标识（`"0"`=原创，`"1"`=转载）
+> - `sourceLink`：转载来源链接（原创时留空）
 
 ### curl 示例
 
 ```bash
+# 以下变量从 geo-config.json 读取：${openKey}、${companyId}、${productId}
+# ${articleId}、${publishAccountId} 从实际数据获取
+
 # 单篇文章发布到单个账号
-curl -s -X POST "https://nbgeo.aimusiclj.com/v1/publication-task" \
+curl -s -X POST "${baseUrl}/v1/publication-task" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/" \
+  -H "Referer: ${referer}" \
   -H "Content-Type: application/json" \
-  -d '{
-    "name":"海顿壁挂炉推广",
-    "aigc":false,
-    "productId":88,
-    "articles":[{"articleId":4346,"platforms":[{"platform":"sohu_news","publishAccountIds":[188],"publishTime":null,"config":{"channels":[],"attribute":"","requireLogin":false,"infoSource":"0","sourceLink":""}}]}],
-    "companyId":36
-  }'
+  -d "{
+    \"name\":\"任务名称\",
+    \"aigc\":false,
+    \"productId\":${productId},
+    \"articles\":[{\"articleId\":${articleId},\"platforms\":[{\"platform\":\"sohu_news\",\"publishAccountIds\":[${publishAccountId}],\"publishTime\":null,\"config\":{\"channels\":[],\"attribute\":\"\",\"requireLogin\":false,\"infoSource\":\"0\",\"sourceLink\":\"\"}}]}],
+    \"companyId\":${companyId}
+  }"
 ```
 
 ### 成功响应
@@ -113,17 +125,18 @@ curl -s -X POST "https://nbgeo.aimusiclj.com/v1/publication-task" \
 ### 请求体
 
 ```json
-{"ids": [2464, 2465]}
+{"ids": [${taskId1}, ${taskId2}]}
 ```
 
 ### curl 示例
 
 ```bash
-curl -s -X DELETE "https://nbgeo.aimusiclj.com/v1/publication-task" \
+# ${taskId} 为实际的发布任务 ID
+curl -s -X DELETE "${baseUrl}/v1/publication-task" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/" \
+  -H "Referer: ${referer}" \
   -H "Content-Type: application/json" \
-  -d '{"ids":[2464]}'
+  -d "{\"ids\":[${taskId}]}"
 ```
 
 ---
@@ -142,21 +155,21 @@ curl -s -X DELETE "https://nbgeo.aimusiclj.com/v1/publication-task" \
 
 ```bash
 # 1. 创建文章
-/skill geo-article-create --title="标题" --content="..." --product-id=88
+/skill geo-article --action=create --title="标题" --content="..." --product-id=${productId}
 
 # 2. 审核文章
-/skill geo-article-review --approve=4346
+/skill geo-article --action=review --approve=${articleId}
 
 # 3. 查看可用账号
-/skill geo-account-list --platform=sohu_news
+/skill geo-account --action=list --platform=sohu_news
 
 # 4. （可选）测试发布 -- 测试后必须删除！
-/skill geo-publish-create --name="测试" --article-id=4346 --platform=sohu_news --account-id=188
+/skill geo-publish --action=create --name="测试" --article-id=${articleId} --platform=sohu_news --account-id=${publishAccountId}
 # 删除测试任务
 # DELETE /v1/publication-task {"ids":[任务ID]}
 
 # 5. 创建正式发布任务
-/skill geo-publish-create --name="正式推广" --article-id=4346 --platform=sohu_news --account-id=188
+/skill geo-publish --action=create --name="正式推广" --article-id=${articleId} --platform=sohu_news --account-id=${publishAccountId}
 ```
 
 ---
@@ -165,6 +178,7 @@ curl -s -X DELETE "https://nbgeo.aimusiclj.com/v1/publication-task" \
 
 1. **测试任务清理（重要）**：调试创建的发布任务**必须立即删除**，避免文章重复发布。正式发布前检查任务列表确认无残留测试任务
 2. **productId 匹配**：发布任务的 productId 必须与文章关联的产品 ID 一致，否则返回 `statusCode: 10108`
+3. **封面图必填**：文章必须设置封面图（coverImageUrl）才能创建发布任务，否则返回 `statusCode: 10104`
 3. **每日发布限制**：注意每个账号的 `maxPostOneDay`，不要超出限制
 4. **定时发布**：时间格式必须为 `YYYY-MM-DD HH:MM:SS`
 5. **文章状态**：文章必须先审核通过（status=1）才能发布

@@ -3,6 +3,8 @@ name: geo-hub
 description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的中央控制台
 ---
 
+> **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
+
 # GEO平台API统一操作入口 (GEO Hub)
 
 > **版本**：v3.0 | **更新日期**：2026-05-08
@@ -60,7 +62,7 @@ description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的�
 ### ④ geo-indexing — 收录检测
 > 检测AI搜索排名、管理收录任务、批量导入关键词
 
-**API接口**：`POST/GET/DELETE /v1/indexing`
+**API接口**：`POST/GET/DELETE /v1/ai-indexing-task/custom`、`GET /v1/ai-indexing/custom`
 
 **快速入口**：`/geo-hub indexing`
 
@@ -69,7 +71,7 @@ description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的�
 ### ⑤ geo-publish — 发布管理
 > 创建发布任务，分发到知乎/搜狐/CSDN等渠道
 
-**API接口**：`POST /v1/publication`
+**API接口**：`POST /v1/publication-task`
 
 **快速入口**：`/geo-hub publish`
 

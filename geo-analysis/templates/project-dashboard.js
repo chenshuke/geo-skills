@@ -7,8 +7,8 @@
 // 占位符列表：
 //   {{BRAND_NAME}}      - 品牌名称（如 "多耐减振器"）
 //   {{BRAND_ICON}}      - 品牌图标（如 "🏭"）
-//   {{PROJECT_PATH}}    - 项目文件夹路径（如 "GEO多项目管理系统/项目_多耐减振GEO"）
-//   {{TRACKING_PATH}}   - 跟踪表路径（如 "GEO多项目管理系统/项目_多耐减振GEO/03_GEO方案/内容布局跟踪表.md"）
+//   {{PROJECT_PATH}}    - 项目文件夹路径（如 "项目_示例品牌GEO"）
+//   {{TRACKING_PATH}}   - 跟踪表路径（如 "项目_示例品牌GEO/03_规划方案/内容布局跟踪表.md"）
 //   {{MAPPING_PATH}}    - 映射表路径或 null
 //   {{RANKING_PATH}}    - 收录监测路径或 null
 //   {{OVERVIEW_PATH}}   - 项目概览路径或 null

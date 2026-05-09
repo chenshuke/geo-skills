@@ -368,7 +368,7 @@ class GEOPlanSyncer:
                      force: bool = False) -> Dict:
         """同步单个项目"""
         # 构建文件路径
-        project_dir = PROJECT_ROOT / f"项目_{project_name}GEO" / "03_GEO方案"
+        project_dir = PROJECT_ROOT / f"项目_{project_name}GEO" / "03_规划方案"
 
         keywords_file = project_dir / f"{brand}_GEO拓展词方案_飞书版.md"
         titles_file = project_dir / f"{brand}_GEO标题创作方案_飞书版.md"

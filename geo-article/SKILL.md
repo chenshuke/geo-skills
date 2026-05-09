@@ -3,6 +3,8 @@ name: geo-article
 description: GEO平台文章全生命周期管理模块，包含文章创建、上传、列表查询、审核、删除、图片上传、媒体投稿创作、批量创作
 ---
 
+> **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
+
 # GEO 文章管理
 
 本模块整合了 GEO 平台文章的完整生命周期管理能力，从文章创作、图片处理、文章上传、列表查询、审核、删除到批量创作和媒体投稿创作，覆盖文章运营的全部操作场景。
@@ -31,7 +33,7 @@ description: GEO平台文章全生命周期管理模块，包含文章创建、�
 | POST | /v1/article/status | 审核文章（通过/驳回） |
 | DELETE | /v1/article/{id} | 删除文章 |
 | POST | /v1/oss/pre | 获取 OSS 上传凭证 |
-| POST | /v1/oss/translate-url | URL 镜像转存 |
+| POST | /v1/oss/translate-url | URL 镜像转存（参数名为 `sourceUrls`） |
 
 ---
 
@@ -42,8 +44,8 @@ description: GEO平台文章全生命周期管理模块，包含文章创建、�
 ```json
 {
   "title": "文章标题",
-  "productId": 88,
-  "companyId": 36,
+  "productId": ${productId},
+  "companyId": ${companyId},
   "coverImageUrl": "https://example.com/cover.jpg",
   "content": "文章正文（支持 Markdown）",
   "summary": "文章摘要",
@@ -54,18 +56,19 @@ description: GEO平台文章全生命周期管理模块，包含文章创建、�
 ### curl 示例
 
 ```bash
-curl -X POST "https://nbgeo.aimusiclj.com/v1/article" \
+# ${productId}、${companyId} 从 geo-config.json 的 defaults 读取
+curl -X POST "${baseUrl}/v1/article" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/" \
-  -d '{
-    "title": "文章标题",
-    "productId": 88,
-    "content": "文章内容",
-    "summary": "摘要",
-    "tags": ["标签1"],
-    "companyId": 36
-  }'
+  -H "Referer: ${referer}" \
+  -d "{
+    \"title\": \"文章标题\",
+    \"productId\": ${productId},
+    \"content\": \"文章内容\",
+    \"summary\": \"摘要\",
+    \"tags\": [\"标签1\"],
+    \"companyId\": ${companyId}
+  }"
 ```
 
 ### 成功响应
@@ -129,10 +132,10 @@ curl -X POST "https://nbgeo.aimusiclj.com/v1/article" \
 **第一步**：获取 OSS 上传凭证（需要 Authorization）
 
 ```bash
-curl -X POST "https://nbgeo.aimusiclj.com/v1/oss/pre" \
+curl -X POST "${baseUrl}/v1/oss/pre" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/" \
+  -H "Referer: ${referer}" \
   -d '{"fileName":"xxx.png", "businessType":2, "groupId":1, "from":1, "url":""}'
 ```
 
@@ -158,11 +161,12 @@ curl -X POST "${host}" \
 将第三方图片 URL 批量转存为 OSS 镜像：
 
 ```bash
-curl -X POST "https://nbgeo.aimusiclj.com/v1/oss/translate-url" \
+# 注意：参数名为 sourceUrls（不是 urls）
+curl -X POST "${baseUrl}/v1/oss/translate-url" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/" \
-  -d '{"urls":["https://example.com/img1.png","https://example.com/img2.jpg"]}'
+  -H "Referer: ${referer}" \
+  -d '{"sourceUrls":["https://example.com/img1.png","https://example.com/img2.jpg"]}'
 ```
 
 ### 文件名安全处理（关键）
@@ -189,9 +193,10 @@ curl -X POST "https://nbgeo.aimusiclj.com/v1/oss/translate-url" \
 ### curl 示例
 
 ```bash
-curl -X GET "https://nbgeo.aimusiclj.com/v1/article?page=1&limit=30&productId=88&companyId=36" \
+# ${productId}、${companyId} 从 geo-config.json 的 defaults 读取
+curl -X GET "${baseUrl}/v1/article?page=1&limit=30&productId=${productId}&companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
+  -H "Referer: ${referer}"
 ```
 
 ---
@@ -202,7 +207,7 @@ curl -X GET "https://nbgeo.aimusiclj.com/v1/article?page=1&limit=30&productId=88
 
 ```json
 {
-  "ids": [4346, 4347, 4348],
+  "ids": [${articleId1}, ${articleId2}, ${articleId3}],
   "status": 1
 }
 ```
@@ -216,18 +221,19 @@ curl -X GET "https://nbgeo.aimusiclj.com/v1/article?page=1&limit=30&productId=88
 ### curl 示例
 
 ```bash
-curl -X POST "https://nbgeo.aimusiclj.com/v1/article/status" \
+# ${articleId} 为实际文章 ID
+curl -X POST "${baseUrl}/v1/article/status" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Content-Type: application/json" \
-  -H "Referer: https://geo.bihuoai.com/" \
-  -d '{"ids":[4346],"status":1}'
+  -H "Referer: ${referer}" \
+  -d "{\"ids\":[${articleId}],\"status\":1}"
 ```
 
 ### 快捷用法
 
-- 审核通过：`--approve=4346`
-- 审核驳回：`--reject=4346`
-- 批量：`--ids=4346,4347,4348 --status=1`
+- 审核通过：`--approve=${articleId}`
+- 审核驳回：`--reject=${articleId}`
+- 批量：`--ids=${articleId1},${articleId2},${articleId3} --status=1`
 
 ---
 
@@ -246,9 +252,10 @@ curl -X POST "https://nbgeo.aimusiclj.com/v1/article/status" \
 ### curl 示例
 
 ```bash
-curl -X DELETE "https://nbgeo.aimusiclj.com/v1/article/5763" \
+# ${articleId} 为实际文章 ID
+curl -X DELETE "${baseUrl}/v1/article/${articleId}" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Referer: https://geo.bihuoai.com/"
+  -H "Referer: ${referer}"
 ```
 
 > 注意：删除操作不可撤销。批量删除建议每批不超过 50 篇，推荐先使用 `--dry-run` 预览。
@@ -306,8 +313,8 @@ curl -X DELETE "https://nbgeo.aimusiclj.com/v1/article/5763" \
 ### 输出
 
 - 文章文件保存到 `04_内容创作/`（文件名含档位标记）
-- 自动更新 `03_GEO方案/内容布局跟踪表.md`
-- 质量报告保存到 `05_质量报告/`
+- 自动更新 `03_规划方案/内容布局跟踪表.md`
+- 质量报告保存到 `05_质量审核/内容质量报告/`
 
 ---
 
