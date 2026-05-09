@@ -30,6 +30,9 @@ pip install -r requirements.txt
 ### 3. 安装可选依赖（按需）
 
 ```bash
+# 本地封面生成（渐变背景+标题文字、预设模板）
+pip install Pillow
+
 # 飞书同步功能
 pip install baseopensdk
 ```

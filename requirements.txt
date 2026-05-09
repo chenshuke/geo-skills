@@ -4,5 +4,7 @@ requests>=2.28.0
 python-dotenv>=1.0.0
 
 # 可选依赖（按需安装）
+# 封面生成：pip install Pillow
+# Pillow>=10.0.0
 # 飞书同步：pip install baseopensdk
 # baseopensdk>=0.2.0

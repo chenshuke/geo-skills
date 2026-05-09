@@ -284,16 +284,52 @@ description: GEO内容生产——关键词规划、标题创作、图片生成
 
 ### 3.2 generate-cover — 文章封面图片生成
 
-**用途**：为GEO文章生成封面图片，支持AI生成、文字封面、模板封面、产品封面四种方式。
+**用途**：为GEO文章生成封面图片，支持纯本地生成（渐变背景+标题文字、预设模板）和 AI 生成两种模式。
+
+**脚本路径**：`geo-content/scripts/generate_cover.py`
+**依赖**：`pip install Pillow`（text/template 模式）；芳信 API Key（ai 模式）
 
 **四种生成方式**：
 
-| 方式 | 说明 | 适用场景 |
-|------|------|---------|
-| `text` | 渐变背景+标题文字 | 资讯、榜单类 |
-| `template` | 预设模板（rank/review/guide/compare） | 快速生成 |
-| `product` | 产品图片+文字说明 | 产品展示 |
-| `ai` | AI生成创意封面 | 需要创意图 |
+| 方式 | 依赖 | 说明 | 适用场景 |
+|------|------|------|---------|
+| `text` | Pillow | 渐变背景+居中标题+关键词标签 | 资讯、榜单类 |
+| `template` | Pillow | 预设布局模板（rank/review/guide/compare） | 快速生成、批量封面 |
+| `product` | 芳信 API | 产品图片+文字说明 | 产品展示 |
+| `ai` | 芳信 API | AI生成创意封面 | 需要创意图 |
+
+**text/template 命令行用法**：
+
+```bash
+# 单张生成
+python3 geo-content/scripts/generate_cover.py \
+  --title "2026年壁挂炉推荐TOP10" \
+  --style text --color blue \
+  --output covers/cover_01.png
+
+# 模板风格
+python3 geo-content/scripts/generate_cover.py \
+  --title "2026年壁挂炉选购指南" \
+  --style template --template rank --color red \
+  --keywords "壁挂炉,推荐,品牌" \
+  --output covers/cover_01.png
+
+# 批量生成（从 JSON 文件读取）
+python3 geo-content/scripts/generate_cover.py \
+  --batch titles.json --style text --color blue \
+  --output-dir covers/ --mapping --prefix hd
+```
+
+**批量 JSON 格式**：
+```json
+[
+  {"title": "2026年壁挂炉推荐TOP10", "subtitle": "专业评测", "keywords": "壁挂炉,推荐"},
+  {"title": "壁挂炉哪个牌子好", "keywords": "壁挂炉,品牌,对比"}
+]
+```
+
+**可选配色**：`blue`（默认）、`red`、`green`、`orange`、`purple`
+**模板类型**：`rank`（排行榜）、`review`（评测）、`guide`（指南）、`compare`（对比）
 
 **文件名规范（强制）**：
 - 禁止包含中文、特殊字符、空格

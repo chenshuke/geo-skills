@@ -92,6 +92,7 @@ pip install -r requirements.txt
 |------|------|------|
 | `requests` | 必需 | HTTP 请求 |
 | `python-dotenv` | 必需 | 环境变量管理 |
+| `Pillow` | 可选 | 本地封面图片生成（text/template 模式） |
 | `baseopensdk` | 可选 | 飞书多维表格同步 |
 | `puppeteer-core` | 可选 | HTML → PDF/PNG 转换（需 Node.js） |
 | Fangxin API Key | 可选 | AI 图片生成（存放于 `~/.geo-skills/credentials/fangxin_image_api_key`） |
