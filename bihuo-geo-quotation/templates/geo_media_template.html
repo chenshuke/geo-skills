@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>必火GEO 新媒体基建服务报价单</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    background: #f8f4f4;
+    color: #222;
+    width: 960px;
+    margin: 0 auto;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, #BC1F1A 0%, #6e0c09 100%);
+    padding: 30px 50px 26px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: 160px;
+    width: 240px; height: 240px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 80px;
+    width: 280px; height: 280px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .header-deco {
+    position: absolute;
+    top: 0; right: 0;
+    width: 160px; height: 100%;
+    background: rgba(0,0,0,0.12);
+    clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
+  }
+  .header-left { position: relative; z-index: 2; }
+  .header-left .eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .header-left .main-title {
+    font-size: 30px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.2;
+    letter-spacing: 1px;
+  }
+  .header-left .main-title .highlight {
+    color: #FFD4D3;
+  }
+  .header-left .sub-title {
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.65);
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+  }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    position: relative; z-index: 2;
+    gap: 8px;
+  }
+  .header-right .service-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 3.5px;
+  }
+  .header-right .validity {
+    font-size: 12px;
+    color: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 4px 14px;
+    border-radius: 20px;
+  }
+  .step-badge {
+    background: rgba(255,255,255,0.2);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 10px;
+    padding: 8px 16px;
+    text-align: center;
+  }
+  .step-badge .step-num {
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+  }
+  .step-badge .step-text {
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 2px;
+    letter-spacing: 1px;
+  }
+
+  /* ===== 必要性横幅 ===== */
+  .necessity-bar {
+    background: #1a0808;
+    padding: 12px 50px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .necessity-bar .nb-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .necessity-bar .nb-text {
+    font-size: 13px;
+    color: #FFD4D3;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+  .necessity-bar .nb-text span {
+    color: rgba(255,255,255,0.5);
+    font-weight: 400;
+    font-size: 12px;
+  }
+
+  /* ===== 核心指标横幅 ===== */
+  .metrics-bar {
+    background: #fff;
+    display: flex;
+    border-bottom: 2px solid #f5eded;
+    box-shadow: 0 3px 16px rgba(188,31,26,0.08);
+  }
+  .metric-item {
+    flex: 1;
+    text-align: center;
+    padding: 15px 10px;
+    border-right: 1px solid #f5f0f0;
+    position: relative;
+  }
+  .metric-item:last-child { border-right: none; }
+  .metric-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 28px; height: 2px;
+    background: #BC1F1A;
+    border-radius: 1px;
+  }
+  .metric-val {
+    font-size: 20px;
+    font-weight: 900;
+    color: #BC1F1A;
+    line-height: 1.2;
+  }
+  .metric-val.big { font-size: 24px; }
+  .metric-label {
+    font-size: 11px;
+    color: #999;
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== 价值主张区 ===== */
+  .value-section {
+    padding: 20px 50px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .value-card-main {
+    background: linear-gradient(135deg, #BC1F1A 0%, #7a0d0a 100%);
+    border-radius: 16px;
+    padding: 26px 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(188,31,26,0.28);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .value-card-main::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+  .value-card-main::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; left: 20px;
+    width: 140px; height: 140px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .vcm-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 8px;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    position: relative; z-index: 1;
+  }
+  .vcm-name {
+    font-size: 18px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.35;
+    margin-bottom: 10px;
+    position: relative; z-index: 1;
+  }
+  .vcm-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.7;
+    margin-bottom: 16px;
+    position: relative; z-index: 1;
+  }
+  .vcm-price {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    position: relative; z-index: 1;
+  }
+  .vcm-currency {
+    font-size: 18px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+  }
+  .vcm-amount {
+    font-size: 48px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+  .vcm-period {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 5px;
+    position: relative; z-index: 1;
+  }
+
+  /* 右侧价值点列表 */
+  .value-points {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .vp-item {
+    background: #fff;
+    border: 1.5px solid #f0e0e0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    box-shadow: 0 2px 8px rgba(188,31,26,0.05);
+  }
+  .vp-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #BC1F1A, #e85550);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    box-shadow: 0 3px 8px rgba(188,31,26,0.25);
+  }
+  .vp-content { flex: 1; }
+  .vp-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+  }
+  .vp-desc {
+    font-size: 11.5px;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  /* ===== 平台账号搭建 ===== */
+  .platform-section {
+    padding: 0 50px 16px;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .sec-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sec-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 20px;
+    background: linear-gradient(to bottom, #BC1F1A, #e85550);
+    border-radius: 2px;
+  }
+  .sec-en {
+    font-size: 11px;
+    color: #ccc;
+    letter-spacing: 2.5px;
+  }
+  .platform-unified {
+    background: #fff;
+    border: 1.5px solid #f0e0e0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(188,31,26,0.06);
+  }
+  .platform-top {
+    background: linear-gradient(to right, #fdf5f5, #fff8f8);
+    border-bottom: 1px solid #f5eded;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .platform-logos {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .plat-tag {
+    background: #fff;
+    border: 1.5px solid #f0d0ce;
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #BC1F1A;
+    box-shadow: 0 2px 6px rgba(188,31,26,0.08);
+  }
+  .platform-top-right {
+    font-size: 12px;
+    color: #BC1F1A;
+    font-weight: 700;
+    background: #fdf0f0;
+    border: 1px solid #f0d0ce;
+    border-radius: 20px;
+    padding: 4px 14px;
+  }
+  .platform-body {
+    padding: 18px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .plat-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+  }
+  .plat-dot {
+    width: 6px; height: 6px;
+    background: #BC1F1A;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .plat-item strong { color: #1a1a1a; font-weight: 700; }
+  .plat-item span { color: #888; font-size: 12px; }
+
+  /* ===== 数字人视频 ===== */
+  .video-section {
+    padding: 0 50px 16px;
+  }
+  .video-hero {
+    background: #fff;
+    border: 1.5px solid #f0e0e0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(188,31,26,0.06);
+  }
+  .video-hero-top {
+    background: linear-gradient(135deg, #1a0808 0%, #3d0f0f 100%);
+    padding: 20px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .vht-left { flex: 1; }
+  .vht-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+  }
+  .vht-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+  .vht-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.6;
+    max-width: 420px;
+  }
+  .vht-right {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .vht-count {
+    text-align: center;
+  }
+  .vht-num {
+    font-size: 48px;
+    font-weight: 900;
+    color: #FFD4D3;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+  .vht-unit {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 2px;
+  }
+  .vht-formula {
+    font-size: 12px;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    line-height: 1.8;
+    border-left: 1px solid rgba(255,255,255,0.1);
+    padding-left: 16px;
+  }
+  .vht-formula .formula-highlight {
+    font-size: 15px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.8);
+    display: block;
+  }
+  .video-hero-body {
+    padding: 16px 28px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .vtag {
+    background: #fdf5f5;
+    border: 1px solid #f0d0ce;
+    border-radius: 5px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: #BC1F1A;
+    font-weight: 600;
+  }
+
+  /* ===== 服务内容 ===== */
+  .service-section { padding: 0 50px 16px; }
+  .service-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .svc-item {
+    background: #fff;
+    border: 1px solid #f0e8e8;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    box-shadow: 0 1px 6px rgba(188,31,26,0.04);
+  }
+  .svc-num {
+    background: linear-gradient(135deg, #BC1F1A, #e85550);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    width: 24px; height: 24px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    box-shadow: 0 2px 6px rgba(188,31,26,0.28);
+  }
+  .svc-title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
+  .svc-desc { font-size: 11.5px; color: #999; line-height: 1.5; }
+
+  /* ===== 注意事项 ===== */
+  .notice-box {
+    background: #fffbf0;
+    border: 1px solid #f5d87a;
+    border-left: 3px solid #f0b800;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: #7a6000;
+    margin: 0 50px 18px;
+    line-height: 1.6;
+  }
+  .notice-box strong { color: #5a4500; }
+
+  /* ===== 交付保障 ===== */
+  .guarantee-section {
+    background: linear-gradient(135deg, #BC1F1A 0%, #6e0c09 100%);
+    padding: 22px 50px 26px;
+    position: relative;
+    overflow: hidden;
+  }
+  .guarantee-section::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .guarantee-section .sec-title { color: #fff; }
+  .guarantee-section .sec-title::before { background: rgba(255,255,255,0.5); }
+  .guarantee-section .sec-en { color: rgba(255,255,255,0.3); }
+  .guarantee-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 16px;
+    position: relative; z-index: 1;
+  }
+  .g-card {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 14px;
+    padding: 18px 12px 14px;
+    text-align: center;
+    backdrop-filter: blur(4px);
+  }
+  .g-val {
+    font-size: 24px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+  }
+  .g-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    margin-top: 5px;
+  }
+  .g-desc {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+  .g-tag {
+    display: block;
+    margin-top: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #FFD4D3;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 9px;
+  }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    background: #150606;
+    color: #666;
+    padding: 14px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+  }
+  .footer-brand { color: #eee; font-weight: 700; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<div class="header">
+  <div class="header-deco"></div>
+  <div class="header-left">
+    <div class="eyebrow">BIHUO GEO · NEW MEDIA INFRASTRUCTURE · STEP 02</div>
+    <div class="main-title">新媒体基建服务<br><span class="highlight" style="font-size:20px;font-weight:700;">GEO 全案第二步 · 让流量真正落地转化</span></div>
+    <div class="sub-title">做完 GEO，流量来了，然后呢？&nbsp;—&nbsp; 新媒体基建是 GEO 流量承接的必要动作<br>一次投入，立标品、搭矩阵、铺路径，解决企业新媒体从零到一的所有问题</div>
+  </div>
+  <div class="header-right">
+    <div class="step-badge">
+      <div class="step-num">STEP</div>
+      <div class="step-num" style="font-size:36px;margin-top:-4px;">02</div>
+      <div class="step-text">GEO 全案流程</div>
+    </div>
+    <div class="service-label">SERVICE QUOTATION</div>
+    <div class="validity">报价有效期：30 天</div>
+  </div>
+</div>
+
+<!-- ===== 必要性横幅 ===== -->
+<div class="necessity-bar">
+  <div class="nb-icon">⚡</div>
+  <div class="nb-text">
+    GEO 做完不做新媒体基建 = 流量来了没有地方接 &nbsp;·&nbsp; 新媒体矩阵是 GEO 流量变现的最后一公里
+    <span>&nbsp;—&nbsp; 这是每一个 GEO 企业客户必须完成的第二步</span>
+  </div>
+</div>
+
+<!-- ===== 核心指标横幅 ===== -->
+<div class="metrics-bar">
+  <div class="metric-item">
+    <div class="metric-val big">4 大</div>
+    <div class="metric-label">平台全覆盖</div>
+  </div>
+  <div class="metric-item">
+    <div class="metric-val big">40 条</div>
+    <div class="metric-label">视频全网发布</div>
+  </div>
+  <div class="metric-item">
+    <div class="metric-val">蓝V</div>
+    <div class="metric-label">认证账号</div>
+  </div>
+  <div class="metric-item">
+    <div class="metric-val">标品</div>
+    <div class="metric-label">内容方向确立</div>
+  </div>
+  <div class="metric-item">
+    <div class="metric-val">15 天</div>
+    <div class="metric-label">全程交付</div>
+  </div>
+</div>
+
+<!-- ===== 价值主张区 ===== -->
+<div class="value-section">
+  <!-- 左：价格卡片 -->
+  <div class="value-card-main">
+    <div>
+      <div class="vcm-tag">GEO 全案 · 第二步</div>
+      <div class="vcm-name">新媒体基建<br>一站式服务套餐</div>
+      <div class="vcm-desc">
+        花一次钱，把企业新媒体的所有基础全部搞定。账号注册、蓝V认证、视觉设计、内容标品、数字人视频——全部交给我们，15天内完整交付。<br><br>
+        这不只是交付物，更是为您的企业立下一套可复用的新媒体内容标准，未来无论用真人还是数字人，都按这个方向做就对了。
+      </div>
+    </div>
+    <div>
+      <div class="vcm-price">
+        <span class="vcm-currency">¥</span>
+        <span class="vcm-amount">9,800</span>
+      </div>
+      <div class="vcm-period">一次性服务费用 · 含四大平台搭建 + 40条视频全网发布</div>
+    </div>
+  </div>
+
+  <!-- 右：价值点 -->
+  <div class="value-points">
+    <div class="vp-item">
+      <div class="vp-icon">🎯</div>
+      <div class="vp-content">
+        <div class="vp-title">解决从零到一的问题</div>
+        <div class="vp-desc">企业新媒体完全空白？一次搞定四大平台账号注册、认证、视觉、定位，不再为"从哪里开始"发愁</div>
+      </div>
+    </div>
+    <div class="vp-item">
+      <div class="vp-icon">📐</div>
+      <div class="vp-content">
+        <div class="vp-title">立下可复用的内容标品</div>
+        <div class="vp-desc">我们交付的不只是视频，而是一套 GEO 方向的内容标准模版，未来团队自己做也好、继续合作也好，都有标准可依</div>
+      </div>
+    </div>
+    <div class="vp-item">
+      <div class="vp-icon">🔗</div>
+      <div class="vp-content">
+        <div class="vp-title">打通 GEO 流量承接闭环</div>
+        <div class="vp-desc">GEO 带来 AI 搜索曝光，新媒体矩阵负责接住流量、建立信任、完成转化，两步缺一不可</div>
+      </div>
+    </div>
+    <div class="vp-item">
+      <div class="vp-icon">🚀</div>
+      <div class="vp-content">
+        <div class="vp-title">40条视频快速占领全网</div>
+        <div class="vp-desc">10条数字人视频 × 同步发布4大平台 = 40条内容全网覆盖，快速建立品牌在 AI 搜索时代的新媒体存在感</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 四大平台账号搭建 ===== -->
+<div class="platform-section">
+  <div class="section-header">
+    <div class="sec-title">四大平台账号搭建</div>
+    <div class="sec-en">PLATFORM SETUP</div>
+  </div>
+  <div class="platform-unified">
+    <div class="platform-top">
+      <div class="platform-logos">
+        <span class="plat-tag">抖音</span>
+        <span class="plat-tag">小红书</span>
+        <span class="plat-tag">视频号</span>
+        <span class="plat-tag">B 站</span>
+      </div>
+      <div class="platform-top-right">四大平台 · 统一标准 · 同步搭建</div>
+    </div>
+    <div class="platform-body">
+      <div class="plat-item">
+        <div class="plat-dot"></div>
+        <div><strong>企业账号注册</strong><span> — 代为完成各平台企业号注册全流程，资料填写规范到位</span></div>
+      </div>
+      <div class="plat-item">
+        <div class="plat-dot"></div>
+        <div><strong>蓝V / 认证资质办理</strong><span> — 协助完成企业蓝V认证及机构号资质审核，提升账号权重与可信度</span></div>
+      </div>
+      <div class="plat-item">
+        <div class="plat-dot"></div>
+        <div><strong>头像 · 简介专业设计</strong><span> — 定制品牌头像，撰写符合 GEO 营销方向的账号简介与关键词布局</span></div>
+      </div>
+      <div class="plat-item">
+        <div class="plat-dot"></div>
+        <div><strong>账号视觉 VI 设计</strong><span> — 统一四大平台视觉风格，封面模板、背景图、品牌色系全套输出</span></div>
+      </div>
+      <div class="plat-item">
+        <div class="plat-dot"></div>
+        <div><strong>GEO 内容方向定位</strong><span> — 结合企业 GEO 关键词策略，规划各平台内容定位、受众方向与发布节奏</span></div>
+      </div>
+      <div class="plat-item">
+        <div class="plat-dot"></div>
+        <div><strong>内容标品模版确立</strong><span> — 交付一套可复用的内容创作标准，未来团队自运营或继续合作均有据可依</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 数字人视频 ===== -->
+<div class="video-section">
+  <div class="section-header">
+    <div class="sec-title">GEO 数字人视频 · 全网发布</div>
+    <div class="sec-en">DIGITAL HUMAN VIDEO</div>
+  </div>
+  <div class="video-hero">
+    <div class="video-hero-top">
+      <div class="vht-left">
+        <div class="vht-label">DIGITAL HUMAN · GEO VIDEO MATRIX</div>
+        <div class="vht-title">AI 数字人视频 × 四大平台同步发布</div>
+        <div class="vht-desc">
+          制作 10 条 GEO 方向数字人视频，同步发布至抖音、小红书、视频号、B站四大平台，实现 40 条内容全网覆盖。视频聚焦品牌核心关键词与用户搜索场景，快速建立新媒体内容矩阵，让 GEO 带来的流量有地方落地、有内容承接、有品牌可信。
+        </div>
+      </div>
+      <div class="vht-right">
+        <div class="vht-count">
+          <div class="vht-num">40</div>
+          <div class="vht-unit">条视频全网覆盖</div>
+        </div>
+        <div class="vht-formula">
+          <span class="formula-highlight">10条制作</span>
+          × 4大平台
+          <span class="formula-highlight">= 40条</span>
+          全网发布
+        </div>
+      </div>
+    </div>
+    <div class="video-hero-body">
+      <span class="vtag">专业脚本策划</span>
+      <span class="vtag">AI 数字人出镜</span>
+      <span class="vtag">GEO 关键词植入</span>
+      <span class="vtag">四平台适配剪辑</span>
+      <span class="vtag">字幕 / 配音</span>
+      <span class="vtag">品牌视觉统一</span>
+      <span class="vtag">同步四大平台发布</span>
+      <span class="vtag">内容标品示范</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 完整服务清单 ===== -->
+<div style="padding: 0 50px 6px; display:flex; justify-content:space-between; align-items:center;">
+  <div class="sec-title">完整服务内容清单</div>
+  <div class="sec-en">SERVICE SCOPE</div>
+</div>
+<div class="service-section">
+  <div class="service-grid">
+    <div class="svc-item">
+      <div class="svc-num">01</div>
+      <div><div class="svc-title">四大平台账号注册</div><div class="svc-desc">代为完成抖音、小红书、视频号、B站企业账号注册全流程</div></div>
+    </div>
+    <div class="svc-item">
+      <div class="svc-num">02</div>
+      <div><div class="svc-title">蓝V / 认证资质办理</div><div class="svc-desc">协助完成各平台企业蓝V认证及机构号资质审核，提升账号权重</div></div>
+    </div>
+    <div class="svc-item">
+      <div class="svc-num">03</div>
+      <div><div class="svc-title">头像与简介专业设计</div><div class="svc-desc">定制品牌头像，撰写符合 GEO 营销方向的账号简介与关键词布局</div></div>
+    </div>
+    <div class="svc-item">
+      <div class="svc-num">04</div>
+      <div><div class="svc-title">账号视觉 VI 全套设计</div><div class="svc-desc">统一四大平台视觉风格，封面模板、背景图、品牌色系规范全套输出</div></div>
+    </div>
+    <div class="svc-item">
+      <div class="svc-num">05</div>
+      <div><div class="svc-title">GEO 内容方向定位</div><div class="svc-desc">结合企业 GEO 关键词策略，规划各平台内容定位与受众方向</div></div>
+    </div>
+    <div class="svc-item">
+      <div class="svc-num">06</div>
+      <div><div class="svc-title">数字人视频脚本策划</div><div class="svc-desc">专业团队策划 10 条视频脚本，聚焦 GEO 核心关键词与搜索场景</div></div>
+    </div>
+    <div class="svc-item">
+      <div class="svc-num">07</div>
+      <div><div class="svc-title">AI 数字人视频制作</div><div class="svc-desc">运用 AI 数字人技术制作 10 条短视频，适配各平台发布规格要求</div></div>
+    </div>
+    <div class="svc-item">
+      <div class="svc-num">08</div>
+      <div><div class="svc-title">四大平台同步发布</div><div class="svc-desc">10条视频同步发布至四大平台，共计40条内容全网覆盖，快速建立存在感</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 注意事项 -->
+<div class="notice-box">
+  <strong>注意事项：</strong>以上报价均不含税。蓝V认证费用由各平台官方收取，不含在本服务费用内。特殊行业（金融、医疗、医美、药品、保健品）账号认证需提供相应资质，认证周期可能延长。
+</div>
+
+<!-- ===== 四大交付保障 ===== -->
+<div class="guarantee-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="sec-title" style="color:#fff;">四大交付保障</div>
+    <div class="sec-en" style="color:rgba(255,255,255,0.3);">DELIVERY GUARANTEE</div>
+  </div>
+  <div class="guarantee-grid">
+    <div class="g-card">
+      <div class="g-val">15 天</div>
+      <div class="g-name">快速交付</div>
+      <div class="g-desc">账号搭建、视觉设计<br>视频制作全程15天内</div>
+      <span class="g-tag">逾期免费补偿</span>
+    </div>
+    <div class="g-card">
+      <div class="g-val">40 条</div>
+      <div class="g-name">视频全网覆盖</div>
+      <div class="g-desc">10条视频 × 4大平台<br>同步发布全网可见</div>
+      <span class="g-tag">不满意免费修改</span>
+    </div>
+    <div class="g-card">
+      <div class="g-val">标品</div>
+      <div class="g-name">内容标准交付</div>
+      <div class="g-desc">交付可复用内容模版<br>未来自运营有标准可依</div>
+      <span class="g-tag">长期价值保障</span>
+    </div>
+    <div class="g-card">
+      <div class="g-val">30 天</div>
+      <div class="g-name">售后跟进</div>
+      <div class="g-desc">交付后30天账号问题<br>免费协助处理</div>
+      <span class="g-tag">专属顾问跟进</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<div class="footer">
+  <div class="footer-brand">必火GEO &nbsp;|&nbsp; 新媒体基建服务</div>
+  <div>本报价单由专属顾问提供，如有疑问请联系您的服务顾问</div>
+  <div>报价有效期 30 天</div>
+</div>
+
+</body>
+</html>

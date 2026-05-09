@@ -1,0 +1,11 @@
+{
+  "geo": {
+    "baseUrl": "https://nbgeo.aimusiclj.com",
+    "openKey": "YOUR_OPEN_KEY_HERE",
+    "referer": "https://geo.bihuoai.com/"
+  },
+  "defaults": {
+    "productId": 0,
+    "companyId": 0
+  }
+}
