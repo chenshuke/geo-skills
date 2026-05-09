@@ -77,15 +77,15 @@ def candidate_api_key_files() -> List[Path]:
     add(DEFAULT_API_KEY_FILE)
     home_env = os.environ.get("HOME")
     if home_env:
-        add(Path(home_env).expanduser() / ".geo-skills" / "credentials" / "fangxin_image_api_key")
+        add(Path(home_env).expanduser() / ".hermes" / "credentials" / "fangxin_image_api_key")
     cwd = Path.cwd()
     for parent in [cwd, *cwd.parents]:
         if parent.name == "home" and parent.parent.name.startswith("workspace-") and parent.parent.parent.name == "profiles":
-            add(parent / ".geo-skills" / "credentials" / "fangxin_image_api_key")
+            add(parent / ".hermes" / "credentials" / "fangxin_image_api_key")
             break
     explicit_profile_home = os.environ.get("HERMES_PROFILE_HOME")
     if explicit_profile_home:
-        add(Path(explicit_profile_home).expanduser() / ".geo-skills" / "credentials" / "fangxin_image_api_key")
+        add(Path(explicit_profile_home).expanduser() / ".hermes" / "credentials" / "fangxin_image_api_key")
     return candidates
 
 

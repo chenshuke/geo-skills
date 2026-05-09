@@ -5,7 +5,7 @@ version: 1.0.0
 author: GEO Agent
 license: MIT
 metadata:
-  geo-image-generation:
+  hermes:
     tags: [images, geo, oss, fangxin, gpt-image-2]
     related_skills: [upload-image, generate-cover, geo-hub]
 ---

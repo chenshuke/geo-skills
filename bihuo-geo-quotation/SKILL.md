@@ -49,7 +49,7 @@ cd ./bihuo-geo-quotation
 node ./scripts/html_to_pdf.js <input.html> <output.pdf>
 ```
 
-或使用内联 Node.js 脚本（puppeteer-core 需要安装 (`npm install puppeteer-core`)）：
+或使用内联 Node.js 脚本（puppeteer-core 需要预先安装 (`npm install puppeteer-core`)
 
 ```javascript
 // 关键：先获取内容高度，再注入 @page 尺寸，使用 preferCSSPageSize: true
@@ -62,7 +62,6 @@ await page.evaluate((h) => {
 const pdf = await page.pdf({ printBackground: true, preferCSSPageSize: true, margin: {top:0,right:0,bottom:0,left:0} });
 ```
 
-> **注意**：puppeteer-core 需要预先安装 (`npm install puppeteer-core`)，运行 node 脚本前需 `cd ./bihuo-geo-quotation`。
 
 ### Logo 内联方式
 
