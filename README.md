@@ -8,12 +8,12 @@
 
 ```mermaid
 graph LR
-    A[/geo-workflow-hub brand] --> B[/geo-workflow-hub knowledge]
-    B --> C[/geo-workflow-hub content production]
-    C --> C2[/geo-workflow-hub content audit]
-    C2 --> C3[/geo-workflow-hub archive]
-    C3 --> D[/geo-hub article]
-    D --> E[/geo-hub indexing]
+    A["/geo-workflow-hub brand"] --> B["/geo-workflow-hub knowledge"]
+    B --> C["/geo-workflow-hub content production"]
+    C --> C2["/geo-workflow-hub content audit"]
+    C2 --> C3["/geo-workflow-hub archive"]
+    C3 --> D["/geo-hub article"]
+    D --> E["/geo-hub indexing"]
 ```
 
 ## 双入口架构
