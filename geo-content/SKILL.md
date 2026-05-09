@@ -818,4 +818,5 @@ description: GEO内容全流程生产——关键词规划、标题创作、图�
 
 [analyze-gaps] 知识库缺口分析（独立于单篇审核，定期执行）
 [create-compliant-ranking] 合规榜单创作（独立流程，从零创作）
+[geo-content-archive] 内容归档（独立技能，创作完成后调用，按日期+AI平台+发布平台归档）
 ```
