@@ -144,10 +144,16 @@ curl -s -X DELETE "${baseUrl}/v1/publication-task" \
 ## 执行步骤
 
 1. 从 `geo-config/geo-config.json` 读取 `openKey`、`companyId`、`productId`
-2. 解析参数（文章 ID、平台列表、账号列表、发布时间）
-3. 参数验证：任务名称非空、文章 ID 与平台账号数量匹配、平台名称有效
-4. 构造请求体并发送请求
-5. 检查响应，输出任务 ID 和发布计划
+2. **获取已登录账号列表**：调用 `GET /v1/publication-account`，按平台筛选出目标账号
+3. **确认发布账号和额度**：
+   - 展示目标平台的全部可用账号（名称、ID、平台、状态）
+   - 展示每个账号的 `remainDaily`（剩余可发布数 = `maxPostOneDay - publishedTodayCount`）
+   - 让用户确认使用哪些账号
+   - > **注意**：每日发布限额可在 GEO 后台调整。如果额度不足，**提示用户可在后台调整**，不要直接中止流程
+4. 解析参数（文章 ID、平台列表、账号列表、发布时间）
+5. 参数验证：任务名称非空、文章 ID 与平台账号数量匹配、平台名称有效
+6. 构造请求体并发送请求
+7. **Write-then-Read 校验**：创建完成后立即调用 `GET /v1/publication-task` 回查确认（见下方强制校验规则）
 
 ---
 
@@ -176,13 +182,57 @@ curl -s -X DELETE "${baseUrl}/v1/publication-task" \
 
 ## 注意事项
 
-1. **测试任务清理（重要）**：调试创建的发布任务**必须立即删除**，避免文章重复发布。正式发布前检查任务列表确认无残留测试任务
-2. **productId 匹配**：发布任务的 productId 必须与文章关联的产品 ID 一致，否则返回 `statusCode: 10108`
-3. **封面图必填**：文章必须设置封面图（coverImageUrl）才能创建发布任务，否则返回 `statusCode: 10104`
-3. **每日发布限制**：注意每个账号的 `maxPostOneDay`，不要超出限制
-4. **定时发布**：时间格式必须为 `YYYY-MM-DD HH:MM:SS`
-5. **文章状态**：文章必须先审核通过（status=1）才能发布
-6. **多平台发布**：platforms 和 accountIds 数组长度必须一致，一一对应
+1. **先查账号再创建（重要）**：创建发布任务前，**必须先调用 `GET /v1/publication-account` 获取已登录账号列表**，让用户确认使用哪些账号，不要自行猜测或硬编码账号 ID
+2. **额度不足时提示用户调整**：每个账号有 `maxPostOneDay`（每日发布上限）和 `publishedTodayCount`（今日已发布数）。如果 `remainDaily` 不足，**告知用户可在 GEO 后台调高限额**，不要直接放弃操作
+3. **测试任务清理（重要）**：调试创建的发布任务**必须立即删除**，避免文章重复发布。正式发布前检查任务列表确认无残留测试任务
+4. **productId 匹配**：发布任务的 productId 必须与文章关联的产品 ID 一致，否则返回 `statusCode: 10108`
+5. **封面图必填**：文章必须设置封面图（coverImageUrl）才能创建发布任务，否则返回 `statusCode: 10104`
+6. **定时发布**：时间格式必须为 `YYYY-MM-DD HH:MM:SS`
+7. **文章状态**：文章必须先审核通过（status=1）才能发布
+8. **多平台发布**：platforms 和 accountIds 数组长度必须一致，一一对应
+
+---
+
+## 强制校验规则（Write-then-Read）
+
+> ⚠️ **此规则为最高优先级，任何写入/删除操作都必须遵守。**
+
+GEO API 在参数错误（如 Referer 不匹配、账号额度不足）时可能返回 `statusCode: 0` 和假 ID（数据实际未写入）。因此**不要信任 POST/DELETE 的返回值，必须以 GET 列表接口的实际数据为准。**
+
+### 校验流程
+
+| 操作 | 必须执行的校验 | 校验内容 |
+|------|---------------|---------|
+| **创建发布任务** | 立即调用 `GET /v1/publication-task` | 确认任务存在于列表中、关联的文章 ID 和账号 ID 正确、任务状态符合预期 |
+| **删除发布任务** | 立即调用 `GET /v1/publication-task` | 确认被删除的任务已不在列表中 |
+
+### 执行原则
+
+1. **写后必读**：每次创建/删除任务完成后，**必须立即**调用 `GET /v1/publication-task` 回查
+2. **以列表为准**：GET 返回的任务列表是唯一真实状态，POST/DELETE 返回的 `statusCode: 0` 不可信
+3. **批量操作分批校验**：批量创建/删除时，每批完成后立即回查，不要等全部完成再查
+4. **发现异常立即停止**：回查发现数据不符时，**停止后续操作**，先排查原因
+5. **注意响应结构**：`GET /v1/publication-task` 返回数据在 `data.data`（嵌套数组），不是 `data.list`
+
+### 示例
+
+```bash
+# 1. 创建发布任务
+curl -s -X POST "${baseUrl}/v1/publication-task" ... -d '{"name":"推广任务",...}'
+
+# 2. 立即回查确认（Write-then-Read）
+curl -s -X GET "${baseUrl}/v1/publication-task?companyId=${companyId}&productId=${productId}&page=1&limit=50" \
+  -H "Authorization: Bearer ${openKey}" -H "Referer: ${referer}"
+# → 检查返回列表中是否包含刚创建的任务，关联文章和账号是否正确
+
+# 3. 删除发布任务
+curl -s -X DELETE "${baseUrl}/v1/publication-task" ... -d '{"ids":[taskId]}'
+
+# 4. 立即回查确认（Write-then-Read）
+curl -s -X GET "${baseUrl}/v1/publication-task?companyId=${companyId}&productId=${productId}&page=1&limit=50" \
+  -H "Authorization: Bearer ${openKey}" -H "Referer: ${referer}"
+# → 确认该任务已不在列表中
+```
 
 ---
 

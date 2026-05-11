@@ -318,6 +318,51 @@ curl -X DELETE "${baseUrl}/v1/article/${articleId}" \
 
 ---
 
+## 强制校验规则（Write-then-Read）
+
+> ⚠️ **此规则为最高优先级，任何写入/删除操作都必须遵守。**
+
+GEO API 在参数错误（如 Referer 不匹配）时可能返回 `statusCode: 0` 和假 ID（数据实际未写入）。因此**不要信任 POST/DELETE 的返回值，必须以 GET 列表接口的实际数据为准。**
+
+### 校验流程
+
+| 操作 | 必须执行的校验 | 校验内容 |
+|------|---------------|---------|
+| **创建文章** | 立即调用 `GET /v1/article` | 确认文章存在于列表中、`coverImageUrl` 非空且可访问、标题/内容正确 |
+| **删除文章** | 立即调用 `GET /v1/article` | 确认被删除的文章已不在列表中 |
+| **审核文章** | 立即调用 `GET /v1/article` | 确认文章 `status` 已变更（0=驳回、1=通过、2=审核中） |
+| **上传封面** | 调用 `GET /v1/article` 查看封面字段 | 确认 `coverImageUrl` 已更新为正确的 OSS 地址 |
+
+### 执行原则
+
+1. **写后必读**：每次写入/删除操作完成后，**必须立即**调用对应的 GET 接口回查
+2. **以列表为准**：GET 返回的文章列表是唯一真实状态，POST/DELETE 返回的 `statusCode: 0` 不可信
+3. **批量操作分批校验**：批量创建/删除时，每批完成后立即回查，不要等全部完成再查
+4. **发现异常立即停止**：回查发现数据不符时，**停止后续操作**，先排查原因
+5. **注意响应结构**：`GET /v1/article` 返回数据在 `data.data`（嵌套数组），不是 `data.list`
+
+### 示例
+
+```bash
+# 1. 创建文章
+curl -s -X POST "${baseUrl}/v1/article" ... -d '{"title":"测试文章",...}'
+
+# 2. 立即回查确认（Write-then-Read）
+curl -s -X GET "${baseUrl}/v1/article?page=1&limit=5&productId=${productId}&companyId=${companyId}" \
+  -H "Authorization: Bearer ${openKey}" -H "Referer: ${referer}"
+# → 检查返回列表中是否包含刚创建的文章，封面 URL 是否正确
+
+# 3. 删除文章
+curl -s -X DELETE "${baseUrl}/v1/article/${articleId}" ...
+
+# 4. 立即回查确认（Write-then-Read）
+curl -s -X GET "${baseUrl}/v1/article?page=1&limit=30&productId=${productId}&companyId=${companyId}" \
+  -H "Authorization: Bearer ${openKey}" -H "Referer: ${referer}"
+# → 确认该文章已不在列表中
+```
+
+---
+
 ## 配置
 
 所有技能统一从 `geo-config/geo-config.json` 读取认证信息：
