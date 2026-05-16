@@ -1,0 +1,16 @@
+# Local credentials and environment files
+.env
+*.env
+.geo-skills/
+credentials/
+*.local.json
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/

@@ -1,11 +1,19 @@
 ---
 name: geo-brand
-description: GEO品牌内容创作统一技能，整合企业品牌、产品品牌、个人品牌三类内容创作能力，以及产品获客类文章创作。基于内容类型+标题+知识库，创作符合5大质量维度的GEO文章，自动更新内容布局跟踪表。
+description: GEO品牌内容创建技能。Use this skill when the user wants to create enterprise/product/personal brand positioning, brand introductions, product acquisition article frameworks, or GEO-ready brand content from a title and knowledge base. Do not use for API upload; use geo-article instead.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: workflow
 ---
 
 > **外部依赖**: 无（纯内容创作）
 
 # GEO 品牌内容创作
+
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
 
 > **适用对象**：企业品牌、产品品牌、个人品牌、产品获客
 > **核心能力**：基于内容类型+标题+知识库 → 创作高质量GEO文章
@@ -173,11 +181,13 @@ description: GEO品牌内容创作统一技能，整合企业品牌、产品品�
 
 ## 使用方法
 
-```bash
-/skill geo-brand --project="项目路径" --keyword="目标关键词" --type="信任背书" --title="文章标题" --kb="知识库路径" --platform="知乎" --words="1000" --use-search
+直接对 Claude Code 或 Codex 说明任务和参数，例如：
+
+```text
+使用 geo-brand，基于项目路径、目标关键词、文章标题、知识库路径和发布平台，创作一篇“信任背书”类型的 GEO 品牌文章，目标 1000 字，并在需要时联网补充事实。
 ```
 
-> **--type参数**：34种内容类型（企业10种/产品10种/个人10种/获客4种）
+> **内容类型参数**：34种内容类型（企业10种/产品10种/个人10种/获客4种）
 
 ---
 

@@ -1,13 +1,30 @@
 ---
 name: geo-article
-description: GEO平台文章全生命周期管理模块，包含文章创建、上传、列表查询、审核、删除、图片上传、媒体投稿创作、批量创作
+description: GEO文章与素材平台管理技能。Use this skill when the user wants to create, upload, list, review, delete, or troubleshoot articles, images, OSS uploads, or media submission workflows in the GEO platform API. Do not use for drafting article content; use geo-content-production instead. Do not use for publication tasks; use geo-publish instead.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: api
 ---
 
 > **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
 
 # GEO 文章管理
 
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
+
 本模块整合了 GEO 平台文章的完整生命周期管理能力，从文章创作、图片处理、文章上传、列表查询、审核、删除到批量创作和媒体投稿创作，覆盖文章运营的全部操作场景。
+
+---
+
+## 通用安全规则
+
+- 真实 openKey 只能读取自 `~/.geo-skills/credentials/geo-config.json` 或环境变量，回复和日志中必须脱敏展示。
+- 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
+- 支持 dry-run / preview 时优先使用 dry-run / preview。
+- 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
 
 ---
 
@@ -365,7 +382,7 @@ curl -s -X GET "${baseUrl}/v1/article?page=1&limit=30&productId=${productId}&com
 
 ## 配置
 
-所有技能统一从 `geo-config/geo-config.json` 读取认证信息：
+所有技能统一从 `~/.geo-skills/credentials/geo-config.json` 读取认证信息：
 - openKey：接口密钥
 - 统一请求头：Authorization: Bearer ${openKey} + Referer: https://geo.bihuoai.com/
 - Base URL：https://nbgeo.aimusiclj.com

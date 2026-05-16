@@ -1,11 +1,19 @@
 ---
 name: geo-analysis
-description: GEO数据分析与可视化技能集，整合证据链分析、平台逆向分析、引用品牌审核、方案同步、项目仪表盘和HTML截图导出六大能力，实现从收录数据采集到策略闭环的全链路数据分析
+description: GEO数据分析与可视化技能。Use this skill when analyzing GEO indexing results, citation/evidence chains, platform citation behavior, brand citation relevance, Feishu plan sync, PDCA dashboards, or HTML/PNG reporting. Do not use for creating or uploading articles; use geo-content-production or geo-article instead.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: workflow
 ---
 
 > **外部依赖**: sync-geo-plan 需要 baseopensdk（飞书SDK，可选）；仪表盘需要 Obsidian + Dataview 插件；html-to-png 需要 puppeteer-core（可选）
 
 # GEO 数据分析（geo-analysis）
+
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
 
 本技能集整合六个分析工具，覆盖 GEO 项目从数据采集、平台逆向、引用审核、证据链评分、项目仪表盘监控到可视化导出的完整闭环。核心能力包括：**证据链分析**从收录检测结果提取引用来源分布规律并生成发布策略矩阵；**平台逆向分析**逐平台全量读取引用链接深度理解来源特征，积累可迭代的知识库；**引用品牌审核**自动访问引用页面判断是否与目标品牌相关；**方案同步**将拓展词和标题方案批量上传飞书多维表格；**项目仪表盘**生成 Obsidian 原生 DataviewJS 仪表盘实现多项目全链路闭环监控与 PDCA 排名追踪；**HTML转PNG**将汇报文件截图导出。
 
@@ -148,7 +156,7 @@ description: GEO数据分析与可视化技能集，整合证据链分析、平�
 └── "截图/HTML转图片"             → html-to-png
 ```
 
-**配置前置**：调用涉及 API 的子技能前，需先从 `geo-config/geo-config.json` 读取配置（openKey、baseUrl、referer），并确认 companyId 和 productId。
+**配置前置**：调用涉及 API 的子技能前，需先从 `~/.geo-skills/credentials/geo-config.json` 读取配置（openKey、baseUrl、referer），并确认 companyId 和 productId。
 
 ---
 

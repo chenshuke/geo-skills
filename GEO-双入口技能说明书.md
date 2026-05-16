@@ -1,13 +1,16 @@
 # GEO 双入口技能说明书
 
-更新时间：2026-05-09
-版本：v3.1（开放优化版）
+更新时间：2026-05-16
+版本：v3.2（Claude Code / Codex 通用版）
 
 ---
 
 ## 1. 总体结构
 
-GEO 技能体系从 59 个子技能精简为 **11 个功能模块**（9 个核心 + 2 个子拆分），通过两个总入口访问。
+GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 12 个业务技能** 组织。所有 `geo-*` 文件夹应作为同级技能安装。
+
+### 0. `geo-runtime` — 运行时与诊断
+- 技能完整性检查、凭证读取、依赖诊断、API 连通性检查
 
 ### A. `geo-hub` — 平台操作入口
 - 账号查询、文章上传、收录检测、发布管理、配置管理
@@ -46,24 +49,24 @@ GEO 技能体系从 59 个子技能精简为 **11 个功能模块**（9 个核�
 ## 3. 路由口诀
 
 ### 平台执行类
-**查 / 传 / 删 / 配** → `/geo-hub`
+**查 / 传 / 删 / 配** → 使用 `geo-hub` 或具体 API 技能
 
 ### 运营交付类
-**建 / 规 / 写 / 审 / 优** → `/geo-workflow-hub`
+**建 / 规 / 写 / 审 / 优** → 使用 `geo-workflow-hub` 或具体工作流技能
 
 ---
 
 ## 4. 推荐工作流
 
-```
-第1步：/geo-workflow-hub brand           → 创建品牌
-第2步：/geo-workflow-hub knowledge      → 搭建知识库（建立标准目录结构）
-第3步：/geo-workflow-hub content production → 关键词→标题→图片→创作
-第4步：/geo-workflow-hub content audit     → 审核→覆盖度→优化
-第5步：/geo-workflow-hub archive          → 文件归位整理
-第6步：/geo-hub article                   → 上传到平台
-第7步：/geo-hub indexing                  → 检测收录排名
-第8步：/geo-workflow-hub analysis         → 证据链分析→策略优化
+```text
+第1步：使用 geo-brand 创建品牌
+第2步：使用 geo-knowledge 搭建知识库（建立标准目录结构）
+第3步：使用 geo-content-production 完成关键词、标题、图片与内容创作
+第4步：使用 geo-content-audit 审核、覆盖度检查与优化
+第5步：使用 geo-content-archive 完成文件归位整理
+第6步：使用 geo-article 上传到平台
+第7步：使用 geo-indexing 检测收录排名
+第8步：使用 geo-analysis 完成证据链分析与策略优化
 ```
 
 > **geo-workflow-hub 负责"想清楚并做出来"，geo-hub 负责"落到平台并看结果"。**
@@ -80,8 +83,8 @@ GEO 技能体系从 59 个子技能精简为 **11 个功能模块**（9 个核�
 | `FAQ.md` | 常见问题解答 |
 | `CHANGELOG.md` | 版本变更日志 |
 | `LICENSE` | MIT 开源许可证 |
-| `requirements.txt` | Python 依赖清单 |
-| `shared/credentials.py` | 统一凭证管理模块 |
+| `requirements.txt` | Python 依赖清单（仓库级说明） |
+| `geo-runtime/scripts/credentials.py` | 统一凭证管理模块 |
 
 ---
 
@@ -90,7 +93,7 @@ GEO 技能体系从 59 个子技能精简为 **11 个功能模块**（9 个核�
 | 依赖 | 必要性 | 用途 |
 |------|--------|------|
 | GEO 平台 openKey | ✅ 必需 | API 认证（config/account/article/indexing/publish） |
-| Python 3.8+ | ✅ 必需 | 脚本运行环境 |
+| Python 3.9+ | ✅ 必需 | 脚本运行环境 |
 | requests / python-dotenv | ✅ 必需 | HTTP 请求和环境变量加载 |
 | baseopensdk | ⬜ 可选 | 飞书多维表格同步 |
 | Fangxin API Key | ⬜ 可选 | AI 图片生成 |

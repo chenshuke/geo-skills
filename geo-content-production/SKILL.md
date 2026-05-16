@@ -1,12 +1,20 @@
 ---
 name: geo-content-production
-description: GEO内容生产——关键词规划、标题创作、图片生成
+description: GEO内容生产技能。Use this skill when planning keywords, generating title plans, writing GEO-oriented article drafts, creating cover/image prompts, or using bundled image/cover scripts. Do not use for final quality audit or platform upload; use geo-content-audit or geo-article instead.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: workflow
 ---
 
 # GEO 内容生产技能
 
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
+
 > 本模块涵盖内容生产全流程：**关键词规划 / 标题创作 / 图片生成**
-> 对应的审核/覆盖分析/优化模块见 [[geo-content-audit]]
+> 对应的审核/覆盖分析/优化模块见 `../geo-content-audit/SKILL.md`
 
 **外部依赖**：`geo-image-generation` 需要 Fangxin API Key（可选）
 
@@ -239,6 +247,8 @@ description: GEO内容生产——关键词规划、标题创作、图片生成
 
 **用途**：基于Fangxin API (gpt-image-2) 生成图片，支持文生图、图生图、多参考图合成、mask编辑，可选自动上传GEO OSS。
 
+**脚本路径**：`geo-content-production/scripts/generate_image.py`（相对于 GEO Skills Suite 根目录；若从本技能目录解析，则为 `scripts/generate_image.py`）
+
 **核心能力**：
 - 文生图 / 图生图编辑 / 多参考图合成 / mask局部编辑
 - 支持多种尺寸：1024x1024、1920x1080、2048x2048
@@ -270,10 +280,10 @@ description: GEO内容生产——关键词规划、标题创作、图片生成
 | `--image` | 否 | 参考图路径（可重复） |
 | `--mask` | 否 | 编辑模式遮罩图 |
 | `--auto-upload` | 否 | 自动上传到GEO OSS |
-| `--geo-config` | 否 | geo-config.json路径 |
+| `--geo-config` | 否 | `~/.geo-skills/credentials/geo-config.json` 或自定义配置路径 |
 | `--output` / `--output-dir` | 否 | 输出路径 |
 
-**GEO OSS上传前置条件**：geo-config.json中需包含 `geo.baseUrl`、`geo.openKey`、`geo.referer`。
+**GEO OSS上传前置条件**：`~/.geo-skills/credentials/geo-config.json` 中需包含 `geo.baseUrl`、`geo.openKey`、`geo.referer`。
 
 **兼容性说明**：
 - `quality=low` 最稳定；`medium/high` 不稳定可能超时
@@ -286,7 +296,7 @@ description: GEO内容生产——关键词规划、标题创作、图片生成
 
 **用途**：为GEO文章生成封面图片，支持纯本地生成（渐变背景+标题文字、预设模板）和 AI 生成两种模式。
 
-**脚本路径**：`geo-content/scripts/generate_cover.py`
+**脚本路径**：`geo-content-production/scripts/generate_cover.py`（相对于 GEO Skills Suite 根目录；若从本技能目录解析，则为 `scripts/generate_cover.py`）
 **依赖**：`pip install Pillow`（text/template 模式）；芳信 API Key（ai 模式）
 
 **四种生成方式**：
@@ -302,20 +312,20 @@ description: GEO内容生产——关键词规划、标题创作、图片生成
 
 ```bash
 # 单张生成
-python3 geo-content/scripts/generate_cover.py \
+python3 geo-content-production/scripts/generate_cover.py \
   --title "2026年壁挂炉推荐TOP10" \
   --style text --color blue \
   --output covers/cover_01.png
 
 # 模板风格
-python3 geo-content/scripts/generate_cover.py \
+python3 geo-content-production/scripts/generate_cover.py \
   --title "2026年壁挂炉选购指南" \
   --style template --template rank --color red \
   --keywords "壁挂炉,推荐,品牌" \
   --output covers/cover_01.png
 
 # 批量生成（从 JSON 文件读取）
-python3 geo-content/scripts/generate_cover.py \
+python3 geo-content-production/scripts/generate_cover.py \
   --batch titles.json --style text --color blue \
   --output-dir covers/ --mapping --prefix hd
 ```

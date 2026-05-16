@@ -1,13 +1,30 @@
 ---
 name: geo-indexing
-description: GEO平台收录检测管理模块，包含收录任务导入/查询/删除/批量导入、收录结果查询、发布状态检测
+description: GEO收录检测管理技能。Use this skill when importing, listing, deleting, batch-managing, or querying AI indexing/ranking tasks and publication status through the GEO API. Do not use for publication tasks or citation analysis; use geo-publish or geo-analysis instead.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: api
 ---
 
 > **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
 
 # GEO 收录检测管理
 
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
+
 本模块整合了 GEO 平台收录检测的全部操作能力，支持在多个 AI 平台（DeepSeek、豆包、元宝、通义千问、文心一言、Kimi、智谱、ChatGPT、Gemini）上查询品牌词的收录情况，管理收录检测任务的生命周期，以及查看详细的 AI 回答和引用来源。
+
+---
+
+## 通用安全规则
+
+- 真实 openKey 只能读取自 `~/.geo-skills/credentials/geo-config.json` 或环境变量，回复和日志中必须脱敏展示。
+- 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
+- 支持 dry-run / preview 时优先使用 dry-run / preview。
+- 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
 
 ---
 
@@ -259,7 +276,7 @@ curl -s "${baseUrl}/v1/publication?page=1&limit=30&productId=${productId}&compan
 
 ## 通用执行步骤
 
-1. 从 `geo-config/geo-config.json` 读取 `openKey`
+1. 从 `~/.geo-skills/credentials/geo-config.json` 读取 `openKey`
 2. 根据操作选择对应 API 接口
 3. 设置统一请求头（Authorization + Referer）
 4. 拼接参数并发送请求
@@ -280,7 +297,7 @@ curl -s "${baseUrl}/v1/publication?page=1&limit=30&productId=${productId}&compan
 
 ## 配置
 
-所有技能统一从 `geo-config/geo-config.json` 读取认证信息：
+所有技能统一从 `~/.geo-skills/credentials/geo-config.json` 读取认证信息：
 - openKey：接口密钥
 - 统一请求头：Authorization: Bearer ${openKey} + Referer: https://geo.bihuoai.com/
 - Base URL：https://nbgeo.aimusiclj.com

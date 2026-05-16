@@ -1,14 +1,31 @@
 ---
 name: geo-hub
-description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的中央控制台
+description: GEO平台 API 路由技能。Use this skill when the user needs help choosing or orchestrating GEO API operations across config, account, article, indexing, and publication modules. For a specific operation, prefer the concrete skill such as geo-config, geo-account, geo-article, geo-indexing, or geo-publish.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: router
 ---
 
 > **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
 
 # GEO平台API统一操作入口 (GEO Hub)
 
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
+
 > **版本**：v3.0 | **更新日期**：2026-05-08
 > **定位**：GEO平台API数据操作的中央控制台
+
+## 通用安全规则
+
+- 真实 openKey 只能读取自 `~/.geo-skills/credentials/geo-config.json` 或环境变量，回复和日志中必须脱敏展示。
+- 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
+- 支持 dry-run / preview 时优先使用 dry-run / preview。
+- 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
+
+---
 
 ## 技能说明
 
@@ -22,8 +39,10 @@ description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的�
 
 ## 快速开始
 
-```
-/geo-hub
+直接对 Claude Code 或 Codex 说：
+
+```text
+使用 geo-hub 帮我判断应该用哪个 GEO API 技能。
 ```
 
 系统会询问你想做什么，然后智能推荐相关模块。
@@ -37,7 +56,7 @@ description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的�
 
 **适用场景**：首次配置、密钥失效、切换公司/产品
 
-**快速入口**：`/geo-hub config`
+**推荐说法**：`使用 geo-config 帮我检查或更新配置`
 
 ---
 
@@ -46,7 +65,7 @@ description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的�
 
 **API接口**：`GET /v1/geo-company`、`GET /v1/dashboard`、`GET /v1/package`、`GET /v1/video`
 
-**快速入口**：`/geo-hub account`
+**推荐说法**：`使用 geo-account 帮我查询账号或资源`
 
 ---
 
@@ -55,7 +74,7 @@ description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的�
 
 **API接口**：`POST/GET/DELETE /v1/article`、`POST /v1/oss/pre`
 
-**快速入口**：`/geo-hub article`
+**推荐说法**：`使用 geo-article 帮我上传或管理文章`
 
 ---
 
@@ -64,7 +83,7 @@ description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的�
 
 **API接口**：`POST/GET/DELETE /v1/ai-indexing-task/custom`、`GET /v1/ai-indexing/custom`
 
-**快速入口**：`/geo-hub indexing`
+**推荐说法**：`使用 geo-indexing 帮我管理收录检测`
 
 ---
 
@@ -73,7 +92,7 @@ description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的�
 
 **API接口**：`POST /v1/publication-task`
 
-**快速入口**：`/geo-hub publish`
+**推荐说法**：`使用 geo-publish 帮我创建或管理发布任务`
 
 ---
 
@@ -93,7 +112,7 @@ description: GEO平台API统一操作入口 - 查询和操作GEO平台数据的�
 
 每次调用 geo-hub 时，自动执行：
 
-1. 读取 `geo-config/geo-config.json` 获取 openKey
+1. 读取 `~/.geo-skills/credentials/geo-config.json` 获取 openKey
 2. 检查 `defaults.companyId` 和 `defaults.productId`，若为 0 则引导选择
 3. 后续操作自动携带 companyId 和 productId
 

@@ -1,10 +1,10 @@
-# GEO 技能包 Python 依赖
-# 必需依赖
+# GEO Skills Suite Python dependencies
+# Required for API and runtime diagnostics
 requests>=2.28.0
 python-dotenv>=1.0.0
 
-# 可选依赖（按需安装）
-# 封面生成：pip install Pillow
+# Optional dependencies (install only when needed)
+# Local cover generation: python3 -m pip install Pillow
 # Pillow>=10.0.0
-# 飞书同步：pip install baseopensdk
+# Feishu/Bitable sync: python3 -m pip install baseopensdk
 # baseopensdk>=0.2.0

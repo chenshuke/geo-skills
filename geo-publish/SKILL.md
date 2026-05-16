@@ -1,13 +1,30 @@
 ---
 name: geo-publish
-description: GEO平台发布任务管理模块，包含创建发布任务和删除发布任务
+description: GEO发布任务管理技能。Use this skill when creating, verifying, deleting, or troubleshooting GEO platform publication tasks that send approved articles to external channels/accounts. Do not use for drafting/uploading articles or indexing checks; use geo-content-production, geo-article, or geo-indexing instead.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: api
 ---
 
 > **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
 
 # GEO 发布任务管理
 
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
+
 本模块管理 GEO 平台的发布任务，支持将已审核通过的文章发布到多个平台账号（今日头条、搜狐号、B站、知乎、CSDN、微信公众号、小红书、抖音），支持定时发布和批量发布。
+
+---
+
+## 通用安全规则
+
+- 真实 openKey 只能读取自 `~/.geo-skills/credentials/geo-config.json` 或环境变量，回复和日志中必须脱敏展示。
+- 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
+- 支持 dry-run / preview 时优先使用 dry-run / preview。
+- 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
 
 ---
 
@@ -143,7 +160,7 @@ curl -s -X DELETE "${baseUrl}/v1/publication-task" \
 
 ## 执行步骤
 
-1. 从 `geo-config/geo-config.json` 读取 `openKey`、`companyId`、`productId`
+1. 从 `~/.geo-skills/credentials/geo-config.json` 读取 `openKey`、`companyId`、`productId`
 2. **获取已登录账号列表**：调用 `GET /v1/publication-account`，按平台筛选出目标账号
 3. **确认发布账号和额度**：
    - 展示目标平台的全部可用账号（名称、ID、平台、状态）
@@ -159,23 +176,12 @@ curl -s -X DELETE "${baseUrl}/v1/publication-task" \
 
 ## 完整工作流
 
-```bash
-# 1. 创建文章
-/skill geo-article --action=create --title="标题" --content="..." --product-id=${productId}
-
-# 2. 审核文章
-/skill geo-article --action=review --approve=${articleId}
-
-# 3. 查看可用账号
-/skill geo-account --action=list --platform=sohu_news
-
-# 4. （可选）测试发布 -- 测试后必须删除！
-/skill geo-publish --action=create --name="测试" --article-id=${articleId} --platform=sohu_news --account-id=${publishAccountId}
-# 删除测试任务
-# DELETE /v1/publication-task {"ids":[任务ID]}
-
-# 5. 创建正式发布任务
-/skill geo-publish --action=create --name="正式推广" --article-id=${articleId} --platform=sohu_news --account-id=${publishAccountId}
+```text
+1. 使用 geo-article 创建或上传文章，并记录 articleId。
+2. 使用 geo-article 审核文章，确认文章状态允许发布。
+3. 使用 geo-account 查询目标平台可用账号和每日额度。
+4. 如需测试发布，使用 geo-publish 创建测试任务；测试后必须立即删除并回查。
+5. 使用 geo-publish 创建正式发布任务；执行前必须展示文章 ID、账号 ID、平台、额度和发布时间并等待确认。
 ```
 
 ---
@@ -238,7 +244,7 @@ curl -s -X GET "${baseUrl}/v1/publication-task?companyId=${companyId}&productId=
 
 ## 配置
 
-所有技能统一从 `geo-config/geo-config.json` 读取认证信息：
+所有技能统一从 `~/.geo-skills/credentials/geo-config.json` 读取认证信息：
 - openKey：接口密钥
 - 统一请求头：Authorization: Bearer ${openKey} + Referer: https://geo.bihuoai.com/
 - Base URL：https://nbgeo.aimusiclj.com

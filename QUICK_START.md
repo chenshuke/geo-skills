@@ -1,51 +1,70 @@
-# GEO 技能包快速上手指南
+# GEO Skills Suite 快速开始
 
-## 前置条件
+这份指南面向学员：不需要安装器，只需要把所有 `geo-*` 文件夹放进 Claude Code 或 Codex 的技能目录。
 
-| 条件 | 说明 |
-|------|------|
-| **Claude Code** 或 **Obsidian + Claude** | 技能运行环境（二选一） |
-| **Python 3.8+** | 执行 API 调用和数据处理脚本 |
-| **pip** | Python 包管理器 |
+## 1. 安装技能
 
-## 安装步骤
-
-### 1. 复制技能包到技能目录
+### 安装到 Codex
 
 ```bash
-# Claude Code
-cp -r geo-topic-expand/ ~/.claude/skills/
-
-# 或 Obsidian
-cp -r geo-topic-expand/ <你的Obsidian库路径>/.claude/skills/
+mkdir -p ~/.codex/skills
+cp -R geo-* ~/.codex/skills/
 ```
 
-### 2. 安装 Python 依赖
+### 安装到 Claude Code
 
 ```bash
-cd ~/.claude/skills/geo-topic-expand
-pip install -r requirements.txt
+mkdir -p ~/.claude/skills
+cp -R geo-* ~/.claude/skills/
 ```
 
-### 3. 安装可选依赖（按需）
+必须包含 `geo-runtime`，否则共享凭证和诊断能力会缺失。
+
+## 2. 检查是否安装成功
+
+对 AI 说：
+
+```text
+使用 geo-runtime 检查我的 GEO Skills 是否安装成功。
+```
+
+或者运行：
 
 ```bash
-# 本地封面生成（渐变背景+标题文字、预设模板）
-pip install Pillow
-
-# 飞书同步功能
-pip install baseopensdk
+python3 ~/.codex/skills/geo-runtime/scripts/doctor.py
+# 或
+python3 ~/.claude/skills/geo-runtime/scripts/doctor.py
 ```
 
-## 配置 API 密钥
+如需创建配置模板：
 
-编辑 `geo-config/geo-config.json`，填入真实的 `openKey`：
+```bash
+python3 ~/.codex/skills/geo-runtime/scripts/doctor.py --init-config
+```
+
+## 3. 配置 openKey
+
+真实密钥统一放在：
+
+```text
+~/.geo-skills/credentials/geo-config.json
+```
+
+你可以对 AI 说：
+
+```text
+使用 geo-config 帮我初始化 GEO 平台 openKey 配置。
+```
+
+配置模板：
 
 ```json
 {
-  "openKey": "你的真实openKey",
-  "baseUrl": "https://nbgeo.aimusiclj.com",
-  "referer": "https://geo.bihuoai.com",
+  "geo": {
+    "baseUrl": "https://nbgeo.aimusiclj.com",
+    "openKey": "your-openKey-here",
+    "referer": "https://geo.bihuoai.com/"
+  },
   "defaults": {
     "companyId": 0,
     "productId": 0
@@ -53,118 +72,34 @@ pip install baseopensdk
 }
 ```
 
-> `companyId` 和 `productId` 保持为 0 即可，首次运行时会自动引导选择。
+## 4. 常用提问
 
-## 首次运行
-
-在 Claude Code 或 Obsidian + Claude 中执行：
-
-```
-/geo-hub
-```
-
-或
-
-```
-/geo-workflow-hub
-```
-
-系统会自动执行配置引导流程：
-1. 调用 API 获取公司列表 -> 选择 `companyId`
-2. 调用 API 获取产品列表 -> 选择 `productId`
-3. 将选择结果写入 `geo-config.json`
-
-配置完成后即可正常使用所有功能。
-
-## 完整工作流演示
-
-以一个新品牌从零开始的完整流程为例：
-
-### Step 1: 创建品牌
-
-```
-/geo-workflow-hub brand
+```text
+我不知道应该用哪个 GEO 技能，帮我选择。
+帮我创建一个新的 GEO 品牌项目。
+帮我整理这些资料成 GEO 知识库。
+帮我规划关键词和标题。
+帮我写一篇 GEO 文章并生成封面。
+帮我审核这篇文章的覆盖度和媒体发布准备度。
+帮我上传文章到 GEO 平台。
+帮我创建发布任务，但发布前先让我确认。
+帮我导入收录检测任务。
+帮我分析收录结果和引用来源。
 ```
 
-- 选择品牌类型（企业/产品/个人/获客）
-- 填写品牌名称、行业、描述等信息
-- 系统自动在 GEO 平台创建品牌档案
+## 5. 安全提醒
 
-### Step 2: 搭建知识库
+- 不要把真实 openKey 写入任何 `geo-*` 技能目录。
+- 删除、发布、批量导入前，必须让 AI 先预览并等待你确认。
+- 如果 AI 输出了完整 openKey，请立即停止并重新生成密钥。
 
-```
-/geo-workflow-hub knowledge
-```
+## 6. 排障
 
-- 自动创建标准 8 目录结构（00_项目概览/ ~ 07_监测分析/）
-- 导入品牌基础知识文档
-- 搭建三级关键词体系（L1核心词 -> L2拓展词 -> L3长尾问题）
-- 确认知识库结构与内容完整
-
-### Step 3: 内容创作
-
-```
-/geo-workflow-hub content
-```
-
-按顺序执行以下子步骤：
-
-1. **关键词规划** - 基于 L1/L2/L3 体系规划内容方向
-2. **标题生成** - 按照榜单型公式生成标题（含年份 2026）
-3. **内容创作** - 按标准档（1000-2000字）撰写文章
-4. **内容审核** - 检查 SEO 合规性和质量标准
-5. **内容优化** - 根据审核结果调整优化
-
-### Step 4: 文件治理
-
-```
-/geo-workflow-hub archive
-```
-
-- 检查目录结构合规性（所有文件是否在标准位置）
-- 自动归位散落文件到对应的 00~07 标准目录
-- 确保项目结构整洁统一
-
-### Step 5: 上传文章到平台
-
-```
-/geo-hub article
-```
-
-- 将创作完成的文章上传至 GEO 平台
-- 上传配套图片素材（需符合 OSS 文件名规范）
-
-### Step 6: 收录检测
-
-```
-/geo-hub indexing
-```
-
-- 检测文章在 9 大 AI 平台的收录情况
-- 查看上榜率、排名等关键指标
-- 根据检测结果进行后续优化
-
-### Step 7: 数据分析
-
-```
-/geo-workflow-hub analysis
-```
-
-- 证据链分析、平台逆向工程
-- 项目仪表盘生成
-- 根据分析结果制定优化策略
-
-> **完整推荐工作流**：品牌创建 → 知识库搭建 → 内容创作 → 文件治理 → 上传平台 → 收录检测 → 数据分析，7 个步骤闭环运营。
-
-## 常见问题排查
-
-| 问题 | 可能原因 | 解决方案 |
-|------|---------|---------|
-| **401 错误** | `openKey` 过期或无效 | 登录 GEO 管理平台重新获取 openKey，更新 `geo-config.json` |
-| **companyId 为 0** | 首次使用未完成配置 | 重新执行 `/geo-hub` 或 `/geo-workflow-hub`，按引导选择 |
-| **图片上传失败** | OSS 权限不足或文件名不合规 | 检查文件名是否仅含英文/数字/._-，确认 OSS 预签名获取成功 |
-| **飞书同步失败** | 缺少飞书依赖或 Token 配置错误 | 安装 `baseopensdk`，检查 `.env` 中的 `APP_TOKEN`、`PERSONAL_BASE_TOKEN`、`TABLE_KEYWORDS` 是否正确 |
-| **AI 图片生成失败** | 芳信 API Key 未配置 | 将 API Key 存放于 `~/.geo-skills/credentials/fangxin_image_api_key`（也可通过 `shared/credentials.py` 统一管理） |
-| **收录检测超时** | AI 平台响应慢或网络不稳定 | 重试或分批检测，避免一次检测过多问题 |
-
-更多问题请参阅 [FAQ.md](./FAQ.md)。
+| 问题 | 处理方式 |
+|------|----------|
+| 找不到 GEO 技能 | 确认所有 `geo-*` 文件夹都在技能目录第一层 |
+| 缺少 `geo-runtime` | 重新复制 `geo-runtime/` |
+| 401 / 403 | 重新获取 openKey 并更新 `~/.geo-skills/credentials/geo-config.json` |
+| Python 模块缺失 | `python3 -m pip install requests python-dotenv` |
+| 封面生成失败 | `python3 -m pip install Pillow` |
+| 飞书同步失败 | `python3 -m pip install baseopensdk` 并检查飞书凭证 |

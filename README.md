@@ -1,56 +1,84 @@
-# GEO 技能包 v3.1
+# GEO Skills Suite v3.2
 
-> GEO（Generative Engine Optimization）运营技能体系，11 大模块覆盖品牌创建、知识库搭建、内容创作、平台上传、收录检测、数据分析的全生命周期。
+> 面向 Claude Code、Codex 与其他 Agent Skills 兼容客户端的 GEO（Generative Engine Optimization）运营技能套件。
+> 设计目标：**直接安装所有 `geo-*` 技能文件夹即可使用**，不依赖安装器，不绑定单一 AI 工具。
 
-[![版本](https://img.shields.io/badge/版本-v3.1-blue.svg)]()
+## 兼容性
 
-## 工作流概览
+- ✅ Claude Code skills
+- ✅ Codex skills
+- ✅ 兼容 Agent Skills 目录结构的其他客户端
+- ✅ 复制安装或软链接安装
+- ✅ 多客户端共享同一份用户级凭证
 
-```mermaid
-graph LR
-    A["/geo-workflow-hub brand"] --> B["/geo-workflow-hub knowledge"]
-    B --> C["/geo-workflow-hub content production"]
-    C --> C2["/geo-workflow-hub content audit"]
-    C2 --> C3["/geo-workflow-hub archive"]
-    C3 --> D["/geo-hub article"]
-    D --> E["/geo-hub indexing"]
-```
+> 不要把整包作为单个技能安装。请将所有 `geo-*` 文件夹作为同级技能安装。
 
-## 双入口架构
+## 快速安装
 
-GEO 技能包通过两个统一入口调度全部功能，每个入口下设若干子模块：
+将本仓库中所有 `geo-*` 文件夹复制或软链接到你的工具技能目录。
 
-| 入口 | 用途 | 子模块 |
-|------|------|--------|
-| `/geo-hub` | GEO 平台 API 操作（查询、上传、删除、配置） | geo-config、geo-account、geo-article、geo-indexing、geo-publish |
-| `/geo-workflow-hub` | GEO 运营工作流（品牌、知识库、内容、分析） | geo-brand、geo-knowledge、geo-content、geo-content-production、geo-content-audit、geo-content-archive、geo-analysis |
-
-### 路由口诀
-
-| 操作类型 | 入口 |
-|---------|------|
-| **查 / 传 / 删 / 配** | `/geo-hub` |
-| **建 / 规 / 写 / 审 / 优** | `/geo-workflow-hub` |
-
-## 快速开始
-
-### Step 1: 安装
+### Codex
 
 ```bash
-cp -r geo-topic-expand/ ~/.claude/skills/
-cd ~/.claude/skills/geo-topic-expand
-pip install -r requirements.txt
+mkdir -p ~/.codex/skills
+cp -R geo-* ~/.codex/skills/
 ```
 
-### Step 2: 配置 API 密钥
+### Claude Code
 
-编辑 `geo-config/geo-config.json`，填入你的 `openKey`：
+```bash
+mkdir -p ~/.claude/skills
+cp -R geo-* ~/.claude/skills/
+```
+
+### 开发者软链接模式
+
+如果你希望仓库更新后两个工具自动同步，可以使用软链接：
+
+```bash
+for d in geo-*; do
+  [ -d "$d" ] && ln -sfn "$(pwd)/$d" ~/.codex/skills/"$d"
+  [ -d "$d" ] && ln -sfn "$(pwd)/$d" ~/.claude/skills/"$d"
+done
+```
+
+## 安装后检查
+
+对 Claude Code 或 Codex 说：
+
+> 使用 geo-runtime 检查我的 GEO Skills 是否安装成功。
+
+如果当前环境支持 shell，也可以直接运行：
+
+```bash
+python3 ~/.codex/skills/geo-runtime/scripts/doctor.py
+# 或
+python3 ~/.claude/skills/geo-runtime/scripts/doctor.py
+```
+
+首次创建用户级配置模板：
+
+```bash
+python3 ~/.codex/skills/geo-runtime/scripts/doctor.py --init-config
+```
+
+## 配置凭证
+
+真实 openKey 不放在技能仓库内。统一使用用户级配置：
+
+```text
+~/.geo-skills/credentials/geo-config.json
+```
+
+模板：
 
 ```json
 {
-  "openKey": "你的openKey",
-  "baseUrl": "https://nbgeo.aimusiclj.com",
-  "referer": "https://geo.bihuoai.com",
+  "geo": {
+    "baseUrl": "https://nbgeo.aimusiclj.com",
+    "openKey": "your-openKey-here",
+    "referer": "https://geo.bihuoai.com/"
+  },
   "defaults": {
     "companyId": 0,
     "productId": 0
@@ -58,111 +86,93 @@ pip install -r requirements.txt
 }
 ```
 
-### Step 3: 开始使用
+你可以让 AI 执行：
 
-首次调用 `/geo-hub` 或 `/geo-workflow-hub` 时，系统会自动引导你选择 `companyId` 和 `productId`，无需手动填写。
+> 使用 geo-config 帮我初始化 GEO 平台 openKey 配置。
 
-## 模块总览
+## 技能结构
 
-### geo-hub 侧（5 个模块）
+### 支撑技能
 
-| # | 模块 | 功能说明 |
-|---|------|---------|
-| 1 | `geo-config` | 平台认证和配置管理 |
-| 2 | `geo-account` | 账号、套餐、视频管理 |
-| 3 | `geo-article` | 文章和素材上传/管理 |
-| 4 | `geo-indexing` | 收录检测全流程 |
-| 5 | `geo-publish` | 发布任务管理 |
+| 技能 | 用途 |
+|------|------|
+| `geo-runtime` | 共享运行时、凭证读取、安装/依赖/配置诊断 |
 
-### geo-workflow-hub 侧（6 个模块）
+### API 操作入口
 
-| # | 模块 | 功能说明 |
-|---|------|---------|
-| 6 | `geo-brand` | 品牌创建（企业/产品/个人/获客） |
-| 7 | `geo-knowledge` | 知识库搭建与管理 |
-| 8 | `geo-content` | 内容总入口（已拆分为 8a + 8b） |
-| 8a | `geo-content-production` | 关键词规划、标题创作、图片生成 |
-| 8b | `geo-content-audit` | 内容审核、覆盖分析、内容优化 |
-| 10 | `geo-content-archive` | 内容归档（按日期/平台分类） |
-| 9 | `geo-analysis` | 证据链分析、平台逆向、仪表盘 |
+| 技能 | 用途 |
+|------|------|
+| `geo-hub` | GEO 平台 API 路由入口 |
+| `geo-config` | openKey、baseUrl、referer、默认 companyId/productId 配置 |
+| `geo-account` | 账号、公司、产品、套餐、视频、看板等资源查询 |
+| `geo-article` | 文章与素材上传、创建、查询、审核、删除 |
+| `geo-indexing` | 收录任务导入、查询、删除、批量管理、结果查询 |
+| `geo-publish` | 发布任务创建、校验、删除 |
 
-## 外部依赖
+### 运营工作流入口
 
-| 依赖 | 类型 | 说明 |
-|------|------|------|
-| `requests` | 必需 | HTTP 请求 |
-| `python-dotenv` | 必需 | 环境变量管理 |
-| `Pillow` | 可选 | 本地封面图片生成（text/template 模式） |
-| `baseopensdk` | 可选 | 飞书多维表格同步 |
-| `puppeteer-core` | 可选 | HTML → PDF/PNG 转换（需 Node.js） |
-| Fangxin API Key | 可选 | AI 图片生成（存放于 `~/.geo-skills/credentials/fangxin_image_api_key`） |
+| 技能 | 用途 |
+|------|------|
+| `geo-workflow-hub` | GEO 运营流程路由入口 |
+| `geo-brand` | 企业/产品/个人品牌内容创建 |
+| `geo-knowledge` | 知识库创建、资料整理、补充清单 |
+| `geo-content` | 内容生产/审核路由入口 |
+| `geo-content-production` | 关键词、标题、文章、封面、图片生产 |
+| `geo-content-audit` | 一致性审核、媒体就绪、AI 检测、覆盖/Gap/优化 |
+| `geo-content-archive` | GEO 项目文件归档、迁移、结构校验 |
+| `geo-analysis` | 证据链、平台逆向、引用审核、PDCA 仪表盘、飞书同步 |
+
+## 工作流概览
+
+```mermaid
+graph LR
+    A[geo-workflow-hub: brand] --> B[geo-workflow-hub: knowledge]
+    B --> C[geo-content-production]
+    C --> D[geo-content-audit]
+    D --> E[geo-content-archive]
+    E --> F[geo-hub / geo-article]
+    F --> G[geo-indexing]
+    G --> H[geo-analysis]
+```
+
+## 依赖
+
+必需：
 
 ```bash
-# 安装必需依赖
-pip install -r requirements.txt
-
-# 按需安装可选依赖
-pip install baseopensdk
+python3 -m pip install requests python-dotenv
 ```
 
-## 目录结构
+可选：
 
-### 技能包结构
-
-```
-geo-topic-expand/
-├── README.md                    # 本文件
-├── QUICK_START.md               # 快速上手指南
-├── GEOSSARY.md                  # GEO 术语表
-├── FAQ.md                       # 常见问题
-├── CHANGELOG.md                 # 更新日志
-├── LICENSE                      # MIT 许可证
-├── requirements.txt             # Python 依赖
-├── GEO-双入口技能说明书.md        # 双入口技能路由说明
-├── geo-hub/                     # geo-hub 入口
-├── geo-workflow-hub/            # geo-workflow-hub 入口
-├── geo-config/                  # ① 配置管理
-├── geo-account/                 # ② 账号管理
-├── geo-article/                 # ③ 文章管理
-├── geo-indexing/                # ④ 收录检测
-├── geo-publish/                 # ⑤ 发布管理
-├── geo-brand/                   # ⑥ 品牌创建
-├── geo-knowledge/               # ⑦ 知识库
-├── geo-content/                 # ⑧ 内容总入口
-├── geo-content-production/      # ⑧a 内容生产
-├── geo-content-audit/           # ⑧b 内容审核
-├── geo-content-archive/         # ⑩ 项目文件治理
-├── geo-analysis/                # ⑨ 数据分析
-└── shared/                      # 共享工具
-    └── credentials.py           # 统一凭证管理
+```bash
+python3 -m pip install Pillow       # 本地封面生成
+python3 -m pip install baseopensdk  # 飞书多维表格同步
 ```
 
-### 项目标准目录结构（create-kb 创建）
+更多说明见 `geo-runtime/references/requirements.md`。
 
-每个 GEO 项目的标准目录结构如下，所有模块产出都归入对应位置：
+## 安全规则
 
+- 真实 openKey 只放在 `~/.geo-skills/credentials/geo-config.json`。
+- 删除、发布、批量导入、覆盖配置等操作必须先预览并获得用户明确确认。
+- 写入/删除类 GEO API 操作后必须回查确认。
+- 日志和回复中不要输出完整密钥，只能脱敏展示。
+
+## 学员推荐用法
+
+安装完成后，可直接向 Claude Code 或 Codex 提问：
+
+```text
+使用 geo-runtime 检查我的 GEO Skills 是否安装成功。
+使用 geo-config 帮我初始化 GEO 平台 openKey 配置。
+帮我为 XX 品牌规划 GEO 关键词。
+帮我写一篇 GEO 文章并生成封面。
+帮我审核这篇文章是否适合发布。
+帮我上传这篇文章到 GEO 平台。
+帮我查询这批关键词的收录结果。
 ```
-项目_{品牌名}GEO/
-│
-├── 00_项目概览/              ← 项目入口：概览、仪表盘、品牌定位、汇报
-├── 01_项目资料/              ← 客户原始资料（只读参考）
-├── 02_知识库/                ← 结构化知识库
-├── 03_规划方案/              ← 关键词方案、标题方案、映射表、跟踪表
-├── 04_内容创作/              ← 文章/封面/配图/合规榜单
-├── 05_质量审核/              ← 所有质检报告
-├── 06_发布记录/              ← 发布与收录状态
-└── 07_监测分析/              ← 收录监测/证据链/PDCA/平台画像
-```
-
-> 文件归位规则详见 `geo-content-archive/SKILL.md`。
-
-## 注意事项
-
-- **openKey 安全**：请勿将 `openKey` 提交到公开仓库。发布脚本会自动进行脱敏处理。
-- **API 地址**：默认 `baseUrl` 为 `https://nbgeo.aimusiclj.com`，如有变更请在 `geo-config.json` 中修改。
-- **首次配置**：`companyId` 和 `productId` 初始为 0，首次使用时会自动引导选择。
-- **凭证管理**：所有 Python 脚本统一通过 `shared/credentials.py` 加载凭证，支持环境变量、配置文件、密钥文件三级回退。
 
 ## 许可证
 
-[MIT](./LICENSE) - Copyright (c) 2026 chenshuke
+MIT License - Copyright (c) 2026 chenshuke

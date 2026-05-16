@@ -1,11 +1,19 @@
 ---
 name: geo-knowledge
-description: GEO知识库管理统一技能，整合知识库项目创建、文件智能分类整理、信息补充清单生成三大能力，实现从零到完整知识库的全流程自动化管理。
+description: GEO知识库管理技能。Use this skill when creating a GEO project knowledge base, organizing source materials, classifying files, or generating missing-information checklists before content production. Do not use for platform API upload; use geo-article instead.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: workflow
 ---
 
 > **外部依赖**: 无（纯内容组织）；OCR 功能需要 Obsidian
 
 # GEO 知识库管理
+
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
 
 > **功能**：创建项目结构 → 扫描整理文件 → 生成补充清单
 > **适用**：企业品牌、产品品牌、个人品牌三类知识库
@@ -144,17 +152,11 @@ description: GEO知识库管理统一技能，整合知识库项目创建、文�
 
 ## 推荐工作流
 
-```bash
-# 1. 创建项目结构
-/skill create-kb --type=综合 --name="客户名称" --founder="创始人" --product="产品名"
-
-# 2. 放入原始资料到 01_项目资料/
-
-# 3. 自动整理知识库
-/skill organize-kb --dir="项目文件夹/"
-
-# 4. 生成补充清单
-/skill supplement-list --project="项目文件夹/"
+```text
+1. 使用 geo-knowledge，为“客户名称 / 创始人 / 产品名”创建综合型 GEO 项目知识库结构。
+2. 将原始资料放入项目的 `01_项目资料/`。
+3. 使用 geo-knowledge，整理项目文件夹中的原始资料并归入知识库。
+4. 使用 geo-knowledge，为该项目生成信息补充清单。
 ```
 
 ---

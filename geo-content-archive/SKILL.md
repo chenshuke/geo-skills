@@ -1,11 +1,19 @@
 ---
 name: geo-content-archive
-description: GEO项目文件治理——统一目录规范、文件归位、结构校验
+description: GEO项目文件治理技能。Use this skill when organizing, migrating, or validating GEO project files and standard directories, especially content drafts, audits, publication records, and monitoring files. Do not use for writing or uploading content.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: workflow
 ---
 
 > **外部依赖**: 无
 
 # GEO 项目文件治理
+
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
 
 > 本模块是 GEO 项目的"目录规范守护者"。确保所有模块产出的文件都放入标准位置，不再乱建文件夹。
 > 对应的内容创作模块见 geo-content-production，审核模块见 geo-content-audit。

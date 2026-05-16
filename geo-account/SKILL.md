@@ -1,13 +1,30 @@
 ---
 name: geo-account
-description: GEO平台账户与资源管理模块，包含发布账号查询、数据总览、套餐/SKU管理、视频管理
+description: GEO账户与资源管理技能。Use this skill when the user wants to list GEO companies/products/accounts, inspect dashboards, packages/SKUs, videos, publication accounts, or troubleshoot account/resource data through the GEO API. Do not use for article upload, publication tasks, or indexing; use geo-article, geo-publish, or geo-indexing instead.
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.2.0"
+  category: api
 ---
 
 > **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
 
 # GEO 账户与资源管理
 
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
+
 本模块整合了 GEO 平台的账户信息查询、运营数据总览、套餐与 SKU 管理、视频资产管理能力。帮助用户全面掌握平台账号资源、套餐配额、使用情况，为运营决策提供数据支撑。
+
+---
+
+## 通用安全规则
+
+- 真实 openKey 只能读取自 `~/.geo-skills/credentials/geo-config.json` 或环境变量，回复和日志中必须脱敏展示。
+- 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
+- 支持 dry-run / preview 时优先使用 dry-run / preview。
+- 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
 
 ---
 
@@ -130,7 +147,7 @@ curl -X POST "${baseUrl}/v1/video/import" \
 
 ## 通用执行步骤
 
-1. 从 `geo-config/geo-config.json` 读取 `openKey`
+1. 从 `~/.geo-skills/credentials/geo-config.json` 读取 `openKey`
 2. 根据操作选择对应 API 接口
 3. 设置统一请求头（Authorization + Referer）
 4. 拼接查询参数并发送请求
@@ -151,7 +168,7 @@ curl -X POST "${baseUrl}/v1/video/import" \
 
 ## 配置
 
-所有技能统一从 `geo-config/geo-config.json` 读取认证信息：
+所有技能统一从 `~/.geo-skills/credentials/geo-config.json` 读取认证信息：
 - openKey：接口密钥
 - 统一请求头：Authorization: Bearer ${openKey} + Referer: https://geo.bihuoai.com/
 - Base URL：https://nbgeo.aimusiclj.com
