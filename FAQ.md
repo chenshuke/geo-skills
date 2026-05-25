@@ -35,14 +35,15 @@
 
 ### Q5: 飞书同步不工作？
 
-飞书同步功能需要额外配置：
+飞书同步功能优先走无 Python 的 `lark-cli` / `lark-base` skill：
 
-1. 安装依赖：`pip install baseopensdk`
-2. 在 `.env` 文件中配置以下环境变量：
+1. 确认 `lark-cli` 已登录并具备 Base 权限
+2. 在配置或环境变量中准备以下信息：
    - `APP_TOKEN` - 飞书应用 Token
    - `PERSONAL_BASE_TOKEN` - 个人基础 Token
    - `TABLE_KEYWORDS` - 多维表格关键词
 3. 确认飞书应用已获得相应权限
+4. 旧版 `baseopensdk` Python 同步脚本仅保留兼容，不作为学员必需步骤
 
 ---
 
@@ -63,7 +64,7 @@ GEO 技能包支持以下运行环境：
 - **Codex**：将所有 `geo-*` 文件夹放入 `~/.codex/skills/`
 - **其他兼容 Agent Skills 目录结构的客户端**：按客户端要求安装同级 `geo-*` 文件夹
 
-其中 `geo-runtime/scripts/doctor.py`、图片生成、封面生成等脚本可在普通 Python 环境中运行；业务 API 操作建议由 Claude Code 或 Codex 根据技能说明执行。
+学员端默认使用 Node.js 脚本：`doctor.js`、`generate_cover.js`、`render_geo_brand_diagnosis.js`；Python 脚本仅保留给旧环境或助教高级维护。
 
 ---
 

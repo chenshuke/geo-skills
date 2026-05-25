@@ -51,15 +51,15 @@ done
 如果当前环境支持 shell，也可以直接运行：
 
 ```bash
-python3 ~/.codex/skills/geo-runtime/scripts/doctor.py
+node ~/.codex/skills/geo-runtime/scripts/doctor.js
 # 或
-python3 ~/.claude/skills/geo-runtime/scripts/doctor.py
+node ~/.claude/skills/geo-runtime/scripts/doctor.js
 ```
 
 首次创建用户级配置模板：
 
 ```bash
-python3 ~/.codex/skills/geo-runtime/scripts/doctor.py --init-config
+node ~/.codex/skills/geo-runtime/scripts/doctor.js --init-config
 ```
 
 ## 配置凭证
@@ -140,14 +140,14 @@ graph LR
 必需：
 
 ```bash
-python3 -m pip install requests python-dotenv
+无需安装 Python；优先使用 node geo-runtime/scripts/doctor.js
 ```
 
 可选：
 
 ```bash
-python3 -m pip install Pillow       # 本地封面生成
-python3 -m pip install baseopensdk  # 飞书多维表格同步
+node geo-content-production/scripts/generate_cover.js  # 本地 SVG 封面生成，无需 Pillow
+优先使用 lark-cli / lark-base skill 同步飞书，无需 baseopensdk
 ```
 
 更多说明见 `geo-runtime/references/requirements.md`。

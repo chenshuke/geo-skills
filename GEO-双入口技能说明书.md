@@ -93,7 +93,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 12 个业务
 | 依赖 | 必要性 | 用途 |
 |------|--------|------|
 | GEO 平台 openKey | ✅ 必需 | API 认证（config/account/article/indexing/publish） |
-| Python 3.9+ | ✅ 必需 | 脚本运行环境 |
+| Node.js 18+ | ✅ 推荐 | 无 Python 默认脚本运行环境 |
 | requests / python-dotenv | ✅ 必需 | HTTP 请求和环境变量加载 |
 | baseopensdk | ⬜ 可选 | 飞书多维表格同步 |
 | Fangxin API Key | ⬜ 可选 | AI 图片生成 |

@@ -1,30 +1,19 @@
-# GEO Runtime Requirements
+# GEO Skills 依赖说明（无 Python 默认）
 
-## Required
-
-```bash
-python3 -m pip install requests python-dotenv
-```
-
-- `requests`: GEO API 调用、图片脚本下载/上传
-- `python-dotenv`: 读取 `.env` 或 `~/.geo-skills/credentials/*.env`
-
-## Optional
+学员端默认不要求 Python。推荐依赖：
 
 ```bash
-python3 -m pip install Pillow
-python3 -m pip install baseopensdk
+node -v
+lark-cli --version
 ```
 
-- `Pillow`: 本地封面图生成脚本 `geo-content-production/scripts/generate_cover.py`
-- `baseopensdk`: `geo-analysis` 飞书多维表格同步
+默认诊断：
 
-## Credential files
-
-```text
-~/.geo-skills/credentials/geo-config.json
-~/.geo-skills/credentials/fangxin_image_api_key
-~/.geo-skills/credentials/feishu.env
+```bash
+node geo-runtime/scripts/doctor.js
 ```
 
-Do not store real credentials inside any `geo-*` skill folder.
+可选高级依赖：
+
+- Playwright/Chromium：仅用于 HTML 转 PNG 截图。没有时保留 HTML/SVG 交付。
+- Python/Pillow/baseopensdk：仅旧脚本兼容，不作为课堂和学员必需依赖。

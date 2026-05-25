@@ -31,15 +31,15 @@ cp -R geo-* ~/.claude/skills/
 或者运行：
 
 ```bash
-python3 ~/.codex/skills/geo-runtime/scripts/doctor.py
+node ~/.codex/skills/geo-runtime/scripts/doctor.js
 # 或
-python3 ~/.claude/skills/geo-runtime/scripts/doctor.py
+node ~/.claude/skills/geo-runtime/scripts/doctor.js
 ```
 
 如需创建配置模板：
 
 ```bash
-python3 ~/.codex/skills/geo-runtime/scripts/doctor.py --init-config
+node ~/.codex/skills/geo-runtime/scripts/doctor.js --init-config
 ```
 
 ## 3. 配置 openKey
@@ -100,6 +100,6 @@ python3 ~/.codex/skills/geo-runtime/scripts/doctor.py --init-config
 | 找不到 GEO 技能 | 确认所有 `geo-*` 文件夹都在技能目录第一层 |
 | 缺少 `geo-runtime` | 重新复制 `geo-runtime/` |
 | 401 / 403 | 重新获取 openKey 并更新 `~/.geo-skills/credentials/geo-config.json` |
-| Python 模块缺失 | `python3 -m pip install requests python-dotenv` |
-| 封面生成失败 | `python3 -m pip install Pillow` |
-| 飞书同步失败 | `python3 -m pip install baseopensdk` 并检查飞书凭证 |
+| Python 模块缺失 | `无需安装 Python；优先使用 node geo-runtime/scripts/doctor.js` |
+| 封面生成失败 | 改用 `node geo-content-production/scripts/generate_cover.js` 生成 SVG |
+| 飞书同步失败 | 优先检查 lark-cli 登录和权限；使用 lark-base skill |

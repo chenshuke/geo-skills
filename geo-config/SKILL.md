@@ -69,7 +69,7 @@ metadata:
 首次初始化用户级配置模板（如当前环境支持 shell）：
 
 ```bash
-python3 ../geo-runtime/scripts/doctor.py --init-config
+node ../geo-runtime/scripts/doctor.js --init-config
 ```
 
 ---
@@ -170,4 +170,4 @@ productId = defaults.productId
 2. **配置同步**：更新配置后，所有技能自动使用新值
 3. **统一认证**：所有 GEO 技能共用 Bearer openKey + Referer 双重认证
 4. **模板发布**：发布技能包时，openKey 会被自动替换为 `your-openKey-here`
-5. **Python 脚本凭证**：所有 Python 脚本统一通过 `../geo-runtime/scripts/credentials.py` 加载凭证，支持三级回退（环境变量 > 用户级配置 > 技能包模板）。脚本开发者应先将 `../geo-runtime/scripts` 加入 Python path，再 `from credentials import get_geo_config, get_geo_headers`
+5. **无 Python 凭证读取**：新脚本统一通过 `../geo-runtime/scripts/credentials.js` 加载凭证，支持环境变量 > 用户级配置。旧 Python 脚本仍可用 `credentials.py`，但学员端不再要求安装 Python。
