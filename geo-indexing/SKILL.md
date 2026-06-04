@@ -1,11 +1,11 @@
 ---
 name: geo-indexing
-description: GEO收录检测管理技能。Use this skill when importing, listing, deleting, batch-managing, or querying AI indexing/ranking tasks and publication status through the GEO API. Do not use for publication tasks or citation analysis; use geo-publish or geo-analysis instead.
+description: "GEO AI 收录检测和问题导入技能。Use when the user says 导入问题、导入深层用户问题、导入自定义 AI 收录任务、产品主题库/问题库、搜索问题插入、查 AI 是否收录、收录检测、排名检测、AI 回答引用来源、DeepSeek/豆包/Kimi/ChatGPT/Gemini 检测、暂停/删除收录任务. Do not create publication tasks; use geo-publish. Use geo-analysis for deep evidence-chain analysis."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: api
 ---
 
@@ -25,17 +25,24 @@ metadata:
 - 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
 - 支持 dry-run / preview 时优先使用 dry-run / preview。
 - 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
+- 有专用 Node 脚本时优先使用脚本；没有专用脚本时使用 `geo-runtime/scripts/api_request.js`，`curl` 只作为低级调试，不作为中文正文或批量写操作默认方案。
 
 ---
+
+## 输出归位硬规则
+
+问题导入、收录任务、收录结果和 AI 回答引用报告必须直接写入 `07_监测分析/收录监测/`；如果同时生成产品主题/问题库备份，也应放入 `03_规划方案/关键词方案/` 或 `02_知识库/`。写文件前可用 `geo-content-archive/scripts/project_paths.js --artifact indexing-report` 获取路径。
 
 ## 能力总览
 
 - **收录任务导入**：提交查收录任务（单个/批量），支持多品牌词格式
+- **问题导入**：从本地 Markdown/TXT/CSV/JSON 读取深层用户问题，导入自定义 AI 收录任务或产品主题库
 - **任务列表查询**：分页查询收录检测任务，查看状态和收录情况
 - **任务删除**：单个/批量/范围删除收录任务
 - **批量导入**：从关键词列表/文件/飞书批量导入收录检测任务
 - **收录结果查询**：查看 AI 回答内容、引用来源、文章链接（indexed 字段标识是否被 AI 采纳）
 - **发布状态检测**：查询文章在平台上的发布状态（已发布/待发布）
+- **产品主题搜索问题插入**：将本地深层用户问题写入产品主题库，或从平台主题生成任务中选择问题插入
 
 ---
 
@@ -48,8 +55,130 @@ metadata:
 | DELETE | /v1/ai-indexing-task/custom?companyId= | 删除查收录任务 |
 | GET | /v1/ai-indexing/custom | 获取收录结果详情 |
 | GET | /v1/publication | 查询发布状态 |
+| POST | /v1/geo-product-topic | 将搜索问题/主题写入产品主题库 |
+| GET | /v1/geo-product-topic | 查询产品主题库 |
+| POST | /v1/topic-task/{taskId}/select | 从主题生成任务中选择搜索问题插入 |
 
 ---
+
+## 零、问题导入脚本（推荐）
+
+**脚本路径**：`geo-indexing/scripts/import_questions.js`
+
+用于把本地 Codex 生成的深层用户问题导入 GEO 平台。默认支持：
+
+- Markdown 列表 / Markdown 表格
+- TXT 每行一个问题
+- CSV：优先识别 `question` / `topic` / `问题` / `搜索问题` 列
+- JSON：数组，或 `{ "questions": [...] }`
+
+### 目标类型
+
+| target | 写入位置 | API | 典型用途 |
+|---|---|---|---|
+| `indexing-custom` | 自定义 AI 收录任务 | `POST /v1/ai-indexing-task/custom/import` | 把问题导入收录检测 |
+| `product-topic` | 产品主题库 / 搜索问题库 | `POST /v1/geo-product-topic` | 把深层用户问题沉淀到主题库 |
+| `topic-task-select` | 平台主题生成任务选择插入 | `POST /v1/topic-task/{taskId}/select` | 从平台生成结果里选择问题导入 |
+
+### 统一安全规则
+
+- 真实导入必须先 `--dry-run` 预览，再加 `--force` 执行。
+- 脚本会按 UTF-8 读取文件，拦截常见乱码。
+- 脚本会自动去重、过滤空行、限制导入数量（默认最多 200 条）。
+- 写入后会 GET 回查最近记录，辅助确认是否真正落库。
+
+### 导入自定义 AI 收录任务
+
+```bash
+# 预览：本地问题 + 品牌词 → 问题[品牌词]
+node geo-indexing/scripts/import_questions.js \
+  --target indexing-custom \
+  --file questions.md \
+  --brand "必火AI" \
+  --platforms all \
+  --dry-run
+
+# 真实导入
+node geo-indexing/scripts/import_questions.js \
+  --target indexing-custom \
+  --file questions.md \
+  --brand "必火AI" \
+  --platforms deepseek,doubao,qwen,kimi \
+  --force
+```
+
+如果问题本身已经是平台格式，例如 `GEO优化服务商怎么选？[必火AI|GEO优化]`，可不传 `--brand`。
+
+### 导入产品主题库 / 搜索问题库
+
+适合把更深层的用户问题沉淀到产品主题库，例如：
+
+```md
+- 中小企业做 GEO 优化最容易失败在哪？
+- 为什么 AI 搜索推荐不到我的品牌？
+- GEO 优化和传统 SEO 的投入产出差异是什么？
+```
+
+命令：
+
+```bash
+# 预览
+node geo-indexing/scripts/import_questions.js \
+  --target product-topic \
+  --file deep_questions.md \
+  --tags "深层用户问题,GEO选题,手动导入" \
+  --dry-run
+
+# 真实导入
+node geo-indexing/scripts/import_questions.js \
+  --target product-topic \
+  --file deep_questions.md \
+  --tags "深层用户问题,GEO选题,手动导入" \
+  --force
+```
+
+底层 payload：
+
+```json
+{
+  "topic": "问题1\n问题2\n问题3",
+  "productId": 409,
+  "tags": ["深层用户问题", "GEO选题", "手动导入"],
+  "knowledgeBaseIds": []
+}
+```
+
+### 从主题生成任务中选择搜索问题插入
+
+如果平台已经通过 `POST /v1/topic-task` 生成了一批搜索问题，可用选择插入接口：
+
+```bash
+# 按平台生成结果索引选择
+node geo-indexing/scripts/import_questions.js \
+  --target topic-task-select \
+  --task-id 123 \
+  --selected-ids 0,2,5 \
+  --dry-run
+
+# 真实插入
+node geo-indexing/scripts/import_questions.js \
+  --target topic-task-select \
+  --task-id 123 \
+  --selected-ids 0,2,5 \
+  --force
+```
+
+也可以用本地问题文件与平台任务的 `llmResult.questions` 做精确匹配，自动换成索引：
+
+```bash
+node geo-indexing/scripts/import_questions.js \
+  --target topic-task-select \
+  --task-id 123 \
+  --match-file selected_questions.md \
+  --dry-run
+```
+
+> 注意：`topic-task-select` 只能选择平台主题生成任务里已经存在的问题；如果是 Codex 本地新写的问题，请用 `--target product-topic`。
 
 ## 一、收录任务导入（POST /v1/ai-indexing-task/custom/import）
 
@@ -95,14 +224,14 @@ metadata:
 | chatgpt | ChatGPT |
 | gemini | Gemini |
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${companyId} 从 geo-config.json 的 defaults.companyId 读取
 curl -X POST "${baseUrl}/v1/ai-indexing-task/custom/import" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Referer: ${referer}" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -d "{
     \"data\": \"燃气壁挂炉推荐[海顿]\",
     \"platforms\": [\"deepseek\", \"doubao\", \"yuanbao\", \"qwen\", \"yiyan\", \"kimi\", \"zhipu\", \"chatgpt\", \"gemini\"],
@@ -131,7 +260,7 @@ curl -X POST "${baseUrl}/v1/ai-indexing-task/custom/import" \
 | `--company-id` | 公司 ID | 从配置读取 |
 | `--format` | 输出格式：table / detail / json | table |
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${companyId} 从 geo-config.json 的 defaults.companyId 读取
@@ -168,14 +297,14 @@ curl -X GET "${baseUrl}/v1/ai-indexing-task/custom?page=1&limit=30&companyId=${c
 - 范围格式：`14227-14250`（含边界）
 - 混合格式：`14227,14230-14240,14250`
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${companyId} 从 geo-config.json 读取，${taskId} 为实际任务 ID
 curl -X DELETE "${baseUrl}/v1/ai-indexing-task/custom?companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Referer: ${referer}" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -d "{\"ids\":[${taskId1},${taskId2}]}"
 ```
 
@@ -221,7 +350,7 @@ curl -X DELETE "${baseUrl}/v1/ai-indexing-task/custom?companyId=${companyId}" \
 | `platform` | string | 平台筛选 |
 | `topic` | string | 问题关键词筛选（模糊匹配） |
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${companyId} 从 geo-config.json 读取
@@ -263,7 +392,7 @@ curl -s "${baseUrl}/v1/ai-indexing/custom?platform=deepseek&topic=多耐&company
 | `--productId` | 产品 ID | 必填 |
 | `--companyId` | 公司 ID | 必填 |
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${productId}、${companyId} 从 geo-config.json 的 defaults 读取

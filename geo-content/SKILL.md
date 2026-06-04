@@ -1,11 +1,11 @@
 ---
 name: geo-content
-description: GEO内容工作流路由技能。Use this skill only when routing between GEO content production and content audit, or when the user asks for the overall content workflow. For keyword/title/article/image creation use geo-content-production; for review/coverage/gap/optimization use geo-content-audit.
+description: "GEO 内容工作流路由技能。Use when the user asks 内容生产怎么走、先写还是先审、关键词标题文章封面审核优化的整体流程, or needs routing between writing and auditing. For writing/keyword/title/image/cover use geo-content-production; for review/gap/coverage/compliance use geo-content-audit."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: router
 ---
 

@@ -1,11 +1,11 @@
 ---
 name: geo-runtime
-description: GEO Skills 共享运行时与诊断技能。Use this skill when checking whether the GEO Skills Suite is installed correctly on Windows or macOS, initializing or validating ~/.geo-skills credentials, running no-Python Node.js diagnostics, checking optional Python legacy dependencies, or troubleshooting missing runtime files for Claude Code, Codex, or other Agent Skills-compatible clients. This support skill does not perform business API writes.
+description: "GEO Skills 安装与运行时诊断技能。Use when the user says 安装技能、检查是否安装成功、doctor、环境检测、Node/Windows/Mac 兼容、初始化配置模板、检查 ~/.geo-skills、no-Python 诊断、技能缺失、配置文件找不到、openKey/companyId/productId 状态检查. This support skill does not perform business writes."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: runtime
 ---
 
@@ -25,6 +25,16 @@ metadata:
 - 需要在 Claude Code 与 Codex 之间共用同一套 GEO 凭证
 
 不要用本技能执行文章上传、发布任务、收录导入等业务操作；这些应交给对应业务技能。
+
+## 默认执行协议
+
+- 默认运行时是 Node.js 18+，Python 只作为旧脚本兼容。
+- 有专用 Node 脚本时优先使用专用脚本；没有专用脚本时使用 `scripts/api_request.js` 替代手写 curl。
+- 写操作必须先 dry-run/preview，真实执行后必须用 GET/list 回查验证。
+- 中文正文不要通过 `curl -d` 或 PowerShell 单行 JSON 上传，使用 `geo-article/scripts/upload_article.js`。
+- 图片/封面统一走 GEO `/v1/text-to-img`，默认 `model=v2`，不使用本地 SVG fallback。
+
+完整协议见套件根目录 `GEO-SKILLS-EXECUTION-PROTOCOL.md`，常用命令见 `QUICK_COMMANDS.md`。
 
 ## 目录约定
 
@@ -106,8 +116,10 @@ node geo-runtime/scripts/doctor.js --check-api
 
 | 文件 | 用途 |
 |------|------|
-| `scripts/credentials.js` | 无 Python 跨技能读取 GEO、Fangxin、飞书凭证 |
+| `scripts/credentials.js` | 无 Python 跨技能读取 GEO 凭证 |
+| `scripts/api_request.js` | 无 Python 通用 GEO API 调用工具，替代 curl，写操作需 `--force` |
 | `scripts/doctor.js` | 无 Python 检查技能完整性、Node/lark-cli、配置和 API 连通性 |
+| `../geo-config/scripts/setup_defaults.js` | 首次安装后获取公司/产品列表，并写入默认 companyId/productId |
 | `scripts/credentials.py` | 旧版 Python 凭证读取，保留兼容 |
 | `scripts/doctor.py` | 旧版 Python 诊断，保留兼容 |
 | `references/requirements.md` | 依赖说明与排障 |

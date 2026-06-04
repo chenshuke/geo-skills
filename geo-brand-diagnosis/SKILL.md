@@ -1,14 +1,26 @@
 ---
 name: geo-brand-diagnosis
-description: GEO品牌AI诊断技能。Use this skill when the user wants to generate AI platform brand diagnosis questions from a brand knowledge base, analyze brand AI diagnosis data from Doubao/DeepSeek/Yuanbao/Kimi/Tongyi or other AI Q&A records, create a professional GEO brand diagnosis report, turn diagnosis into a GEO optimization issue list, and output Markdown and beautiful HTML versions; image versions should be created by manual screenshot or AI image generation, not local HTML-to-PNG automation. Use for 品牌AI诊断问题生成、豆包问答诊断、GEO优化问题清单、竞品风险、知识库补充建议、AI是否认识/推荐品牌、品牌词/品类词/场景词/对比词测试等场景.
+description: "GEO 品牌 AI 诊断技能。Use when the user says 生成品牌 AI 诊断问题、测试 AI 是否认识品牌、豆包/DeepSeek/Kimi/通义问答诊断、分析 AI 回答、竞品风险、品牌词/品类词/场景词/对比词测试、生成 GEO 诊断报告、输出优化问题清单和 HTML 报告. Image versions should use screenshot or AI image generation, not local HTML-to-PNG automation."
+license: MIT
+compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
+metadata:
+  suite: geo-skills
+  version: "3.3.0"
+  category: workflow
 ---
 
 # GEO 品牌 AI 诊断技能
+
+> **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
 
 本技能支持两种模式：
 
 1. **诊断问题生成模式**：用户只提供品牌资料/知识库、还没有 AI 平台回复时，先生成 5 个或 10 个品牌 AI 诊断问题，方便用户去豆包、DeepSeek、元宝、通义等平台测试。
 2. **诊断报告生成模式**：用户提供「品牌资料/临时知识库 + AI 平台问答记录」后，生成专业 Markdown 诊断报告和精致 HTML 版本；图片版通过截图或 AI 图片生成另行处理。并调用图片生成能力
+
+## 输出归位硬规则
+
+品牌 AI 诊断报告必须直接写入项目标准目录：诊断 Markdown/HTML 优先放 `07_监测分析/证据链分析/` 或 `05_质量审核/缺口分析/`；诊断信息图提示词放同一目录。写文件前可用 `geo-content-archive/scripts/project_paths.js --artifact evidence-report` 或 `--artifact audit-gap` 获取路径。
 
 ## 输入要求
 
@@ -131,8 +143,19 @@ AI回答1：
 
 优先使用脚本：
 
+相对于 `geo-brand-diagnosis` 技能目录：
+
 ```bash
-node .claude/geo-skills-repo/geo-brand-diagnosis/scripts/render_geo_brand_diagnosis.js \
+node scripts/render_geo_brand_diagnosis.js \
+  --input 品牌AI诊断报告.md \
+  --output-dir 输出目录 \
+  --title "品牌 AI 诊断报告"
+```
+
+相对于 GEO Skills Suite 根目录：
+
+```bash
+node geo-brand-diagnosis/scripts/render_geo_brand_diagnosis.js \
   --input 品牌AI诊断报告.md \
   --output-dir 输出目录 \
   --title "品牌 AI 诊断报告"

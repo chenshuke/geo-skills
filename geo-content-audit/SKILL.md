@@ -1,11 +1,11 @@
 ---
 name: geo-content-audit
-description: GEO内容审核与优化技能。Use this skill when auditing GEO articles for consistency, media readiness, AI-detection risk, coverage, gaps, compliance lists, or optimizing existing content. Do not use for first-draft content generation; use geo-content-production instead.
+description: "GEO 内容审核、优化和发布前检查技能。Use when the user says 审核文章、优化文章、检查覆盖度、查缺漏、媒体发布准备、AI 检测风险、合规检查、榜单是否合理、内容质量评分、发布前检查、让文章更容易被 AI 收录. Do not write first draft; use geo-content-production."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: workflow
 ---
 
@@ -19,6 +19,10 @@ metadata:
 **外部依赖**：无外部依赖
 
 ---
+
+## 输出归位硬规则
+
+审核和优化产物必须直接写入项目标准目录：一致性、媒体投稿、AI 检测、覆盖度、缺口、质量报告分别放入 `05_质量审核/` 对应子目录；优化版文章放 `04_内容创作/{日期}/optimized/`。写文件前可用 `geo-content-archive/scripts/project_paths.js --artifact audit-coverage` 等获取路径。
 
 ## 一、内容审核
 

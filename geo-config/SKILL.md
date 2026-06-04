@@ -1,11 +1,11 @@
 ---
 name: geo-config
-description: GEO配置与凭证管理技能。Use this skill when setting up, viewing, updating, validating, or resetting GEO API credentials, base URL, referer, default companyId/productId, or the shared config at ~/.geo-skills/credentials/geo-config.json. Use geo-runtime for installation and dependency diagnostics.
+description: "GEO 配置和首次开通向导技能。Use when the user says 配置/更新 openKey/API 密钥、设置 baseUrl/referer、获取公司和产品列表、设置 companyId/productId、companyId 为 0、productId 为 0、首次安装后配置账号、创建公司、创建产品、选择默认公司/产品、查看或重置 ~/.geo-skills/credentials/geo-config.json. Do not use for article upload or publishing."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: api
 ---
 
@@ -25,6 +25,7 @@ metadata:
 - 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
 - 支持 dry-run / preview 时优先使用 dry-run / preview。
 - 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
+- 有专用 Node 脚本时优先使用脚本；没有专用脚本时使用 `geo-runtime/scripts/api_request.js`，`curl` 只作为低级调试，不作为中文正文或批量写操作默认方案。
 
 ---
 
@@ -33,6 +34,8 @@ metadata:
 - 查看当前配置
 - 更新 openKey（解决密钥失效问题）
 - 更新默认 companyId / productId
+- 首次使用时自动获取公司/产品列表，引导学员选择并写入 defaults
+- 如果账号下没有公司/产品，可在用户确认后创建公司和产品
 - 重置为默认配置结构
 
 ---
@@ -70,6 +73,38 @@ metadata:
 
 ```bash
 node ../geo-runtime/scripts/doctor.js --init-config
+```
+
+首次选择默认公司和产品（推荐）：
+
+```bash
+# 相对于 GEO Skills Suite 根目录
+node geo-config/scripts/setup_defaults.js --list
+node geo-config/scripts/setup_defaults.js --company-id <公司ID> --product-id <产品ID> --force
+
+# 如果账号下只有一个公司/产品，可以自动写入
+node geo-config/scripts/setup_defaults.js --auto
+```
+
+如果账号没有公司或产品，也可以先预览再创建：
+
+```bash
+# 创建公司预览
+node geo-config/scripts/setup_defaults.js \
+  --create-company \
+  --company-name "公司名" \
+  --company-description "公司描述" \
+  --dry-run
+
+# 创建产品预览
+node geo-config/scripts/setup_defaults.js \
+  --create-product \
+  --company-id <公司ID> \
+  --product-name "产品名" \
+  --keywords "关键词1,关键词2" \
+  --target-words "目标词1,目标词2" \
+  --product-type 1 \
+  --dry-run
 ```
 
 ---
@@ -146,6 +181,51 @@ productId = defaults.productId
 5. 后续子技能调用自动携带 companyId 和 productId
 
 > **注意**：`geo-hub` 和 `geo-workflow-hub` 已内置此流程（Step 0），会自动执行。直接调用子技能时也需遵守此规则。
+
+### 学员首次安装后的主动处理
+
+学员刚安装技能时，`companyId/productId` 通常都是 `0`。AI 助手不要让学员手猜 ID，应主动执行：
+
+```bash
+node geo-config/scripts/setup_defaults.js --list
+```
+
+然后把返回的公司/产品列表展示给学员选择；学员选择后执行：
+
+```bash
+node geo-config/scripts/setup_defaults.js --company-id <公司ID> --product-id <产品ID> --force
+```
+
+如果公司和产品都只有一个，可直接执行：
+
+```bash
+node geo-config/scripts/setup_defaults.js --auto
+```
+
+脚本会把选择结果写入用户级配置 `~/.geo-skills/credentials/geo-config.json`，后续所有 GEO 技能自动使用。
+
+如果没有可用公司或产品，AI 助手可以引导学员创建，但必须先 dry-run 展示 payload，等待学员确认后再执行 `--force`：
+
+```bash
+# 创建公司
+node geo-config/scripts/setup_defaults.js \
+  --create-company \
+  --company-name "公司名" \
+  --company-description "公司描述" \
+  --force
+
+# 创建产品并写入 defaults
+node geo-config/scripts/setup_defaults.js \
+  --create-product \
+  --company-id <公司ID> \
+  --product-name "产品名" \
+  --keywords "关键词1,关键词2" \
+  --target-words "目标词1,目标词2" \
+  --product-type 1 \
+  --force
+```
+
+产品创建需要的信息来自平台接口 `POST /v1/geo-product`：`name`、`keyword[]`、`type`、`targetWord[]`、`companyId`。如果学员不确定这些字段，先让学员确认产品名、核心关键词和目标词，不要替学员编造。
 
 ---
 

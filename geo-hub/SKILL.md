@@ -1,11 +1,11 @@
 ---
 name: geo-hub
-description: GEO平台 API 路由技能。Use this skill when the user needs help choosing or orchestrating GEO API operations across config, account, article, indexing, and publication modules. For a specific operation, prefer the concrete skill such as geo-config, geo-account, geo-article, geo-indexing, or geo-publish.
+description: "GEO 平台 API 总入口和路由技能。Use when the user does not know which GEO platform skill to use, or says 查平台数据、上传到平台、删除平台数据、配置账号、文章管理、收录任务、发布任务、公司产品账号查询. For a clear task, route to geo-config, geo-account, geo-article, geo-indexing, or geo-publish."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: router
 ---
 
@@ -24,6 +24,7 @@ metadata:
 - 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
 - 支持 dry-run / preview 时优先使用 dry-run / preview。
 - 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
+- 有专用 Node 脚本时优先使用脚本；没有专用脚本时使用 `geo-runtime/scripts/api_request.js`，`curl` 只作为低级调试，不作为中文正文或批量写操作默认方案。
 
 ---
 

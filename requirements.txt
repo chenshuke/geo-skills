@@ -1,10 +1,13 @@
-# GEO Skills Suite Python dependencies
-# Required for API and runtime diagnostics
+# GEO Skills Suite legacy Python dependencies
+#
+# Default learner/runtime path is Node.js only. Do NOT install this file for
+# normal GEO Skills usage. It is kept only for maintainers who intentionally
+# run legacy Python compatibility scripts.
+
+# Optional legacy API helpers
 requests>=2.28.0
 python-dotenv>=1.0.0
 
-# Optional dependencies (install only when needed)
-# Local cover generation: python3 -m pip install Pillow
-# Pillow>=10.0.0
-# Feishu/Bitable sync: python3 -m pip install baseopensdk
+
+# Optional legacy Feishu/Bitable sync
 # baseopensdk>=0.2.0

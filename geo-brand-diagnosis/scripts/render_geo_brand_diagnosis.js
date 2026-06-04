@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const fs=require('fs'), path=require('path'), child_process=require('child_process');
+const {pathToFileURL}=require('url');
 function arg(k,d=''){const i=process.argv.indexOf('--'+k);return i>=0?process.argv[i+1]:d}
 function esc(s){return String(s||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
 function inline(s){return esc(s).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')}
@@ -10,4 +11,10 @@ const outdir=arg('output-dir','.'); fs.mkdirSync(outdir,{recursive:true}); const
 const css=`body{margin:0;background:#f7f8fa;color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',Arial,sans-serif;line-height:1.72}.page{max-width:1120px;margin:auto;padding:42px 34px}.hero{background:linear-gradient(135deg,#151721,#3a1118);color:white;border-radius:28px;padding:42px 46px;box-shadow:0 24px 60px rgba(22,24,35,.18)}.hero h1{margin:0;font-size:38px}.content{background:white;border-radius:24px;padding:18px 34px 40px;margin-top:24px;box-shadow:0 12px 36px rgba(16,24,40,.08)}h1,h2,h3{color:#d83931}h2{border-left:5px solid #d83931;padding-left:12px}table{width:100%;border-collapse:collapse;margin:18px 0;background:white}th,td{border:1px solid #eceff3;padding:10px 12px;vertical-align:top}th{background:#fff1f0;color:#7f1d1d}pre{background:#111827;color:#e5e7eb;border-radius:14px;padding:16px;overflow:auto}code{background:#f2f4f7;border-radius:5px;padding:2px 5px}pre code{background:transparent}`;
 const html=`<!doctype html><meta charset="utf-8"><title>${esc(title)}</title><style>${css}</style><main class="page"><section class="hero"><p>GEO Brand AI Diagnosis</p><h1>${esc(title)}</h1><p>AI 是否看见、看懂、相信并推荐你的品牌</p></section><section class="content">${md(raw)}</section></main>`;
 const htmlPath=path.join(outdir,path.basename(input,'.md')+'.html'); fs.writeFileSync(htmlPath,html,'utf8'); console.log('HTML:',htmlPath);
-if(process.argv.includes('--png')){const png=path.join(outdir,path.basename(input,'.md')+'.png'); const js=path.join(outdir,'_shot.js'); fs.writeFileSync(js,`const {chromium}=require('playwright');(async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:1280,height:1600},deviceScaleFactor:2});await p.goto('file://${path.resolve(htmlPath)}');await p.screenshot({path:'${path.resolve(png)}',fullPage:true});await b.close();})();`); try{child_process.execFileSync('node',[js],{stdio:'ignore'});console.log('PNG:',png)}catch{console.error('PNG skipped: playwright/chromium not available. HTML is ready. PNG is optional and not part of the default student workflow.')} try{fs.unlinkSync(js)}catch{}}
+if(process.argv.includes('--png')){
+  const png=path.join(outdir,path.basename(input,'.md')+'.png');
+  const js=path.join(outdir,'_shot.js');
+  const shot=`const { chromium } = require('playwright');\n(async()=>{\n  const b=await chromium.launch({headless:true});\n  const p=await b.newPage({viewport:{width:1280,height:1600},deviceScaleFactor:2});\n  await p.goto(${JSON.stringify(pathToFileURL(path.resolve(htmlPath)).href)});\n  await p.screenshot({path:${JSON.stringify(path.resolve(png))},fullPage:true});\n  await b.close();\n})();\n`;
+  fs.writeFileSync(js,shot,'utf8');
+  try{child_process.execFileSync(process.execPath,[js],{stdio:'ignore'});console.log('PNG:',png)}catch{console.error('PNG skipped: playwright/chromium not available. HTML is ready. PNG is optional and not part of the default student workflow.')} try{fs.unlinkSync(js)}catch{}
+}

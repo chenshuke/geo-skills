@@ -15,5 +15,5 @@ node geo-runtime/scripts/doctor.js
 
 可选高级依赖：
 
-- Playwright/Chromium：仅用于 HTML 转 PNG 截图。没有时保留 HTML/SVG 交付。
-- Python/Pillow/baseopensdk：仅旧脚本兼容，不作为课堂和学员必需依赖。
+- Playwright/Chromium：仅用于 HTML 转 PNG 截图。没有时保留 HTML 交付；文章封面/发布素材不要依赖 SVG，默认走 GEO 文生图。
+- Python/baseopensdk：仅旧脚本兼容，不作为课堂和学员必需依赖。

@@ -56,7 +56,6 @@ REQUIRED_SKILLS = [
 OPTIONAL_IMPORTS = {
     "requests": "GEO API calls and image generation helpers",
     "dotenv": "loading .env files; install python-dotenv if missing",
-    "PIL": "local cover image generation; install Pillow if using cover scripts",
     "baseopensdk": "Feishu/Bitable sync in geo-analysis; optional",
 }
 

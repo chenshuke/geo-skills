@@ -1,11 +1,11 @@
 ---
 name: geo-knowledge
-description: GEO知识库管理技能。Use this skill when creating a GEO project knowledge base, organizing source materials, classifying files, or generating missing-information checklists before content production. Do not use for platform API upload; use geo-article instead.
+description: "GEO 本地知识库和资料整理技能。Use when the user says 整理客户资料、搭建本地知识库、分类素材、梳理品牌/产品资料、生成缺失信息清单、课前资料治理、把零散资料变成可写文章的知识库. Do not upload to GEO platform; use geo-article or geo-config/API tools when platform upload is needed."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: workflow
 ---
 
@@ -20,6 +20,10 @@ metadata:
 > **输出**：完整的Markdown格式知识库文档 + 信息补充清单
 
 ---
+
+## 输出归位硬规则
+
+创建或整理知识库文件时，必须直接写入项目标准目录：原始资料放 `01_项目资料/`，结构化知识库和信息补充清单放 `02_知识库/`。写文件前可用 `geo-content-archive/scripts/project_paths.js --artifact knowledge` 或 `--artifact supplement-list` 获取路径。
 
 ## 能力总览
 

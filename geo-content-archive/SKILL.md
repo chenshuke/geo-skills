@@ -1,11 +1,11 @@
 ---
 name: geo-content-archive
-description: GEO项目文件治理技能。Use this skill when organizing, migrating, or validating GEO project files and standard directories, especially content drafts, audits, publication records, and monitoring files. Do not use for writing or uploading content.
+description: "GEO 项目文件整理和归档技能。Use when the user says 整理项目文件、归档文章、迁移文件、按项目/日期/平台分类、清理目录、检查目录结构、把草稿/审核/发布记录放到标准位置、治理 Obsidian/本地 GEO 项目文件. Do not write or upload content."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: workflow
 ---
 
@@ -17,6 +17,30 @@ metadata:
 
 > 本模块是 GEO 项目的"目录规范守护者"。确保所有模块产出的文件都放入标准位置，不再乱建文件夹。
 > 对应的内容创作模块见 geo-content-production，审核模块见 geo-content-audit。
+
+---
+
+## 0. 输出归位硬规则
+
+所有 GEO 技能在产出文件时，必须**直接写入标准目录**，不要先写到项目根目录再事后归位。
+
+写文件前优先用共享路径工具解析目标位置：
+
+```bash
+node geo-content-archive/scripts/project_paths.js \
+  --project-dir "项目_品牌GEO" \
+  --artifact article \
+  --filename "文章标题.md" \
+  --json
+```
+
+如果从本技能目录内执行：
+
+```bash
+node scripts/project_paths.js --project-dir "项目_品牌GEO" --artifact article --filename "文章标题.md"
+```
+
+该脚本会创建标准 8 目录和常用子目录，并返回 `outputPath`。其他技能写文件时应使用这个路径。
 
 ---
 

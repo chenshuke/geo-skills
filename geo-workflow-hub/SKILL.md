@@ -1,11 +1,11 @@
 ---
 name: geo-workflow-hub
-description: GEO运营工作流路由技能。Use this skill when the user needs an end-to-end GEO workflow from brand setup, knowledge base, content production, audit, archive, and analysis. For platform API actions such as upload, indexing, or publication tasks, use geo-hub or the concrete API skill instead.
+description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、品牌搭建、资料整理、写文章、审核优化、归档分析、完整运营流程、线下课练习流程. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: router
 ---
 

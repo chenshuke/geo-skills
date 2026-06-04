@@ -1,11 +1,11 @@
 ---
 name: geo-analysis
-description: GEO数据分析与可视化技能。Use this skill when analyzing GEO indexing results, citation/evidence chains, platform citation behavior, brand citation relevance, Feishu plan sync, PDCA dashboards, or HTML/PNG reporting. Do not use for creating or uploading articles; use geo-content-production or geo-article instead.
+description: "GEO 收录结果分析和可视化报告技能。Use when the user says 分析收录结果、分析 AI 引用来源、证据链分析、平台引用偏好、品牌相关性、竞品/引用风险、PDCA 仪表盘、生成 HTML 报告、分析 DeepSeek/豆包/Kimi/ChatGPT 回答数据. Do not create/upload articles; use geo-content-production or geo-article."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: workflow
 ---
 
@@ -168,5 +168,9 @@ metadata:
 2. 平台逆向分析建议逐平台进行，每批10-15条数据，知识库持续积累
 3. 引用品牌审核需 Playwright/Chromium 环境
 4. 项目仪表盘依赖 Obsidian Dataview 插件
-5. 自动 HTML 转 PNG 已移除；需要图片时优先交付 HTML/SVG，或使用系统截图/浏览器打印/AI 图片生成
+5. 自动 HTML 转 PNG 已移除；分析报告优先交付 HTML，发布用封面/素材优先使用 GEO 平台 AI 图片生成，不依赖 SVG
 6. 所有数据驱动的子技能建议定期重新分析，因AI平台引用偏好可能随时间变化
+
+## 输出归位硬规则
+
+分析报告必须直接写入项目标准目录：证据链报告放 `07_监测分析/证据链分析/`，PDCA 放 `07_监测分析/PDCA对比/`，平台画像放 `07_监测分析/平台画像/`，行业洞察放 `07_监测分析/行业洞察/`，仪表盘放 `00_项目概览/仪表盘.md`。

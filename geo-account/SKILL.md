@@ -1,11 +1,11 @@
 ---
 name: geo-account
-description: GEO账户与资源管理技能。Use this skill when the user wants to list GEO companies/products/accounts, inspect dashboards, packages/SKUs, videos, publication accounts, or troubleshoot account/resource data through the GEO API. Do not use for article upload, publication tasks, or indexing; use geo-article, geo-publish, or geo-indexing instead.
+description: "GEO 账号、公司产品、套餐资源查询技能。Use when the user says 查看公司/产品列表、发布账号、账号资源、套餐、配额、积分、余额、dashboard、仪表盘、视频素材、平台账号是否正常、有哪些账号/产品/公司. Do not use for article upload, publishing, or indexing tasks; use geo-article, geo-publish, or geo-indexing."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: api
 ---
 
@@ -25,6 +25,7 @@ metadata:
 - 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
 - 支持 dry-run / preview 时优先使用 dry-run / preview。
 - 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
+- 有专用 Node 脚本时优先使用脚本；没有专用脚本时使用 `geo-runtime/scripts/api_request.js`，`curl` 只作为低级调试，不作为中文正文或批量写操作默认方案。
 
 ---
 
@@ -67,7 +68,7 @@ metadata:
 
 toutiao（今日头条）、sohu_news（搜狐号）、bilibili（B站）、zhihu（知乎）、csdn（CSDN）、wechat（微信公众号）、xiaohongshu（小红书）、douyin（抖音）
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${companyId} 从 geo-config.json 的 defaults.companyId 读取
@@ -99,7 +100,7 @@ curl -X GET "${baseUrl}/v1/publication-account?page=1&limit=30&companyId=${compa
 | `--limit` | 每页数量 | 10 |
 | `--company-id` | 公司 ID | 从配置读取 |
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 curl -X GET "${baseUrl}/v1/package?page=1&limit=10&companyId=${companyId}" \
@@ -122,7 +123,7 @@ curl -X GET "${baseUrl}/v1/package?page=1&limit=10&companyId=${companyId}" \
 | source | string | 导入来源，固定为 `oem` |
 | videoIds | string[] | OEM 平台视频 ID 数组 |
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # 查询视频列表
@@ -132,7 +133,7 @@ curl -X GET "${baseUrl}/v1/video?page=1&limit=10" \
 
 # 导入视频（${videoId} 为 OEM 平台视频 ID）
 curl -X POST "${baseUrl}/v1/video/import" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Referer: ${referer}" \
   -d '{"source":"oem", "videoIds":["${videoId1}","${videoId2}"]}'

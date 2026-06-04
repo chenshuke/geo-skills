@@ -1,11 +1,11 @@
 ---
 name: geo-brand
-description: GEO品牌内容创建技能。Use this skill when the user wants to create enterprise/product/personal brand positioning, brand introductions, product acquisition article frameworks, or GEO-ready brand content from a title and knowledge base. Do not use for API upload; use geo-article instead.
+description: "GEO 品牌定位和品牌内容创建技能。Use when the user says 创建品牌定位、写公司介绍、产品介绍、个人品牌介绍、品牌故事、获客文章框架、品牌基础资料、从标题和知识库生成品牌内容、客户品牌包装. Do not upload to platform; use geo-article."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: workflow
 ---
 
@@ -21,6 +21,10 @@ metadata:
 > **自动功能**：创作后自动更新内容布局跟踪表
 
 ---
+
+## 输出归位硬规则
+
+品牌定位、品牌介绍、内容布局跟踪表等文件必须直接写入项目标准目录：品牌定位放 `00_项目概览/品牌定位/`，跟踪表放 `03_规划方案/内容布局跟踪表.md`，不要输出到项目根目录。写文件前可用 `geo-content-archive/scripts/project_paths.js --artifact brand-positioning` 或 `--artifact tracking-table` 获取路径。
 
 ## 能力总览
 

@@ -49,11 +49,11 @@
 
 ### Q6: AI 图片生成失败？
 
-AI 图片生成功能需要芳信 API Key：
+AI 图片生成功能现在使用 GEO 平台 `/v1/text-to-img`，不再需要单独的图片 API Key；请确认 `~/.geo-skills/credentials/geo-config.json` 中的 `geo.openKey`、`geo.baseUrl`、`geo.referer` 和 `defaults.productId` 有效：
 
-1. 将 API Key 存放于 `~/.geo-skills/credentials/fangxin_image_api_key`
+1. 确认 `~/.geo-skills/credentials/geo-config.json` 中的 GEO openKey/referer/baseUrl/defaults 有效
 2. 确保文件权限设置正确（建议 600）
-3. 确认 API Key 额度充足
+3. 确认 GEO 平台文生图额度/积分充足
 
 ---
 
@@ -122,3 +122,16 @@ done
 | 微信 | 社交平台 |
 | 小红书 | 生活社区 |
 | 抖音 | 短视频平台 |
+
+---
+
+### Q11: 本地中文文章上传到 GEO 后乱码？
+
+默认不要用 `curl -d`、PowerShell 单行 JSON 或复制粘贴正文上传中文文章。请统一使用 UTF-8 安全上传脚本：
+
+```bash
+node geo-article/scripts/upload_article.js --file "文章.md" --dry-run
+node geo-article/scripts/upload_article.js --file "文章.md" --auto-cover
+```
+
+如果 dry-run 提示疑似乱码，先把 Markdown 另存为 UTF-8，再上传。脚本会用 `application/json; charset=utf-8` 提交并上传后回查。

@@ -1,7 +1,16 @@
-# GEO Skills Suite v3.2
+# GEO Skills Suite v3.3
 
 > 面向 Claude Code、Codex 与其他 Agent Skills 兼容客户端的 GEO（Generative Engine Optimization）运营技能套件。
 > 设计目标：**直接安装所有 `geo-*` 技能文件夹即可使用**，不依赖安装器，不绑定单一 AI 工具。
+
+## 默认执行协议
+
+- 学员默认只需要 **Node.js 18+**；Python/pip/Pillow/baseopensdk 均不是核心必需。
+- 涉及上传、删除、发布、批量导入时，优先使用 Node 脚本的 `--dry-run`，真实执行后必须 GET/list 回查。
+- 中文文章上传统一使用 `geo-article/scripts/upload_article.js`，避免 `curl -d` 或 PowerShell 单行 JSON 导致乱码。
+- 图片和封面统一走 GEO 平台 `/v1/text-to-img`，默认 `model=v2`，不再使用本地 SVG 封面 fallback。
+
+详见：`GEO-SKILLS-EXECUTION-PROTOCOL.md`；常用命令见：`QUICK_COMMANDS.md`。
 
 ## 兼容性
 
@@ -17,29 +26,59 @@
 
 将本仓库中所有 `geo-*` 文件夹复制或软链接到你的工具技能目录。
 
-### Codex
+### macOS / Linux：安装到 Codex
 
 ```bash
 mkdir -p ~/.codex/skills
 cp -R geo-* ~/.codex/skills/
 ```
 
-### Claude Code
+### macOS / Linux：安装到 Claude Code
 
 ```bash
 mkdir -p ~/.claude/skills
 cp -R geo-* ~/.claude/skills/
 ```
 
+### Windows PowerShell：安装到 Codex
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex\skills" | Out-Null
+Get-ChildItem -Directory -Filter "geo-*" | ForEach-Object {
+  Copy-Item $_.FullName -Destination "$env:USERPROFILE\.codex\skills" -Recurse -Force
+}
+```
+
+### Windows PowerShell：安装到 Claude Code
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude\skills" | Out-Null
+Get-ChildItem -Directory -Filter "geo-*" | ForEach-Object {
+  Copy-Item $_.FullName -Destination "$env:USERPROFILE\.claude\skills" -Recurse -Force
+}
+```
+
 ### 开发者软链接模式
 
-如果你希望仓库更新后两个工具自动同步，可以使用软链接：
+如果你希望仓库更新后两个工具自动同步，可以使用软链接。
+
+macOS / Linux：
 
 ```bash
 for d in geo-*; do
   [ -d "$d" ] && ln -sfn "$(pwd)/$d" ~/.codex/skills/"$d"
   [ -d "$d" ] && ln -sfn "$(pwd)/$d" ~/.claude/skills/"$d"
 done
+```
+
+Windows PowerShell（需允许创建符号链接；不确定时优先用复制安装）：
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex\skills", "$env:USERPROFILE\.claude\skills" | Out-Null
+Get-ChildItem -Directory -Filter "geo-*" | ForEach-Object {
+  New-Item -ItemType SymbolicLink -Force -Path "$env:USERPROFILE\.codex\skills\$($_.Name)" -Target $_.FullName | Out-Null
+  New-Item -ItemType SymbolicLink -Force -Path "$env:USERPROFILE\.claude\skills\$($_.Name)" -Target $_.FullName | Out-Null
+}
 ```
 
 ## 安装后检查
@@ -50,16 +89,34 @@ done
 
 如果当前环境支持 shell，也可以直接运行：
 
+macOS / Linux：
+
 ```bash
 node ~/.codex/skills/geo-runtime/scripts/doctor.js
 # 或
 node ~/.claude/skills/geo-runtime/scripts/doctor.js
 ```
 
+Windows PowerShell：
+
+```powershell
+node "$env:USERPROFILE\.codex\skills\geo-runtime\scripts\doctor.js"
+# 或
+node "$env:USERPROFILE\.claude\skills\geo-runtime\scripts\doctor.js"
+```
+
 首次创建用户级配置模板：
+
+macOS / Linux：
 
 ```bash
 node ~/.codex/skills/geo-runtime/scripts/doctor.js --init-config
+```
+
+Windows PowerShell：
+
+```powershell
+node "$env:USERPROFILE\.codex\skills\geo-runtime\scripts\doctor.js" --init-config
 ```
 
 ## 配置凭证
@@ -67,7 +124,8 @@ node ~/.codex/skills/geo-runtime/scripts/doctor.js --init-config
 真实 openKey 不放在技能仓库内。统一使用用户级配置：
 
 ```text
-~/.geo-skills/credentials/geo-config.json
+macOS / Linux: ~/.geo-skills/credentials/geo-config.json
+Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 ```
 
 模板：
@@ -146,7 +204,7 @@ graph LR
 可选：
 
 ```bash
-node geo-content-production/scripts/generate_cover.js  # 本地 SVG 封面生成，无需 Pillow
+node geo-content-production/scripts/generate_cover.js  # GEO 平台封面生成，默认 model=v2
 优先使用 lark-cli / lark-base skill 同步飞书，无需 baseopensdk
 ```
 

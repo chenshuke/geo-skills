@@ -1,11 +1,11 @@
 ---
 name: geo-publish
-description: GEO发布任务管理技能。Use this skill when creating, verifying, deleting, or troubleshooting GEO platform publication tasks that send approved articles to external channels/accounts. Do not use for drafting/uploading articles or indexing checks; use geo-content-production, geo-article, or geo-indexing instead.
+description: "GEO 发布任务和分发管理技能。Use when the user says 发布文章、分发到公众号/知乎/搜狐/头条/CSDN/小红书/抖音/B站、创建发布任务、定时发布、删除发布任务、查看发布状态、发布失败排查、投稿记录、媒体发布平台、发布统计. Do not draft/upload articles; use geo-content-production or geo-article first."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: api
 ---
 
@@ -25,8 +25,13 @@ metadata:
 - 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
 - 支持 dry-run / preview 时优先使用 dry-run / preview。
 - 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
+- 有专用 Node 脚本时优先使用脚本；没有专用脚本时使用 `geo-runtime/scripts/api_request.js`，`curl` 只作为低级调试，不作为中文正文或批量写操作默认方案。
 
 ---
+
+## 输出归位硬规则
+
+发布任务创建、删除、状态核验、发布失败排查和媒体投稿记录必须直接写入 `06_发布记录/`，不要散落在项目根目录。写文件前可用 `geo-content-archive/scripts/project_paths.js --artifact publish-record` 获取路径。
 
 ## 能力总览
 
@@ -105,7 +110,7 @@ toutiao（今日头条）、sohu_news（搜狐号）、bilibili（B站）、zhih
 > - `infoSource`：信息来源标识（`"0"`=原创，`"1"`=转载）
 > - `sourceLink`：转载来源链接（原创时留空）
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # 以下变量从 geo-config.json 读取：${openKey}、${companyId}、${productId}
@@ -115,7 +120,7 @@ toutiao（今日头条）、sohu_news（搜狐号）、bilibili（B站）、zhih
 curl -s -X POST "${baseUrl}/v1/publication-task" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Referer: ${referer}" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -d "{
     \"name\":\"任务名称\",
     \"aigc\":false,
@@ -145,14 +150,14 @@ curl -s -X POST "${baseUrl}/v1/publication-task" \
 {"ids": [${taskId1}, ${taskId2}]}
 ```
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${taskId} 为实际的发布任务 ID
 curl -s -X DELETE "${baseUrl}/v1/publication-task" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Referer: ${referer}" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -d "{\"ids\":[${taskId}]}"
 ```
 

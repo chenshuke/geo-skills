@@ -1,5 +1,13 @@
 #!/usr/bin/env node
-const fs=require('fs'), path=require('path'), os=require('os');
-function arg(k,d=''){const i=process.argv.indexOf('--'+k);return i>=0?process.argv[i+1]:d}
-function key(){ if(process.env.FANGXIN_API_KEY) return process.env.FANGXIN_API_KEY; const p=path.join(os.homedir(),'.geo-skills','credentials','fangxin_image_api_key'); try{return fs.readFileSync(p,'utf8').trim()}catch{return ''}}
-(async()=>{const prompt=arg('prompt'); if(!prompt){console.error('Usage: node generate_image.js --prompt "..." --output image.png');process.exit(1)} const apiKey=key(); if(!apiKey){console.error('缺少 FANGXIN_API_KEY 或 ~/.geo-skills/credentials/fangxin_image_api_key');process.exit(1)} const base=arg('base-url','https://fangxinapi.com').replace(/\/$/,''); const body={model:arg('model','gpt-image-2'),prompt,size:arg('size','1024x1024'),n:Number(arg('n','1')),quality:arg('quality','low')}; const res=await fetch(base+'/v1/images/generations',{method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify(body)}); const j=await res.json().catch(()=>null); if(!res.ok){console.error('API failed',res.status,j||'');process.exit(1)} const item=j.data&&j.data[0]; if(!item){console.error('No image returned');process.exit(1)} const out=arg('output',path.join(arg('output-dir',process.cwd()),'geo-image.png')); fs.mkdirSync(path.dirname(out),{recursive:true}); if(item.b64_json) fs.writeFileSync(out,Buffer.from(item.b64_json,'base64')); else if(item.url){const r=await fetch(item.url); fs.writeFileSync(out,Buffer.from(await r.arrayBuffer()));} else {fs.writeFileSync(out+'.json',JSON.stringify(j,null,2)); console.log('JSON:',out+'.json'); return} console.log('Image:',out)})().catch(e=>{console.error(e);process.exit(1)});
+/** Compatibility wrapper for GEO content image generation.
+ * Canonical implementation: ../geo-content-production/scripts/generate_image.js
+ */
+const path = require('path');
+const cp = require('child_process');
+const target = path.resolve(__dirname, '../../geo-content-production/scripts/generate_image.js');
+const result = cp.spawnSync(process.execPath, [target, ...process.argv.slice(2)], { stdio: 'inherit' });
+if (result.error) {
+  console.error(result.error.message || result.error);
+  process.exit(1);
+}
+process.exit(result.status ?? 0);

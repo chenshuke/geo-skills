@@ -1,7 +1,7 @@
 # GEO 双入口技能说明书
 
 更新时间：2026-05-16
-版本：v3.2（Claude Code / Codex 通用版）
+版本：v3.3（Claude Code / Codex 通用版）
 
 ---
 
@@ -56,6 +56,18 @@ GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 12 个业务
 
 ---
 
+## 3.1 默认执行协议（减少模型差异）
+
+- **运行时**：默认 Node.js 18+，Python 仅为旧脚本兼容，不作为学员必需依赖。
+- **写操作**：上传/删除/发布/批量导入必须先 dry-run/preview，真实执行后必须 GET/list 回查。
+- **API 调用**：有专用 Node 脚本优先用专用脚本；没有专用脚本时用 `geo-runtime/scripts/api_request.js`；`curl` 仅作为低级调试。
+- **中文上传**：文章统一用 `geo-article/scripts/upload_article.js`，避免 `curl -d`、PowerShell 单行 JSON 和手写转义。
+- **图片封面**：统一走 GEO `/v1/text-to-img`，默认 `model=v2`，不使用本地 SVG fallback。
+
+详见：`GEO-SKILLS-EXECUTION-PROTOCOL.md`；固定命令卡片见：`QUICK_COMMANDS.md`。
+
+---
+
 ## 4. 推荐工作流
 
 ```text
@@ -65,7 +77,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 12 个业务
 第4步：使用 geo-content-audit 审核、覆盖度检查与优化
 第5步：使用 geo-content-archive 完成文件归位整理
 第6步：使用 geo-article 上传到平台
-第7步：使用 geo-indexing 检测收录排名
+第7步：使用 geo-indexing 导入深层用户问题、检测收录排名
 第8步：使用 geo-analysis 完成证据链分析与策略优化
 ```
 
@@ -83,8 +95,8 @@ GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 12 个业务
 | `FAQ.md` | 常见问题解答 |
 | `CHANGELOG.md` | 版本变更日志 |
 | `LICENSE` | MIT 开源许可证 |
-| `requirements.txt` | Python 依赖清单（仓库级说明） |
-| `geo-runtime/scripts/credentials.py` | 统一凭证管理模块 |
+| `NO_PYTHON_COMPATIBILITY.md` | 无 Python 默认运行说明 |
+| `geo-runtime/scripts/credentials.js` | 无 Python 统一凭证管理模块 |
 
 ---
 
@@ -93,9 +105,9 @@ GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 12 个业务
 | 依赖 | 必要性 | 用途 |
 |------|--------|------|
 | GEO 平台 openKey | ✅ 必需 | API 认证（config/account/article/indexing/publish） |
-| Node.js 18+ | ✅ 推荐 | 无 Python 默认脚本运行环境 |
-| requests / python-dotenv | ✅ 必需 | HTTP 请求和环境变量加载 |
+| Node.js 18+ | ✅ 必需 | 无 Python 默认脚本运行环境 |
+| Python / requests / python-dotenv | ⬜ 旧版可选 | 仅维护旧 Python 兼容脚本时使用，学员默认不需要 |
 | baseopensdk | ⬜ 可选 | 飞书多维表格同步 |
-| Fangxin API Key | ⬜ 可选 | AI 图片生成 |
+| GEO 平台文生图额度 | ✅ 按需 | 使用 `/v1/text-to-img` 生图，默认 model=v2 |
 | puppeteer-core | ⬜ 可选 | HTML → PDF/PNG 转换 |
 | Obsidian + Dataview | ⬜ 可选 | 项目仪表盘可视化 |

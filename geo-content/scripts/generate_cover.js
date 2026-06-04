@@ -1,10 +1,13 @@
 #!/usr/bin/env node
-const fs=require('fs'), path=require('path');
-const colors={blue:['#1a365d','#2b6cb0','#93c5fd'],red:['#742a2a','#e53e3e','#fecaca'],green:['#22543d','#38a169','#86efac'],orange:['#7b341e','#dd6b20','#fdba74'],purple:['#44337a','#805ad5','#c4b5fd']};
-function arg(k,d=''){const i=process.argv.indexOf('--'+k);return i>=0?process.argv[i+1]:d}
-function esc(s){return String(s||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
-function wrap(s,n=18){const a=[];let x='';for(const ch of String(s||'')){x+=ch;if(x.length>=n){a.push(x);x=''}} if(x)a.push(x); return a.slice(0,4);}
-function svg(item,out){const title=item.title||arg('title','GEO封面'); const subtitle=item.subtitle||arg('subtitle',''); const keywords=String(item.keywords||arg('keywords','')).split(/[,，]/).filter(Boolean); const color=arg('color','blue'); const [c1,c2,acc]=colors[color]||colors.blue; const lines=wrap(title,18); let y=250-(lines.length-1)*44; let text=lines.map(l=>`<text x="600" y="${y+=72}" text-anchor="middle" font-size="58" font-weight="800" fill="#fff">${esc(l)}</text>`).join('\n'); let sub=subtitle?`<text x="600" y="430" text-anchor="middle" font-size="28" fill="rgba(255,255,255,.82)">${esc(subtitle)}</text>`:''; let tags=keywords.slice(0,4).map((k,i)=>`<text x="${420+i*120}" y="520" text-anchor="middle" font-size="22" fill="#fff">#${esc(k)}</text>`).join(''); return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient><filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity=".28"/></filter></defs><rect width="1200" height="630" fill="url(#g)"/><circle cx="980" cy="60" r="260" fill="${acc}" opacity=".18"/><circle cx="70" cy="590" r="220" fill="#fff" opacity=".10"/><rect x="80" y="70" width="1040" height="490" rx="36" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.22)" filter="url(#shadow)"/><text x="110" y="125" font-size="24" fill="${acc}" font-weight="700">GEO CONTENT COVER</text>${text}${sub}${tags}</svg>`;}
-function write(item,out){fs.mkdirSync(path.dirname(out),{recursive:true}); fs.writeFileSync(out,svg(item,out),'utf8'); console.log('SVG:',out)}
-const batch=arg('batch'); if(batch){const arr=JSON.parse(fs.readFileSync(batch,'utf8')); const dir=arg('output-dir','covers'); arr.forEach((it,i)=>write(it,path.join(dir,`${arg('prefix','cover')}_${String(i+1).padStart(2,'0')}.svg`)));}
-else write({},arg('output','cover.svg'));
+/** Compatibility wrapper for GEO content cover generation.
+ * Canonical implementation: ../geo-content-production/scripts/generate_cover.js
+ */
+const path = require('path');
+const cp = require('child_process');
+const target = path.resolve(__dirname, '../../geo-content-production/scripts/generate_cover.js');
+const result = cp.spawnSync(process.execPath, [target, ...process.argv.slice(2)], { stdio: 'inherit' });
+if (result.error) {
+  console.error(result.error.message || result.error);
+  process.exit(1);
+}
+process.exit(result.status ?? 0);

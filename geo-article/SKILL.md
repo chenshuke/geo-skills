@@ -1,11 +1,11 @@
 ---
 name: geo-article
-description: GEO文章与素材平台管理技能。Use this skill when the user wants to create, upload, list, review, delete, or troubleshoot articles, images, OSS uploads, or media submission workflows in the GEO platform API. Do not use for drafting article content; use geo-content-production instead. Do not use for publication tasks; use geo-publish instead.
+description: "GEO 文章和素材上传管理技能。Use when the user says 上传文章、上传本地 Markdown、创建文章、文章列表、审核文章、删除文章、中文乱码、封面 URL、OSS 图片上传、图片转存、素材上传、把文章传到 GEO 平台、查看文章是否上传成功. Do not draft article content; use geo-content-production. Do not create publication tasks; use geo-publish."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.2.0"
+  version: "3.3.0"
   category: api
 ---
 
@@ -25,8 +25,13 @@ metadata:
 - 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
 - 支持 dry-run / preview 时优先使用 dry-run / preview。
 - 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
+- 有专用 Node 脚本时优先使用脚本；没有专用脚本时使用 `geo-runtime/scripts/api_request.js`，`curl` 只作为低级调试，不作为中文正文或批量写操作默认方案。
 
 ---
+
+## 输出归位硬规则
+
+文章上传、质量报告、OSS 图片映射和上传记录必须直接写入项目标准目录：本地文章放 `04_内容创作/{日期}/articles/`，质量报告放 `05_质量审核/内容质量报告/`，平台上传/审核记录放 `06_发布记录/`，图片放 `04_内容创作/{日期}/images/` 或 `covers/`。
 
 ## 能力总览
 
@@ -54,6 +59,28 @@ metadata:
 
 ---
 
+## 文章上传编码安全规则（最高优先级）
+
+历史上本地文章上传到 GEO 平台出现过中文乱码。为避免 Windows/macOS 编码差异，上传本地 Markdown 时默认必须使用 Node 脚本：
+
+```bash
+node geo-article/scripts/upload_article.js --file "文章.md" --auto-cover
+```
+
+不要用 `curl -d "{...中文...}"`、PowerShell 手写 JSON 字符串或复制粘贴大段中文 JSON 作为默认上传方式；这些方式在 Windows 终端、shell 转义或文件编码不一致时容易导致乱码。
+
+脚本会自动执行：
+
+1. 以 UTF-8 读取本地 Markdown。
+2. 检测非法 UTF-8 和常见 mojibake（如 `ä¸­æ–‡`、`锟斤拷`、`�`）。
+3. 用 `Content-Type: application/json; charset=utf-8` 提交。
+4. 上传后立即 GET 回查标题/内容，发现疑似乱码会警告。
+5. 支持 Windows/macOS 路径和中文文件名。
+
+如检测到乱码，先把源 Markdown 另存为 **UTF-8**，不要强行上传；确认是误判时才使用 `--allow-suspicious`。
+
+---
+
 ## 一、文章创建（POST /v1/article）
 
 ### 请求体
@@ -70,22 +97,30 @@ metadata:
 }
 ```
 
-### curl 示例
+### 推荐上传命令（UTF-8 安全）
 
 ```bash
-# ${productId}、${companyId} 从 geo-config.json 的 defaults 读取
+# macOS / Linux / Windows PowerShell 均可用
+node geo-article/scripts/upload_article.js \
+  --file "文章.md" \
+  --auto-cover \
+  --json-out "upload-result.json"
+
+# 只检查编码和 payload，不真实上传
+node geo-article/scripts/upload_article.js \
+  --file "文章.md" \
+  --dry-run
+```
+
+### curl 示例（仅调试英文/短内容，不作为中文文章默认上传方式）
+
+```bash
+# 如必须用 curl，至少显式声明 charset=utf-8，并确保 JSON 文件本身为 UTF-8
 curl -X POST "${baseUrl}/v1/article" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Referer: ${referer}" \
-  -d "{
-    \"title\": \"文章标题\",
-    \"productId\": ${productId},
-    \"content\": \"文章内容\",
-    \"summary\": \"摘要\",
-    \"tags\": [\"标签1\"],
-    \"companyId\": ${companyId}
-  }"
+  --data-binary @payload.utf8.json
 ```
 
 ### 成功响应
@@ -117,28 +152,22 @@ curl -X POST "${baseUrl}/v1/article" \
 | `--title` | 文章标题 | 是* |
 | `--content` | 文章正文 | 是* |
 | `--file` | .md 文件路径（自动提取标题和内容） | 否 |
-| `--autoCover` | 自动生成封面 | 否 |
-| `--coverStyle` | 封面样式：text / rank / review / guide / compare / product | 否 |
-| `--coverColor` | 封面颜色：blue / red / green / orange / purple | 否 |
-| `--cover` | 本地封面路径 | 否 |
-| `--coverUrl` | 已有 OSS URL | 否 |
+| `--auto-cover` / `--autoCover` | 自动调用 GEO 平台生成封面 | 否 |
+| `--cover-url` / `--coverUrl` | 已有 OSS 图片 URL | 否 |
 | `--productId` | 产品 ID | 否（从配置读取） |
 | `--companyId` | 公司 ID | 否（从配置读取） |
 | `--tags` | 标签（逗号分隔） | 否 |
 | `--summary` | 文章摘要（不提供则自动提取前 200 字） | 否 |
+| `--dry-run` | 只检查编码和 payload，不上传 | 否 |
+| `--allow-suspicious` | 允许疑似乱码内容继续上传，谨慎使用 | 否 |
 
 * 使用 `--file` 时 title 和 content 自动从文件提取。
 
-### 封面样式选择建议
+### 封面生成说明
 
-| 文章类型 | 推荐样式 | 推荐颜色 |
-|---------|---------|---------|
-| 排行榜 | rank | red / blue |
-| 产品评测 | review | blue / purple |
-| 使用攻略 | guide | green / orange |
-| 对比评测 | compare | blue / red |
-| 产品介绍 | product | 品牌色 |
-| 资讯文章 | text | blue / green |
+`--auto-cover` 会调用 `geo-content-production/scripts/generate_cover.js`，底层使用 GEO 平台 `/v1/text-to-img`，默认 `model=v2`、`aspectRatio=16:9`，返回可发布的图片 URL。
+
+如果已有封面图，优先传 `--cover-url` 使用 OSS/HTTPS 图片地址；不要传 SVG。
 
 ---
 
@@ -150,7 +179,7 @@ curl -X POST "${baseUrl}/v1/article" \
 
 ```bash
 curl -X POST "${baseUrl}/v1/oss/pre" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Referer: ${referer}" \
   -d '{"fileName":"xxx.png", "businessType":2, "groupId":1, "from":1, "url":""}'
@@ -175,12 +204,14 @@ curl -X POST "${host}" \
 
 ### URL 镜像转存（POST /v1/oss/translate-url）
 
+> 默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`，避免 shell 转义问题。
+
 将第三方图片 URL 批量转存为 OSS 镜像：
 
 ```bash
 # 注意：参数名为 sourceUrls（不是 urls）
 curl -X POST "${baseUrl}/v1/oss/translate-url" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Referer: ${referer}" \
   -d '{"sourceUrls":["https://example.com/img1.png","https://example.com/img2.jpg"]}'
@@ -207,7 +238,7 @@ curl -X POST "${baseUrl}/v1/oss/translate-url" \
 | `--company-id` | 公司 ID 筛选 | 从配置读取 |
 | `--format` | 输出格式：table / json / detail | table |
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${productId}、${companyId} 从 geo-config.json 的 defaults 读取
@@ -235,13 +266,13 @@ curl -X GET "${baseUrl}/v1/article?page=1&limit=30&productId=${productId}&compan
 | 1 | 审核通过（发布） |
 | 2 | 审核中 |
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${articleId} 为实际文章 ID
 curl -X POST "${baseUrl}/v1/article/status" \
   -H "Authorization: Bearer ${openKey}" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -H "Referer: ${referer}" \
   -d "{\"ids\":[${articleId}],\"status\":1}"
 ```
@@ -266,7 +297,7 @@ curl -X POST "${baseUrl}/v1/article/status" \
 | `--force` | 强制删除（不二次确认） | false |
 | `--dry-run` | 模拟运行，不实际删除 | false |
 
-### curl 示例
+### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
 ```bash
 # ${articleId} 为实际文章 ID
@@ -361,21 +392,33 @@ GEO API 在参数错误（如 Referer 不匹配）时可能返回 `statusCode: 0
 ### 示例
 
 ```bash
-# 1. 创建文章
-curl -s -X POST "${baseUrl}/v1/article" ... -d '{"title":"测试文章",...}'
+# 1. 创建文章；脚本会自动 UTF-8 检测、提交和回查
+node geo-article/scripts/upload_article.js \
+  --file "文章.md" \
+  --auto-cover \
+  --json-out "upload-result.json"
 
-# 2. 立即回查确认（Write-then-Read）
-curl -s -X GET "${baseUrl}/v1/article?page=1&limit=5&productId=${productId}&companyId=${companyId}" \
-  -H "Authorization: Bearer ${openKey}" -H "Referer: ${referer}"
-# → 检查返回列表中是否包含刚创建的文章，封面 URL 是否正确
+# 2. 删除文章前先 dry-run，再加 --force 真实删除
+node geo-article/scripts/delete_articles.js --id ${articleId} --dry-run
+node geo-article/scripts/delete_articles.js --id ${articleId} --force
+```
 
-# 3. 删除文章
-curl -s -X DELETE "${baseUrl}/v1/article/${articleId}" ...
+---
 
-# 4. 立即回查确认（Write-then-Read）
-curl -s -X GET "${baseUrl}/v1/article?page=1&limit=30&productId=${productId}&companyId=${companyId}" \
-  -H "Authorization: Bearer ${openKey}" -H "Referer: ${referer}"
-# → 确认该文章已不在列表中
+## 中文乱码排查
+
+如果上传后出现乱码，按顺序检查：
+
+1. 本地 `.md` 文件必须是 UTF-8。Windows 上不要用 ANSI/GBK 保存。
+2. 使用 `node geo-article/scripts/upload_article.js --file "文章.md" --dry-run` 检查。
+3. dry-run 出现 `疑似乱码/错误编码` 时，先转换源文件编码，不要上传。
+4. 不要把中文正文直接塞进 `curl -d` 或 PowerShell 单行 JSON。
+5. 上传后以脚本回查结果为准；如果回查标题或内容疑似乱码，应立即停止批量上传。
+
+Windows PowerShell 如需手工生成 JSON 文件，建议显式使用 UTF-8：
+
+```powershell
+Set-Content -Path payload.utf8.json -Value $json -Encoding utf8
 ```
 
 ---

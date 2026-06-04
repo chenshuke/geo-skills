@@ -6,6 +6,27 @@
 
 ---
 
+## [3.3.0] - 2026-06-04
+
+### 新增
+- 新增 `GEO-SKILLS-EXECUTION-PROTOCOL.md` 和 `QUICK_COMMANDS.md`，统一不同 AI 模型/系统的默认执行方式。
+- 新增 `geo-runtime/scripts/api_request.js`，作为跨平台、UTF-8 安全的通用 GEO API 调用工具，替代默认 curl 流程。
+- 新增 `geo-config/scripts/setup_defaults.js`，用于学员首次安装后获取公司/产品列表并写入默认 `companyId/productId`。
+- 新增 `geo-article/scripts/upload_article.js`，支持中文 Markdown UTF-8 检测、疑似乱码拦截、上传后回查。
+- 新增 `geo-indexing/scripts/import_questions.js`，支持本地问题导入自定义 AI 收录任务、产品主题库，以及主题生成任务搜索问题选择插入。
+- 新增 `geo-content-archive/scripts/project_paths.js`，统一所有 GEO 技能产物的标准输出路径，确保文件在创建时直接落到正确目录。
+
+### 优化
+- 文生图/封面默认使用 GEO `/v1/text-to-img`，默认 `model=v2`，不再使用本地 SVG 封面 fallback。
+- `doctor.js` 增强 Node 版本、默认 companyId/productId、核心脚本语法和 API 连通性检查。
+- 文生图轮询改为较短初始间隔 + 退避，减少等待体感同时控制 API 压力。
+- 文档统一强调 Node/no-Python 默认路径、写操作 dry-run、GET/list 回查和中文上传防乱码。
+- 所有会产出文件的 GEO 技能增加“输出归位硬规则”，要求知识库、关键词方案、标题方案、文章、审核记录、发布记录和分析报告直接写入项目标准目录。
+
+### 修复
+- 统一 JSON 请求头为 `application/json; charset=utf-8`，降低中文内容乱码风险。
+- 修正 Windows/macOS 路径与 file URL 兼容问题说明。
+
 ## [3.2.0] - 2026-05-16
 
 ### 新增
