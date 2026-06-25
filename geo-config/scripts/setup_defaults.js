@@ -146,7 +146,7 @@ async function main() {
     if (!name) throw new Error('创建公司需要 --company-name。');
     const payload = { name, description };
     if (dryRun) {
-      const report = { configPath: configPath(), openKey: mask(cfg.geo.openKey), createPreview: { endpoint: `${baseUrl(cfg)}/v1/geo-company`, payload }, companies, next: '确认无误后，把 --dry-run 改为 --force 创建公司。' };
+      const report = { configPath: configPath(), openKey: mask(cfg.geo.openKey), createPreview: { endpoint: '/v1/geo-company', payload }, companies, next: '确认无误后，把 --dry-run 改为 --force 创建公司。' };
       if (args.json) console.log(JSON.stringify(report, null, 2)); else printHuman(report);
       return;
     }
@@ -192,7 +192,7 @@ async function main() {
     if (![1, 2].includes(type)) throw new Error('--product-type 只能是 1 或 2。');
     const payload = { name, keyword, type, targetWord, companyId: Number(companyId) };
     if (dryRun) {
-      const report = { configPath: configPath(), openKey: mask(cfg.geo.openKey), companies, selectedCompanyId: companyId, createPreview: { endpoint: `${baseUrl(cfg)}/v1/geo-product`, payload }, next: '确认无误后，把 --dry-run 改为 --force 创建产品。' };
+      const report = { configPath: configPath(), openKey: mask(cfg.geo.openKey), companies, selectedCompanyId: companyId, createPreview: { endpoint: '/v1/geo-product', payload }, next: '确认无误后，把 --dry-run 改为 --force 创建产品。' };
       if (args.json) console.log(JSON.stringify(report, null, 2)); else printHuman(report);
       return;
     }

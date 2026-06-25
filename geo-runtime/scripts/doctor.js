@@ -51,7 +51,7 @@ function checkScript(rel) {
 }
 function configHealth(cfg) {
   const problems = [];
-  if (!cfg.geo.baseUrl) problems.push('baseUrl empty');
+  if (!cfg.geo.baseUrl) problems.push('platform endpoint empty');
   if (!cfg.geo.openKey) problems.push('openKey empty');
   if (!cfg.geo.referer) problems.push('referer empty');
   if (!Number(cfg.defaults.companyId)) problems.push('defaults.companyId is 0/empty');
@@ -106,7 +106,7 @@ async function main() {
       path: configPath(),
       exists: fs.existsSync(configPath()),
       openKey: mask(cfg.geo.openKey),
-      baseUrl: cfg.geo.baseUrl,
+      platformConfigured: Boolean(cfg.geo.baseUrl),
       referer: cfg.geo.referer,
       defaults: cfg.defaults,
     },

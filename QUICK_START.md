@@ -137,7 +137,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 ```json
 {
   "geo": {
-    "baseUrl": "https://nbgeo.aimusiclj.com",
+    "baseUrl": "<内部接口地址>",
     "openKey": "your-openKey-here",
     "referer": "https://geo.bihuoai.com/"
   },

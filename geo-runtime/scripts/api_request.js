@@ -92,6 +92,10 @@ function redactHeaders(h) {
   if (out.Authorization) out.Authorization = `Bearer ${mask(String(out.Authorization).replace(/^Bearer\s+/i, ''))}`;
   return out;
 }
+function safeUrlForDisplay(url) {
+  try { const u = new URL(url); return `${u.pathname}${u.search}`; }
+  catch { return String(url || '').replace(/^https?:\/\/[^/]+/i, ''); }
+}
 async function main() {
   const args = parseArgs(process.argv);
   if (args.help || args.h) { usage(); return; }
@@ -107,7 +111,7 @@ async function main() {
   const bodyJson = parseMaybeJson(bodyText);
   const h = { ...geoHeaders(cfg), Accept: 'application/json' };
   if (bodyText !== undefined) h['Content-Type'] = 'application/json; charset=utf-8';
-  const preview = { method, url, headers: redactHeaders(h), body: bodyJson };
+  const preview = { method, path: safeUrlForDisplay(url), headers: redactHeaders(h), body: bodyJson };
   if (args['dry-run'] || args.dryRun) {
     console.log(JSON.stringify({ dryRun: true, request: preview }, null, 2));
     return;

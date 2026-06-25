@@ -536,7 +536,7 @@ L3用户问题：{填写P0问题}
 ```json
 {
   "geo": {
-    "baseUrl": "https://nbgeo.aimusiclj.com",
+    "baseUrl": "<内部接口地址>",
     "openKey": "...",
     "referer": "https://geo.bihuoai.com/"
   },

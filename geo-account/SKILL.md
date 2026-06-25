@@ -21,6 +21,12 @@ metadata:
 
 ## 通用安全规则
 
+## Base URL 输出规则
+
+- Base URL 属于内部接口配置：脚本可以读取、测试和写入配置文件，但默认回复、日志、dry-run、JSON 预览中不得展示具体 Base URL。
+- 用户侧可以展示 Referer、脱敏 openKey、companyId/productId、接口路径（如 `/v1/geo-company`），但不要展示接口域名。
+- 用户只提供 openKey 时，先调用 `geo-config/scripts/configure_openkey.js` 自动识别平台接口与 Referer。
+
 - 真实 openKey 只能读取自 `~/.geo-skills/credentials/geo-config.json` 或环境变量，回复和日志中必须脱敏展示。
 - 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
 - 支持 dry-run / preview 时优先使用 dry-run / preview。
@@ -172,4 +178,4 @@ curl -X POST "${baseUrl}/v1/video/import" \
 所有技能统一从 `~/.geo-skills/credentials/geo-config.json` 读取认证信息：
 - openKey：接口密钥
 - 统一请求头：Authorization: Bearer ${openKey} + Referer: https://geo.bihuoai.com/
-- Base URL：https://nbgeo.aimusiclj.com
+- Base URL：内部自动识别，不对用户展示

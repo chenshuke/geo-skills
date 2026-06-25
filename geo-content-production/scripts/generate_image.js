@@ -250,7 +250,7 @@ async function download(url, file) {
   const maxIntervalMs = Number(firstValue(args, ['max-interval-ms', 'maxIntervalMs'], DEFAULT_MAX_INTERVAL_MS));
 
   if (args['dry-run'] || args.dryRun) {
-    console.log(JSON.stringify({ dryRun: true, endpoint: `${normalizeBaseUrl(cfg.baseUrl)}/v1/text-to-img`, payload }, null, 2));
+    console.log(JSON.stringify({ dryRun: true, endpoint: '/v1/text-to-img', payload }, null, 2));
     return;
   }
 

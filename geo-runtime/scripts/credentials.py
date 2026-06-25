@@ -35,6 +35,14 @@ DEFAULT_GEO_REFERER = "https://geo.bihuoai.com/"
 DEFAULT_FANGXIN_BASE_URL = "https://fangxinapi.com"
 
 
+def _geo_profile_name() -> str:
+    raw = (os.getenv("GEO_PROFILE") or os.getenv("GEO_CONFIG_PROFILE") or "").strip()
+    if not raw:
+        return ""
+    safe = "".join(ch if ch.isalnum() or ch in "_.-" else "_" for ch in raw).lstrip(".")
+    return safe
+
+
 def mask_secret(value: str, keep: int = 4) -> str:
     """Return a display-safe masked secret."""
     if not value:
@@ -75,6 +83,9 @@ def candidate_geo_config_files() -> list[Path]:
     explicit = os.getenv("GEO_CONFIG_FILE") or os.getenv("GEO_CONFIG_PATH")
     if explicit:
         candidates.append(Path(explicit).expanduser())
+    profile = _geo_profile_name()
+    if profile:
+        candidates.append(CREDENTIALS_DIR / f"geo-config.{profile}.json")
     candidates.extend([
         GEO_CONFIG_FILE,  # ~/.geo-skills/credentials/geo-config.json
         SUITE_ROOT / "geo-config" / "geo-config.json",  # bundled template/fallback
@@ -97,7 +108,7 @@ def get_geo_config() -> Dict:
     """
     config = {
         "base_url": os.getenv("GEO_BASE_URL", DEFAULT_GEO_BASE_URL),
-        "open_key": os.getenv("GEO_OPEN_KEY", ""),
+        "open_key": os.getenv("GEO_OPENKEY") or os.getenv("GEO_OPEN_KEY", ""),
         "referer": os.getenv("GEO_REFERER", DEFAULT_GEO_REFERER),
         "company_id": int(os.getenv("GEO_COMPANY_ID", "0") or "0"),
         "product_id": int(os.getenv("GEO_PRODUCT_ID", "0") or "0"),

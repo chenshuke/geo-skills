@@ -1,6 +1,6 @@
 ---
 name: geo-config
-description: "GEO 配置和首次开通向导技能。Use when the user says 配置/更新 openKey/API 密钥、设置 baseUrl/referer、获取公司和产品列表、设置 companyId/productId、companyId 为 0、productId 为 0、首次安装后配置账号、创建公司、创建产品、选择默认公司/产品、查看或重置 ~/.geo-skills/credentials/geo-config.json. Do not use for article upload or publishing."
+description: "GEO 配置和首次开通向导技能。Use when the user says 配置/更新 openKey/API 密钥、自动识别 Base URL/referer、设置 baseUrl/referer、获取公司和产品列表、设置 companyId/productId、companyId 为 0、productId 为 0、首次安装后配置账号、创建公司、创建产品、选择默认公司/产品、查看或重置 ~/.geo-skills/credentials/geo-config.json. Do not use for article upload or publishing."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
@@ -21,6 +21,12 @@ metadata:
 
 ## 通用安全规则
 
+## Base URL 输出规则
+
+- Base URL 属于内部接口配置：脚本可以读取、测试和写入配置文件，但默认回复、日志、dry-run、JSON 预览中不得展示具体 Base URL。
+- 用户侧可以展示 Referer、脱敏 openKey、companyId/productId、接口路径（如 `/v1/geo-company`），但不要展示接口域名。
+- 用户只提供 openKey 时，先调用 `geo-config/scripts/configure_openkey.js` 自动识别平台接口与 Referer。
+
 - 真实 openKey 只能读取自 `~/.geo-skills/credentials/geo-config.json` 或环境变量，回复和日志中必须脱敏展示。
 - 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
 - 支持 dry-run / preview 时优先使用 dry-run / preview。
@@ -33,6 +39,7 @@ metadata:
 
 - 查看当前配置
 - 更新 openKey（解决密钥失效问题）
+- 自动识别 Base URL + Referer：自动测试新旧 Base URL，并优先测试 `https://geo.bihuogeo.com`，失败后回退 `https://geo.bihuoai.com`
 - 更新默认 companyId / productId
 - 首次使用时自动获取公司/产品列表，引导学员选择并写入 defaults
 - 如果账号下没有公司/产品，可在用户确认后创建公司和产品
@@ -48,7 +55,7 @@ metadata:
 ```json
 {
   "geo": {
-    "baseUrl": "https://nbgeo.aimusiclj.com",
+    "baseUrl": "<内部接口地址>",
     "openKey": "your-openKey-here",
     "referer": "https://geo.bihuoai.com/"
   },
@@ -61,13 +68,90 @@ metadata:
 
 | 配置项 | 说明 | 示例值 |
 |--------|------|--------|
-| geo.baseUrl | API 基础地址 | https://nbgeo.aimusiclj.com |
+| geo.baseUrl | API 基础地址 | 内部自动识别，不对用户展示 |
 | geo.openKey | 接口密钥（管理平台 > 密钥管理 > 创建） | sk-xxxxxxxx |
 | geo.referer | 请求来源标识 | https://geo.bihuoai.com/ |
 | defaults.companyId | 默认公司 ID（0 表示未设置） | 从 API 获取 |
 | defaults.productId | 默认产品 ID（0 表示未设置） | 从 API 获取 |
 
 > openKey 获取方式：登录 GEO 管理平台 > 密钥管理 > 创建新密钥
+
+### openKey 自动识别 Base URL + Referer（双平台无感适配）
+
+当用户直接提供新的 openKey，且没有明确指定 Base URL / Referer 时，必须优先使用脚本自动测试 Base URL + Referer，而不是让用户手动判断：
+
+```bash
+# 相对于 GEO Skills Suite 根目录
+node geo-config/scripts/configure_openkey.js --open-key '<用户提供的openKey>' --force
+```
+
+默认测试顺序：
+
+Base URL 候选：
+
+1. 当前配置中的 `baseUrl`
+2. `<内部接口地址>`
+3. `<内部接口地址>`
+
+Referer 候选：
+
+1. `https://geo.bihuogeo.com`
+2. `https://geo.bihuoai.com`
+
+脚本使用 `GET /v1/geo-company?page=1&limit=1` 验证 openKey + Base URL + Referer 组合是否可用；第一个成功的组合会写入 `~/.geo-skills/credentials/geo-config.json`。
+
+安全要求：
+
+- 回复和日志中只能展示脱敏后的 openKey。
+- 如果 openKey、Base URL 或 Referer 发生变化，默认将 `defaults.companyId/productId` 重置为 `0`，避免沿用另一个平台的公司/产品 ID。
+- Base URL + Referer 识别成功后，继续执行 `setup_defaults.js --list` 或 `--auto` 获取并选择默认公司/产品。
+- 如果所有 Base URL + Referer 组合都失败，提示用户检查 openKey、baseUrl 或平台白名单，不要编造配置。
+
+可选预览：
+
+```bash
+node geo-config/scripts/configure_openkey.js --open-key '<用户提供的openKey>' --dry-run
+```
+
+
+### 多 openKey / 多平台 Profile
+
+当用户有多个 openKey 时，不要反复覆盖同一个默认配置；优先把每个 openKey 保存成独立 profile：
+
+```bash
+# 为平台 A 保存一个 profile，并自动识别 Base URL/referer
+node geo-config/scripts/configure_openkey.js --profile platform-a --open-key '<平台A openKey>' --force
+
+# 为平台 B 保存一个 profile，并自动识别 Base URL/referer
+node geo-config/scripts/configure_openkey.js --profile platform-b --open-key '<平台B openKey>' --force
+```
+
+profile 会保存到：
+
+```text
+~/.geo-skills/credentials/geo-config.platform-a.json
+~/.geo-skills/credentials/geo-config.platform-b.json
+```
+
+后续调用任何 GEO 技能时，通过环境变量选择 profile：
+
+```bash
+GEO_PROFILE=platform-a node geo-config/scripts/setup_defaults.js --list
+GEO_PROFILE=platform-b node geo-config/scripts/setup_defaults.js --list
+```
+
+如果不设置 `GEO_PROFILE`，仍然读取默认配置：
+
+```text
+~/.geo-skills/credentials/geo-config.json
+```
+
+Profile 规则：
+
+- `GEO_PROFILE=<name>` 会读取 `~/.geo-skills/credentials/geo-config.<name>.json`。
+- `GEO_CONFIG_FILE=/absolute/path/config.json` 优先级更高，可显式指定任意配置文件。
+- 每个 profile 都有独立的 `openKey`、`referer`、`defaults.companyId`、`defaults.productId`。
+- 用户只提供多个 openKey 但没给 profile 名时，AI 可以根据平台或用途命名，如 `bihuogeo`、`bihuoai`、`client-a`、`client-b`，但回复中不得展示完整 openKey。
 
 首次初始化用户级配置模板（如当前环境支持 shell）：
 
@@ -140,7 +224,7 @@ productId = defaults.productId
 | `--referer` | 新的 Referer 来源 | 否 | https://geo.bihuoai.com/ |
 | `--company-id` | 默认公司 ID | 否 | 0 |
 | `--product-id` | 默认产品 ID | 否 | 0 |
-| `--api-url` | API 基础地址 | 否 | https://nbgeo.aimusiclj.com |
+| `--api-url` | API 基础地址 | 否 | 内部参数，默认自动识别 |
 
 ---
 
@@ -155,9 +239,14 @@ productId = defaults.productId
 ### action=update（更新配置）
 
 1. 读取当前 `~/.geo-skills/credentials/geo-config.json`
-2. 更新指定配置项（仅更新用户指定的字段，其他保持不变）
-3. 写回文件
-4. 显示更新结果
+2. 如果用户提供了 openKey 但没有明确指定 referer：
+   - 运行 `node geo-config/scripts/configure_openkey.js --open-key '<用户提供的openKey>' --force`
+   - 脚本自动测试当前 Base URL、`<内部接口地址>`、`<内部接口地址>`
+   - 每个 Base URL 下先测试 `https://geo.bihuogeo.com`，失败后回退 `https://geo.bihuoai.com`
+   - 识别成功后写回 `openKey`、`baseUrl`、`referer`，并将 defaults 重置为 `0/0`
+3. 如果用户明确指定了 referer/baseUrl/companyId/productId，则仅更新用户指定字段
+4. 写回文件
+5. 显示更新结果（openKey 必须脱敏）
 
 ### action=reset（重置配置）
 
@@ -239,8 +328,10 @@ node geo-config/scripts/setup_defaults.js \
 更新 openKey 时，直接对 AI 说：
 
 ```text
-使用 geo-config，把我的 GEO openKey 更新为“新的openKey”，并更新到用户级配置文件。
+使用 geo-config，把我的 GEO openKey 更新为“新的openKey”，并自动识别 Base URL 和 Referer。
 ```
+
+AI 助手收到 openKey 后应自动执行 `configure_openkey.js`，自动测试 Base URL + Referer 组合；当前支持新平台 `<内部接口地址>` 和旧平台 `<内部接口地址>`。
 
 ---
 
