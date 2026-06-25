@@ -136,3 +136,9 @@ node geo-article/scripts/upload_article.js --file "文章.md" --cover-url "https
 node geo-indexing/scripts/import_questions.js --target indexing-custom --file "questions.md" --brand "品牌名" --dry-run
 node geo-indexing/scripts/import_questions.js --target product-topic --file "deep_questions.md" --tags "深层用户问题,手动导入" --dry-run
 ```
+
+## 公开技能包脱敏规则
+
+- 公开仓库、课堂安装包和技能示例中不得出现真实客户名称、客户案例、客户项目路径或客户品牌别名。
+- 示例统一使用 `示例品牌A / 示例品牌B / 示例品牌C`、`竞品A / 竞品B`、`某某科技有限公司` 等占位。
+- 如果需要说明客户案例方法论，只描述结构和字段，不写真实客户名、真实数据或可反查项目线索。

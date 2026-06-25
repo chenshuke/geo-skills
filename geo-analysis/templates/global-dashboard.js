@@ -263,9 +263,9 @@
     html += '<div style="margin-top:20px;padding:14px 18px;background:#f8f9fa;border-radius:10px;">';
     html += '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">🚀 快速操作</div>';
     html += '<div style="font-size:12px;color:#666;line-height:2;">';
-    html += '• <code>/geo-project-dashboard --project 多耐 --action create</code> — 创建/更新多耐仪表盘<br>';
-    html += '• <code>/geo-project-dashboard --project 海顿 --action create</code> — 创建/更新海顿仪表盘<br>';
-    html += '• <code>/geo-project-dashboard --project 贝易寿 --action create</code> — 创建/更新贝易寿仪表盘<br>';
+    html += '• <code>/geo-project-dashboard --project 示例品牌B --action create</code> — 创建/更新示例品牌B仪表盘<br>';
+    html += '• <code>/geo-project-dashboard --project 示例品牌A --action create</code> — 创建/更新示例品牌A仪表盘<br>';
+    html += '• <code>/geo-project-dashboard --project 示例品牌C --action create</code> — 创建/更新示例品牌C仪表盘<br>';
     html += '• <code>/geo-project-dashboard --action global</code> — 刷新全局视图';
     html += '</div></div>';
 

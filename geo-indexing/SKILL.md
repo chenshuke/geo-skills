@@ -192,7 +192,7 @@ node geo-indexing/scripts/import_questions.js \
 
 ```json
 {
-  "data": "燃气壁挂炉推荐[海顿]",
+  "data": "燃气壁挂炉推荐[示例品牌A]",
   "platforms": ["deepseek", "doubao", "yuanbao", "qwen", "yiyan"],
   "companyId": ${companyId}
 }
@@ -202,7 +202,7 @@ node geo-indexing/scripts/import_questions.js \
 
 ```json
 {
-  "data": "减震器品牌推荐[多耐|DN]",
+  "data": "减震器品牌推荐[示例品牌B|品牌B英文名]",
   "platforms": ["deepseek", "doubao"],
   "companyId": ${companyId}
 }
@@ -239,7 +239,7 @@ curl -X POST "${baseUrl}/v1/ai-indexing-task/custom/import" \
   -H "Referer: ${referer}" \
   -H "Content-Type: application/json; charset=utf-8" \
   -d "{
-    \"data\": \"燃气壁挂炉推荐[海顿]\",
+    \"data\": \"燃气壁挂炉推荐[示例品牌A]\",
     \"platforms\": [\"deepseek\", \"doubao\", \"yuanbao\", \"qwen\", \"yiyan\", \"kimi\", \"zhipu\", \"chatgpt\", \"gemini\"],
     \"companyId\": ${companyId}
   }"
@@ -366,7 +366,7 @@ curl -s "${baseUrl}/v1/ai-indexing/custom?page=1&limit=30&companyId=${companyId}
   -H "Referer: ${referer}"
 
 # 按平台 + 关键词筛选
-curl -s "${baseUrl}/v1/ai-indexing/custom?platform=deepseek&topic=多耐&companyId=${companyId}" \
+curl -s "${baseUrl}/v1/ai-indexing/custom?platform=deepseek&topic=示例品牌B&companyId=${companyId}" \
   -H "Authorization: Bearer ${openKey}" \
   -H "Referer: ${referer}"
 ```
