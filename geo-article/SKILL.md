@@ -79,7 +79,7 @@ node geo-article/scripts/upload_article.js --file "文章.md" --auto-cover
 
 1. 以 UTF-8 读取本地 Markdown。
 2. 检测非法 UTF-8 和常见 mojibake（如 `ä¸­æ–‡`、`锟斤拷`、`�`）。
-3. 用 `Content-Type: application/json; charset=utf-8` 提交。
+3. 用 `Content-Type: application/json; charset=utf-8` 提交，并使用 `summaries` 数组字段。
 4. 上传后立即 GET 回查标题/内容，发现疑似乱码会警告。
 5. 支持 Windows/macOS 路径和中文文件名。
 
@@ -98,10 +98,12 @@ node geo-article/scripts/upload_article.js --file "文章.md" --auto-cover
   "companyId": ${companyId},
   "coverImageUrl": "https://example.com/cover.jpg",
   "content": "文章正文（支持 Markdown）",
-  "summary": "文章摘要",
+  "summaries": ["文章摘要"],
   "tags": ["标签1", "标签2"]
 }
 ```
+
+> **字段兼容性重点**：当前 GEO 文章创建接口需要 `summaries` 数组，不要发送旧字段 `summary`。`upload_article.js` 会把 `--summary` 或 frontmatter `summary` 自动转换为 `summaries: [摘要]`；即使没有摘要也保留 `summaries: []`，避免平台返回“请求参数错误”。
 
 ### 推荐上传命令（UTF-8 安全）
 
@@ -141,7 +143,7 @@ curl -X POST "${baseUrl}/v1/article" \
 
 ### 注意事项
 
-- 标题建议 10-50 字，内容不少于 500 字，摘要建议 50-200 字
+- 标题建议 10-50 字，内容不少于 500 字，摘要建议 50-200 字；payload 字段必须是 `summaries` 数组
 - 标签建议不超过 5 个
 - 支持从 .md 文件读取内容（首个 H1 标题作为文章标题）
 
@@ -163,7 +165,8 @@ curl -X POST "${baseUrl}/v1/article" \
 | `--productId` | 产品 ID | 否（从配置读取） |
 | `--companyId` | 公司 ID | 否（从配置读取） |
 | `--tags` | 标签（逗号分隔） | 否 |
-| `--summary` | 文章摘要（不提供则自动提取前 200 字） | 否 |
+| `--summary` | 文章摘要；脚本会转换为 `summaries: [摘要]` | 否 |
+| `--summaries` | 多摘要数组；支持 JSON 数组或用 `|` 分隔 | 否 |
 | `--dry-run` | 只检查编码和 payload，不上传 | 否 |
 | `--allow-suspicious` | 允许疑似乱码内容继续上传，谨慎使用 | 否 |
 

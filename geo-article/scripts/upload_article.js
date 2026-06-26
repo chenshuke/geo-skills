@@ -38,7 +38,8 @@ Options:
   --file <path>               Markdown file, read as UTF-8
   --title <text>              Article title; defaults to first H1 or frontmatter title
   --content <text>            Article content if --file is not used
-  --summary <text>            Summary; defaults to content excerpt
+  --summary <text>            Article summary; script sends it as summaries array
+  --summaries <a,b>           Optional summaries array, comma-separated; overrides --summary
   --tags <a,b,c>              Tags, comma-separated
   --cover-url <url>           coverImageUrl
   --auto-cover                Generate cover through GEO /v1/text-to-img and use ossUrls[0]
@@ -94,6 +95,17 @@ function excerpt(content, max = 200) {
     .slice(0, max);
 }
 function parseTags(v) { return String(v || '').split(/[,，]/).map(s => s.trim()).filter(Boolean).slice(0, 5); }
+function parseSummaries(v) {
+  if (Array.isArray(v)) return v.map(x => String(x).trim()).filter(Boolean).slice(0, 5);
+  const raw = String(v || '').trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map(x => String(x).trim()).filter(Boolean).slice(0, 5);
+  } catch {}
+  // Summary text often contains Chinese commas; only split when user explicitly passes | as separator.
+  return raw.includes('|') ? raw.split('|').map(s => s.trim()).filter(Boolean).slice(0, 5) : [raw];
+}
 function suspiciousMojibake(text) {
   const patterns = [
     /锟斤拷|烫烫|屯屯|�/,
@@ -184,9 +196,10 @@ function summarizeCheck(title, content, uploaded) {
   if (!title) throw new Error('缺少标题：请在 Markdown 中添加一级标题 # 标题，或传 --title。');
   const content = raw.trim();
   const summary = first(args, ['summary'], fm.summary || excerpt(content));
+  const summaries = parseSummaries(first(args, ['summaries', 'summaries-json', 'summariesJson'], summary));
   const tags = parseTags(first(args, ['tags'], fm.tags || ''));
 
-  const suspicious = suspiciousMojibake(`${title}\n${summary}\n${content}`);
+  const suspicious = suspiciousMojibake(`${title}\n${summaries.join('\n')}\n${content}`);
   if (suspicious.length && !args['allow-suspicious'] && !args.allowSuspicious) {
     throw new Error(`检测到疑似乱码/错误编码模式：${suspicious.join(', ')}\n请确认源文件已保存为 UTF-8，或确认无误后加 --allow-suspicious。`);
   }
@@ -194,12 +207,17 @@ function summarizeCheck(title, content, uploaded) {
   let coverImageUrl = first(args, ['cover-url', 'coverUrl'], fm.coverImageUrl || fm.cover || '');
   if (!coverImageUrl && (args['auto-cover'] || args.autoCover)) coverImageUrl = await generateCover(args, title);
 
-  const payload = { title, productId, companyId, coverImageUrl, content, summary, tags };
-  Object.keys(payload).forEach(k => (payload[k] === '' || payload[k] == null || (Array.isArray(payload[k]) && payload[k].length === 0)) && delete payload[k]);
+  // Current GEO article API expects summaries array. Do not send legacy `summary`,
+  // otherwise the platform can return 请求参数错误. Keep summaries even when empty.
+  const payload = { title, productId, companyId, coverImageUrl, content, summaries, tags };
+  Object.keys(payload).forEach(k => {
+    if (k === 'summaries') return;
+    if (payload[k] === '' || payload[k] == null || (Array.isArray(payload[k]) && payload[k].length === 0)) delete payload[k];
+  });
 
   const localCheck = { title, bytes: Buffer.byteLength(JSON.stringify(payload), 'utf8'), cjkCount: countCjk(`${title}\n${content}`), suspicious };
   if (args['dry-run'] || args.dryRun) {
-    console.log(JSON.stringify({ dryRun: true, endpoint: `${base}/v1/article`, localCheck, payloadPreview: { ...payload, content: content.slice(0, 500) + (content.length > 500 ? '...' : '') } }, null, 2));
+    console.log(JSON.stringify({ dryRun: true, endpoint: '/v1/article', localCheck, payloadPreview: { ...payload, content: content.slice(0, 500) + (content.length > 500 ? '...' : '') } }, null, 2));
     return;
   }
 
