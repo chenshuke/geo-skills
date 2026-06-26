@@ -63,7 +63,7 @@ Create input:
   --times-per-cycle <n>      interval 均分预设
   --competitor-brands <a,b>  竞品品牌数组
   --screenshot-platforms <a,b> 截图平台数组(platforms 子集)
-  --source <1|2|3>           采集模式
+  --source <1|3>             采集模式：1=本地/设备模式（默认），3=云端模式
   --enabled <true|false>     默认 true
   --run-now                  创建成功后立即执行一次
 
@@ -239,7 +239,7 @@ function createPayload(args, cfg) {
   };
   const screenshotPlatforms = splitList(first(args, ['screenshot-platforms','screenshotPlatforms'], ''));
   if (screenshotPlatforms.length) payload.screenshotPlatforms = screenshotPlatforms.filter(p => payload.platforms.includes(p));
-  const source = first(args, ['source']); if (source !== undefined) payload.source = Number(source);
+  payload.source = Number(first(args, ['source'], 1));
   const competitors = splitList(first(args, ['competitor-brands','competitorBrands'], ''));
   if (competitors.length) payload.competitorBrands = competitors;
   return payload;

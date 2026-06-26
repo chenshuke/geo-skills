@@ -144,6 +144,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
   "topics": ["2026年GEO优化服务商怎么选？", "AI搜索为什么推荐不到我的品牌？"],
   "platforms": ["deepseek", "doubao", "qwen", "kimi"],
   "scheduleConfig": { "type": "daily", "timesPerDay": 1 },
+  "source": 1,
   "enabled": true
 }
 ```
@@ -153,7 +154,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 | 字段 | 说明 |
 |---|---|
 | `screenshotPlatforms` | 截图平台数组，必须是 `platforms` 子集 |
-| `source` | 采集模式：`1` 设备、`3` moliapi（按平台定义） |
+| `source` | 采集模式：`1` 本地/设备模式（默认），`3` 云端模式 |
 | `competitorBrands` | 竞品品牌数组，仅用于 `(竞)` 标记 |
 
 `scheduleConfig` 支持：
@@ -164,6 +165,13 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 | `daily` | `hours` 或 `timesPerDay` |
 | `weekly` | `weekdays` + `hours` 或 `timesPerActiveDay` |
 | `interval` | `intervalDays` + `hours` 或 `timesPerCycle` |
+
+
+## 本地模式与云端模式
+
+- 默认使用本地/设备模式：`source: 1`。脚本在创建计划时会显式写入 `source=1`，用户不需要额外传参。
+- 如需云端模式，创建或更新计划时传 `--source 3`。
+- 两种模式都走同一套 Scheduled Indexing 查询接口；区别只在创建/更新计划时的 `source` 字段。
 
 ## 查询字段重点
 

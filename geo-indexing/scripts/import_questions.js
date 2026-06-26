@@ -63,7 +63,7 @@ scheduled-indexing options:
   --hours <0,8,16>       执行小时数组
   --weekdays <1,3,5>     weekly 生效，1=周一..7=周日
   --run-now              创建成功后立即执行一次
-  --source <1|2|3>       采集模式；不传则平台默认
+  --source <1|3>         采集模式：1=本地/设备模式（默认），3=云端模式
 
 product-topic options:
   --tags <a,b>           默认 深层用户问题,手动导入
@@ -256,7 +256,7 @@ function buildScheduledIndexingPayload(args, questions, companyId, productId) {
   };
   const screenshotPlatforms = parseList(first(args, ['screenshot-platforms','screenshotPlatforms'], ''));
   if (screenshotPlatforms.length) payload.screenshotPlatforms = screenshotPlatforms.filter(p => platforms.includes(p));
-  const source = first(args, ['source']); if (source !== undefined) payload.source = Number(source);
+  payload.source = Number(first(args, ['source'], 1));
   const competitorBrands = parseList(first(args, ['competitor-brands','competitorBrands'], ''));
   if (competitorBrands.length) payload.competitorBrands = competitorBrands;
   return payload;
