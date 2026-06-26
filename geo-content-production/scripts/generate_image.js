@@ -3,8 +3,13 @@
  * GEO Image Generation — use GEO platform /v1/text-to-img.
  *
  * Creates an async text-to-image task, optionally waits for completion,
- * translates returned provider URLs to GEO OSS URLs, and optionally downloads
- * images to local files. Credentials are shared with other GEO skills.
+ * uploads returned provider URLs to GEO OSS, and optionally downloads images
+ * to local files. Credentials are shared with other GEO skills.
+ *
+ * Important: Kling resourceUrls can be very long signed URLs. Direct
+ * /v1/oss/translate-url may silently return null. The default OSS strategy is
+ * therefore local-upload: download provider images to temp files, upload them
+ * with /v1/oss/pre signed POST, then verify each resulting OSS URL.
  */
 const fs = require('fs');
 const os = require('os');
@@ -51,8 +56,13 @@ Options:
   --timeout-ms <ms>              默认 ${DEFAULT_TIMEOUT_MS}
   --interval-ms <ms>             默认 ${DEFAULT_INTERVAL_MS}，会逐步退避
   --max-interval-ms <ms>         默认 ${DEFAULT_MAX_INTERVAL_MS}
+  --oss-mode <local|auto|translate|none>
+                                默认 local：先下载 provider 图片，再通过 /v1/oss/pre 上传并验证
+                                auto：先尝试 translate-url，失败/返回 null 时自动回退本地上传
+                                translate：仅使用旧 URL 镜像转存；none：不生成 OSS URL
   --translate-url / --no-translate-url
-                                默认 translate-url，将 Kling 等外部 URL 转为 GEO OSS URL
+                                兼容旧参数；--translate-url 等价 auto，--no-translate-url 等价 none
+  --keep-temp                   保留转存时下载的临时图片，默认上传后删除
   --output <file>                下载第一张结果图到指定文件
   --output-dir <dir>             下载全部结果图到目录，默认不下载
   --project-dir <dir>            GEO 项目根目录；未传 output 时自动按 artifact 写入标准目录
@@ -191,7 +201,174 @@ async function translateUrls(cfg, sourceUrls) {
   if (!Array.isArray(sourceUrls) || sourceUrls.length === 0) return [];
   const url = `${normalizeBaseUrl(cfg.baseUrl)}/v1/oss/translate-url`;
   const body = await requestJson(url, { method: 'POST', headers: headers(cfg), body: JSON.stringify({ sourceUrls }) });
-  return body.data || body;
+  return normalizeTranslatedUrls(body, sourceUrls);
+}
+
+function isHttpUrl(v) { return typeof v === 'string' && /^https?:\/\//i.test(v); }
+function pickUrl(v) {
+  if (isHttpUrl(v)) return v;
+  if (!v || typeof v !== 'object') return null;
+  return v.url || v.ossUrl || v.ossURL || v.uploadUrl || v.resourceUrl || v.src || null;
+}
+function normalizeTranslatedUrls(body, sourceUrls = []) {
+  const data = body && typeof body === 'object' && body.data !== undefined ? body.data : body;
+  if (Array.isArray(data)) return data.map(pickUrl);
+  if (data && typeof data === 'object') {
+    for (const key of ['ossUrls', 'urls', 'resourceUrls', 'list', 'data']) {
+      if (Array.isArray(data[key])) return data[key].map(pickUrl);
+    }
+    const mapped = sourceUrls.map(src => pickUrl(data[src]));
+    if (mapped.some(Boolean)) return mapped;
+    const one = pickUrl(data);
+    if (one) return [one];
+  }
+  return [];
+}
+function resolveOssMode(args) {
+  const explicit = firstValue(args, ['oss-mode', 'ossMode']);
+  if (explicit) {
+    const v = String(explicit).toLowerCase();
+    if (['local', 'auto', 'translate', 'none'].includes(v)) return v;
+    throw new Error('--oss-mode 只能是 local、auto、translate 或 none。');
+  }
+  if (args['translate-url'] === false || args.translateUrl === false) return 'none';
+  if (args['translate-url'] === true || args.translateUrl === true) return 'auto';
+  return 'local';
+}
+function contentTypeFromExt(file) {
+  const ext = path.extname(file).toLowerCase();
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.gif') return 'image/gif';
+  if (ext === '.svg') return 'image/svg+xml';
+  return 'image/png';
+}
+function extFromContentType(ct) {
+  const v = String(ct || '').toLowerCase();
+  if (v.includes('jpeg') || v.includes('jpg')) return '.jpg';
+  if (v.includes('webp')) return '.webp';
+  if (v.includes('gif')) return '.gif';
+  if (v.includes('svg')) return '.svg';
+  if (v.includes('png')) return '.png';
+  return '';
+}
+function safeFileName(name, fallback = 'geo_image.png') {
+  const ext = path.extname(name || fallback) || path.extname(fallback) || '.png';
+  const base = path.basename(name || fallback, ext).replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70) || 'geo_image';
+  return `${base}${ext}`;
+}
+async function requestOssPre(cfg, fileName) {
+  const url = `${normalizeBaseUrl(cfg.baseUrl)}/v1/oss/pre`;
+  const payload = { fileName, businessType: 2, groupId: 1, from: 1, url: '' };
+  const body = await requestJson(url, { method: 'POST', headers: headers(cfg), body: JSON.stringify(payload) });
+  const data = body.data || body;
+  if (!data || !data.host || !data.key) throw new Error('OSS 预签名失败：/v1/oss/pre 未返回 host/key。');
+  return data;
+}
+async function downloadToTemp(url, index) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`下载 provider 图片失败：image#${index + 1} HTTP ${res.status} ${res.statusText}`);
+  const contentType = res.headers.get('content-type') || '';
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (!buf.length) throw new Error(`下载 provider 图片失败：image#${index + 1} 内容为空。`);
+  const ext = extFromContentType(contentType) || extensionFromUrl(url, '.png');
+  const fileName = safeFileName(`geo_image_${Date.now()}_${index + 1}${ext}`);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'geo-img-oss-'));
+  const file = path.join(dir, fileName);
+  fs.writeFileSync(file, buf);
+  return { file, fileName, contentType: contentType || contentTypeFromExt(fileName), bytes: buf.length, tempDir: dir };
+}
+async function uploadLocalFileToOss(cfg, file, fileName) {
+  const safeName = safeFileName(fileName || path.basename(file));
+  const pre = await requestOssPre(cfg, safeName);
+  const form = new FormData();
+  for (const key of ['expire', 'policy', 'signature', 'OSSAccessKeyId', 'host', 'callback', 'dir', 'key', 'uploadUrl', 'Content-Disposition']) {
+    if (pre[key] !== undefined && pre[key] !== null) form.append(key, String(pre[key]));
+  }
+  const blob = new Blob([fs.readFileSync(file)], { type: contentTypeFromExt(safeName) });
+  form.append('file', blob, safeName);
+  const res = await fetch(pre.host, { method: 'POST', body: form });
+  const text = await res.text().catch(() => '');
+  if (!res.ok) throw new Error(`OSS 本地上传失败：HTTP ${res.status} ${res.statusText}; ${String(text).slice(0, 300)}`);
+  const finalUrl = pre.uploadUrl || (String(pre.host).replace(/\/$/, '') + '/' + String(pre.key || '').replace(/^\//, ''));
+  return { url: finalUrl, httpStatus: res.status, fileName: safeName };
+}
+async function verifyRemoteImage(url) {
+  if (!isHttpUrl(url)) throw new Error('OSS URL 无效。');
+  let res = null;
+  try { res = await fetch(url, { method: 'HEAD' }); } catch {}
+  if (res && res.ok) return { ok: true, httpStatus: res.status, method: 'HEAD' };
+  res = await fetch(url, { headers: { Range: 'bytes=0-0' } });
+  if (res.ok || res.status === 206) return { ok: true, httpStatus: res.status, method: 'GET' };
+  throw new Error(`OSS URL 验证失败：HTTP ${res.status} ${res.statusText}`);
+}
+async function uploadSourceUrlsViaLocal(cfg, sourceUrls, { keepTemp = false, onlyIndexes = null } = {}) {
+  const ossUrls = new Array(sourceUrls.length).fill(null);
+  const items = [];
+  const indexes = onlyIndexes || sourceUrls.map((_, i) => i);
+  for (const i of indexes) {
+    const src = sourceUrls[i];
+    if (!isHttpUrl(src)) throw new Error(`resourceUrls[${i}] 不是有效 URL。`);
+    const tmp = await downloadToTemp(src, i);
+    try {
+      const uploaded = await uploadLocalFileToOss(cfg, tmp.file, tmp.fileName);
+      const verification = await verifyRemoteImage(uploaded.url);
+      ossUrls[i] = uploaded.url;
+      items.push({ index: i, method: 'local-upload', fileName: uploaded.fileName, bytes: tmp.bytes, ossUrl: uploaded.url, verified: verification });
+    } finally {
+      if (!keepTemp) { try { fs.rmSync(tmp.tempDir, { recursive: true, force: true }); } catch {} }
+    }
+  }
+  return { ossUrls, items };
+}
+async function buildOssUrls(cfg, sourceUrls, { mode = 'local', keepTemp = false } = {}) {
+  const report = { mode, ossUrls: [], items: [], warnings: [] };
+  if (!Array.isArray(sourceUrls) || !sourceUrls.length || mode === 'none') return report;
+
+  let translated = [];
+  if (mode === 'auto' || mode === 'translate') {
+    try { translated = await translateUrls(cfg, sourceUrls); }
+    catch (e) { report.warnings.push(`translate-url failed: ${e.message || e}`); translated = []; }
+  }
+
+  if (mode === 'translate') {
+    report.ossUrls = translated.filter(isHttpUrl);
+    if (report.ossUrls.length !== sourceUrls.length) report.warnings.push('translate-url returned empty/null URL for one or more images. Use --oss-mode local or auto.');
+    return report;
+  }
+
+  if (mode === 'auto') {
+    const missing = [];
+    report.ossUrls = new Array(sourceUrls.length).fill(null);
+    for (let i = 0; i < sourceUrls.length; i++) {
+      const candidate = translated[i];
+      if (isHttpUrl(candidate)) {
+        try {
+          const verification = await verifyRemoteImage(candidate);
+          report.ossUrls[i] = candidate;
+          report.items.push({ index: i, method: 'translate-url', ossUrl: candidate, verified: verification });
+          continue;
+        } catch (e) {
+          report.warnings.push(`translate-url verification failed for image#${i + 1}: ${e.message || e}`);
+        }
+      } else {
+        report.warnings.push(`translate-url returned null/empty for image#${i + 1}; fallback to local upload.`);
+      }
+      missing.push(i);
+    }
+    if (missing.length) {
+      const local = await uploadSourceUrlsViaLocal(cfg, sourceUrls, { keepTemp, onlyIndexes: missing });
+      for (let i = 0; i < local.ossUrls.length; i++) if (local.ossUrls[i]) report.ossUrls[i] = local.ossUrls[i];
+      report.items.push(...local.items);
+    }
+    report.ossUrls = report.ossUrls.filter(isHttpUrl);
+    return report;
+  }
+
+  const local = await uploadSourceUrlsViaLocal(cfg, sourceUrls, { keepTemp });
+  report.ossUrls = local.ossUrls.filter(isHttpUrl);
+  report.items = local.items;
+  return report;
 }
 
 function extensionFromUrl(url, fallback = '.png') {
@@ -244,7 +421,8 @@ async function download(url, file) {
   Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
 
   const wait = args.wait !== false;
-  const translate = args['translate-url'] !== false && args.translateUrl !== false;
+  const ossMode = resolveOssMode(args);
+  const keepTemp = Boolean(args['keep-temp'] || args.keepTemp);
   const timeoutMs = Number(firstValue(args, ['timeout-ms', 'timeoutMs'], DEFAULT_TIMEOUT_MS));
   const intervalMs = Number(firstValue(args, ['interval-ms', 'intervalMs'], DEFAULT_INTERVAL_MS));
   const maxIntervalMs = Number(firstValue(args, ['max-interval-ms', 'maxIntervalMs'], DEFAULT_MAX_INTERVAL_MS));
@@ -263,7 +441,11 @@ async function download(url, file) {
     result = { ...result, ...row, row };
     if (Array.isArray(row.resourceUrls)) {
       result.resourceUrls = row.resourceUrls;
-      if (translate) result.ossUrls = await translateUrls(cfg, row.resourceUrls);
+      if (ossMode !== 'none') {
+        const oss = await buildOssUrls(cfg, row.resourceUrls, { mode: ossMode, keepTemp });
+        result.ossUrls = oss.ossUrls;
+        result.ossUpload = oss;
+      }
     }
   }
 
