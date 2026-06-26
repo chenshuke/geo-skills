@@ -23,7 +23,7 @@ metadata:
 `geo-workflow-hub` 是**GEO运营工作流**的统一入口，覆盖全流程：
 
 ```
-品牌创建 → 知识库搭建 → 关键词规划 → 标题创作 → 内容创作 → 内容审核 → 内容归档
+品牌创建 → 知识库搭建 → 关键词规划 → 标题创作 → 内容创作 → 内容审核 → 上传发布预览 → 内容归档
 ```
 
 ---
@@ -61,7 +61,7 @@ metadata:
 ---
 
 ### ⑧ geo-content — 内容全流程（总入口）
-> 关键词规划 → 标题创作 → 图片生成 → 内容审核 → 覆盖分析 → 内容优化
+> 关键词规划 → 标题创作 → 图片生成 → 内容审核 → 覆盖分析 → 内容优化 → 上传发布预览
 
 **本模块已拆分为两个子模块**：
 
@@ -69,6 +69,16 @@ metadata:
 |--------|---------|---------|
 | **⑧a geo-content-production** | 关键词规划、标题创作、图片生成、封面生成 | `使用 geo-content-production ...` |
 | **⑧b geo-content-audit** | 一致性审核、媒体就绪审核、AI检测、覆盖度检查、内容优化、合规榜单 | `使用 geo-content-audit ...` |
+| **⑧c geo-content-to-publish-pipeline** | 封面 OSS、文章上传、文章审核、账号查询、发布 dry-run、确认清单 | `使用 geo-content-to-publish-pipeline ...` |
+
+---
+
+### ⑧c geo-content-to-publish-pipeline — 内容到发布总控流水线
+> 关键词方案/标题方案/文章 → 审核 → 封面 OSS → 文章上传 → 审核通过 → 账号查询 → 发布 dry-run → 用户确认
+
+**适用场景**：学员希望一步到位完成“内容创作到发布预览”，或跨多个 GEO 技能时需要统一编排、失败记录和可重试命令。
+
+**推荐说法**：`使用 geo-content-to-publish-pipeline 帮我把这批文章上传并生成发布确认清单`
 
 ---
 
@@ -99,6 +109,7 @@ metadata:
 | "规划关键词" / "生成标题" / "写内容" | ⑧a geo-content-production |
 | "审核" / "覆盖度" / "优化内容" | ⑧b geo-content-audit |
 | "归档内容" / "整理创作文件" | ⑩ geo-content-archive |
+| "一条龙发布" / "上传并发布预览" / "从标题到发布" | ⑧c geo-content-to-publish-pipeline |
 | "证据链" / "逆向分析" / "仪表盘" | ⑨ geo-analysis |
 
 ---
@@ -118,9 +129,10 @@ metadata:
 第2步：使用 geo-knowledge 搭建知识库
 第3步：使用 geo-content-production 完成关键词、标题和内容创作
 第4步：使用 geo-content-audit 审核、覆盖度检查和优化
-第5步：使用 geo-content-archive 归档整理
-第6步：使用 geo-article 上传到平台
-第7步：使用 geo-indexing 检测收录排名
+第5步：使用 geo-content-to-publish-pipeline 生成封面、上传文章、审核通过并输出发布确认清单
+第6步：用户确认后使用 geo-content-to-publish-pipeline / geo-publish 创建发布任务
+第7步：使用 geo-content-archive 归档整理
+第8步：使用 geo-indexing 检测收录排名
 ```
 
 > **geo-workflow-hub 负责"想清楚并做出来"，geo-hub 负责"落到平台并看结果"。**
@@ -136,6 +148,7 @@ metadata:
 | 创作内容 | ✅ | ❌ |
 | 审核内容 | ✅ | ❌ |
 | 归档内容 | ✅ | ❌ |
+| 上传并生成发布确认清单 | ✅ | ✅（通过 geo-article/geo-publish） |
 | **上传文章到平台** | ❌ | ✅ |
 | **查看文章/账号** | ❌ | ✅ |
 | **检测收录排名** | ❌ | ✅ |

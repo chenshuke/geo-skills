@@ -177,6 +177,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | `geo-content` | 内容生产/审核路由入口 |
 | `geo-content-production` | 关键词、标题、文章、封面、图片生产 |
 | `geo-content-audit` | 一致性审核、媒体就绪、AI 检测、覆盖/Gap/优化 |
+| `geo-content-to-publish-pipeline` | 内容到发布总控：封面 OSS、文章上传、审核、账号查询、发布 dry-run 和确认清单 |
 | `geo-content-archive` | GEO 项目文件归档、迁移、结构校验 |
 | `geo-analysis` | 证据链、平台逆向、引用审核、PDCA 仪表盘、飞书同步 |
 
@@ -187,7 +188,8 @@ graph LR
     A[geo-workflow-hub: brand] --> B[geo-workflow-hub: knowledge]
     B --> C[geo-content-production]
     C --> D[geo-content-audit]
-    D --> E[geo-content-archive]
+    D --> P[geo-content-to-publish-pipeline]
+    P --> E[geo-content-archive]
     E --> F[geo-hub / geo-article]
     F --> G[geo-indexing]
     G --> H[geo-analysis]
@@ -232,6 +234,7 @@ node geo-content-production/scripts/generate_cover.js  # GEO 平台封面生成�
 帮我写一篇 GEO 文章并生成封面。
 帮我审核这篇文章是否适合发布。
 帮我上传这篇文章到 GEO 平台。
+使用 geo-content-to-publish-pipeline 帮我生成发布确认清单。
 帮我查询这批关键词的收录结果。
 ```
 

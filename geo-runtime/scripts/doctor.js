@@ -9,7 +9,7 @@ const suite = path.resolve(__dirname, '../..');
 const required = [
   'geo-runtime','geo-hub','geo-workflow-hub','geo-config','geo-account','geo-article',
   'geo-indexing','geo-publish','geo-brand','geo-knowledge','geo-content','geo-content-production',
-  'geo-content-audit','geo-content-archive','geo-analysis'
+  'geo-content-audit','geo-content-to-publish-pipeline','geo-content-archive','geo-analysis'
 ];
 const optional = ['geo-brand-diagnosis'];
 const coreScripts = [
@@ -25,6 +25,7 @@ const coreScripts = [
   'geo-content-production/scripts/generate_cover.js',
   'geo-content/scripts/generate_image.js',
   'geo-content/scripts/generate_cover.js',
+  'geo-content-to-publish-pipeline/scripts/pipeline.js',
   'geo-brand-diagnosis/scripts/render_geo_brand_diagnosis.js',
 ];
 function ok(status, message, extra) { return extra ? { status, message, ...extra } : { status, message }; }
