@@ -159,7 +159,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 帮我审核这篇文章的覆盖度和媒体发布准备度。
 帮我上传文章到 GEO 平台。
 帮我创建发布任务，但发布前先让我确认。
-帮我导入收录检测任务。
+帮我创建 Scheduled Indexing 定时收录计划。
 帮我分析收录结果和引用来源。
 ```
 

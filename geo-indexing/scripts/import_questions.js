@@ -3,16 +3,17 @@
  * GEO question import helper (Node/no-Python).
  *
  * Targets:
- *  - indexing-custom: import local questions to /v1/ai-indexing-task/custom/import
+ *  - scheduled-indexing: import local questions to /v1/scheduled-indexing (default)
  *  - product-topic: import local deep user questions to /v1/geo-product-topic
  *  - topic-task-select: select generated questions from /v1/topic-task/{taskId}/select
+ *  - legacy-indexing-custom: old custom indexing import (manual rollback only)
  */
 const fs = require('fs');
 const path = require('path');
 const { loadGeoConfig, headers: geoHeaders } = require('../../geo-runtime/scripts/credentials.js');
 
-const ALL_PLATFORMS = ['deepseek','doubao','yuanbao','qwen','yiyan','kimi','zhipu','chatgpt','gemini'];
-const TARGETS = new Set(['indexing-custom', 'product-topic', 'topic-task-select']);
+const ALL_PLATFORMS = ['deepseek','doubao','yuanbao','qwen','yiyan','kimi','zhipu','chatgpt','gemini','nami','grok','perp','poe'];
+const TARGETS = new Set(['scheduled-indexing', 'indexing-custom', 'product-topic', 'topic-task-select', 'legacy-indexing-custom']);
 
 function parseArgs(argv) {
   const out = { _: [] };
@@ -32,12 +33,13 @@ function parseArgs(argv) {
 function first(args, names, fallback = undefined) { for (const n of names) if (args[n] !== undefined && args[n] !== '') return args[n]; return fallback; }
 function usage() {
   console.log(`Usage:
-  node geo-indexing/scripts/import_questions.js --target indexing-custom --file questions.md --brand "品牌名" --dry-run
+  node geo-indexing/scripts/import_questions.js --target scheduled-indexing --file questions.md --name "每日收录" --dry-run
   node geo-indexing/scripts/import_questions.js --target product-topic --file questions.md --tags "深层问题,GEO" --dry-run
   node geo-indexing/scripts/import_questions.js --target topic-task-select --task-id 123 --selected-ids 0,2,5 --dry-run
 
 Targets:
-  indexing-custom    导入自定义 AI 收录任务：POST /v1/ai-indexing-task/custom/import
+  scheduled-indexing 默认：创建定时收录计划：POST /v1/scheduled-indexing
+  indexing-custom    兼容旧提示词的别名：实际也走 /v1/scheduled-indexing
   product-topic      将本地深层用户问题写入产品主题库：POST /v1/geo-product-topic
   topic-task-select  从平台主题生成任务中选择搜索问题插入：POST /v1/topic-task/{taskId}/select
 
@@ -54,10 +56,14 @@ Common options:
   --force                真实写入必须显式添加
   --json-out <file>      保存结果 JSON
 
-indexing-custom options:
-  --brand <name>         品牌名；多品牌用 | 分隔。若问题已含 [品牌] 可省略
-  --platforms <list|all> 默认 all
-  --source <1|2|3>       任务来源；不传则平台默认
+scheduled-indexing options:
+  --name <text>          计划名称，默认 定时收录-YYYY-MM-DD
+  --platforms <list|all> 默认 all（deepseek/doubao/.../poe）
+  --schedule-type <type> daily | weekly | interval | once，默认 once
+  --hours <0,8,16>       执行小时数组
+  --weekdays <1,3,5>     weekly 生效，1=周一..7=周日
+  --run-now              创建成功后立即执行一次
+  --source <1|2|3>       采集模式；不传则平台默认
 
 product-topic options:
   --tags <a,b>           默认 深层用户问题,手动导入
@@ -208,38 +214,104 @@ async function getTopicTask(cfg, taskId, { companyId, productId }) {
   const rows = rowsOf(await requestJson(`${baseUrl(cfg)}/v1/topic-task?${qs}`, { headers: buildHeaders(cfg) }));
   return rows.find(x => Number(x.id) === Number(taskId)) || rows[0] || null;
 }
+
+function parseBool(v, fallback) {
+  if (v === undefined || v === '') return fallback;
+  if (typeof v === 'boolean') return v;
+  return /^(1|true|yes|y|on)$/i.test(String(v));
+}
+function today() { return new Date().toISOString().slice(0, 10); }
+function scheduleConfig(args) {
+  const inline = first(args, ['schedule-config-json','scheduleConfigJson']);
+  if (inline) return JSON.parse(String(inline));
+  const cfg = { type: String(first(args, ['schedule-type','scheduleType'], 'once')) };
+  const hours = parseIds(first(args, ['hours'], '')).map(Number).filter(n => Number.isFinite(n));
+  if (hours.length) cfg.hours = hours;
+  const weekdays = parseIds(first(args, ['weekdays'], '')).map(Number).filter(n => Number.isFinite(n));
+  if (weekdays.length) cfg.weekdays = weekdays;
+  const mappings = [
+    ['times-per-day','timesPerDay'], ['timesPerDay','timesPerDay'],
+    ['times-per-active-day','timesPerActiveDay'], ['timesPerActiveDay','timesPerActiveDay'],
+    ['interval-days','intervalDays'], ['intervalDays','intervalDays'],
+    ['times-per-cycle','timesPerCycle'], ['timesPerCycle','timesPerCycle'],
+  ];
+  for (const [arg, prop] of mappings) {
+    const v = first(args, [arg]);
+    if (v !== undefined) cfg[prop] = Number(v);
+  }
+  return cfg;
+}
+function buildScheduledIndexingPayload(args, questions, companyId, productId) {
+  const platformsRaw = String(first(args, ['platforms'], 'all')).trim();
+  const platforms = platformsRaw === 'all' ? ALL_PLATFORMS : parseList(platformsRaw).filter(p => ALL_PLATFORMS.includes(p));
+  if (!platforms.length) throw new Error(`platforms 为空或不合法；可选：${ALL_PLATFORMS.join(',')}`);
+  const payload = {
+    name: String(first(args, ['name'], `定时收录-${today()}`)),
+    companyId,
+    productId,
+    topics: questions,
+    platforms,
+    scheduleConfig: scheduleConfig(args),
+    enabled: parseBool(first(args, ['enabled'], undefined), true),
+  };
+  const screenshotPlatforms = parseList(first(args, ['screenshot-platforms','screenshotPlatforms'], ''));
+  if (screenshotPlatforms.length) payload.screenshotPlatforms = screenshotPlatforms.filter(p => platforms.includes(p));
+  const source = first(args, ['source']); if (source !== undefined) payload.source = Number(source);
+  const competitorBrands = parseList(first(args, ['competitor-brands','competitorBrands'], ''));
+  if (competitorBrands.length) payload.competitorBrands = competitorBrands;
+  return payload;
+}
+
 function makePreview(target, payload, questions, extra = {}) {
   return { dryRun: true, target, count: questions.length, questionsPreview: questions.slice(0, 20), payload, ...extra };
 }
 async function main() {
   const args = parseArgs(process.argv);
   if (args.help || args.h) { usage(); return; }
-  const target = String(first(args, ['target'], 'indexing-custom'));
+  let target = String(first(args, ['target'], 'scheduled-indexing'));
+  // Compatibility: old prompts using --target indexing-custom now route to Scheduled Indexing.
+  if (target === 'indexing-custom') target = 'scheduled-indexing';
   if (!TARGETS.has(target)) throw new Error(`未知 --target：${target}；可选 ${[...TARGETS].join(', ')}`);
   const cfg = loadGeoConfig();
   if (!cfg.geo.openKey) throw new Error('未配置 GEO openKey。');
   const companyId = Number(first(args, ['company-id', 'companyId'], cfg.defaults.companyId || 0));
   const productId = Number(first(args, ['product-id', 'productId'], cfg.defaults.productId || 0));
   if (!companyId && target !== 'topic-task-select') throw new Error('缺少 companyId，请先配置 defaults.companyId 或传 --company-id。');
-  if (!productId && target === 'product-topic') throw new Error('缺少 productId，请先配置 defaults.productId 或传 --product-id。');
+  if (!productId && (target === 'product-topic' || target === 'scheduled-indexing')) throw new Error('缺少 productId，请先配置 defaults.productId 或传 --product-id。');
 
   const dryRun = Boolean(args['dry-run'] || args.dryRun);
   if (!dryRun && !args.force) throw new Error('真实写入必须先确认并添加 --force；建议先运行 --dry-run。');
 
   let result;
-  if (target === 'indexing-custom') {
+  if (target === 'scheduled-indexing') {
+    const questions = readQuestions(args);
+    if (!questions.length) throw new Error('没有读取到问题，请传 --file/--question/--questions。');
+    const hits = suspiciousMojibake(questions.join('\n'));
+    if (hits.length && !args['allow-suspicious'] && !args.allowSuspicious) throw new Error(`检测到疑似乱码：${hits.join(', ')}`);
+    const payload = buildScheduledIndexingPayload(args, questions, companyId, productId);
+    if (dryRun) result = makePreview(target, payload, questions, { endpoint: '/v1/scheduled-indexing' });
+    else {
+      const created = await requestJson(`${baseUrl(cfg)}/v1/scheduled-indexing`, { method: 'POST', headers: buildHeaders(cfg), body: JSON.stringify(payload) });
+      const scheduleId = Number(created?.data?.id || created?.id || 0);
+      let runNow = null;
+      if ((args['run-now'] || args.runNow) && scheduleId) {
+        runNow = await requestJson(`${baseUrl(cfg)}/v1/scheduled-indexing/${scheduleId}/run-now`, { method: 'POST', headers: buildHeaders(cfg) });
+      }
+      result = { target, imported: questions.length, scheduleId, created: created.data || created, runNow: runNow ? (runNow.data || runNow) : null };
+    }
+  } else if (target === 'legacy-indexing-custom') {
     const questions = readQuestions(args);
     if (!questions.length) throw new Error('没有读取到问题，请传 --file/--question/--questions。');
     const hits = suspiciousMojibake(questions.join('\n'));
     if (hits.length && !args['allow-suspicious'] && !args.allowSuspicious) throw new Error(`检测到疑似乱码：${hits.join(', ')}`);
     const platformsRaw = String(first(args, ['platforms'], 'all')).trim();
-    const platforms = platformsRaw === 'all' ? ALL_PLATFORMS : parseList(platformsRaw).filter(p => ALL_PLATFORMS.includes(p));
+    const platforms = platformsRaw === 'all' ? ALL_PLATFORMS.slice(0, 9) : parseList(platformsRaw).filter(p => ALL_PLATFORMS.includes(p));
     if (!platforms.length) throw new Error(`platforms 为空或不合法；可选：${ALL_PLATFORMS.join(',')}`);
     const brand = first(args, ['brand', 'brands'], '');
     const dataLines = questions.map(q => ensureBrandFormat(q, brand));
     const payload = { data: dataLines.join('\n'), platforms, companyId };
     const source = first(args, ['source']); if (source !== undefined) payload.source = Number(source);
-    if (dryRun) result = makePreview(target, payload, questions, { endpoint: `${baseUrl(cfg)}/v1/ai-indexing-task/custom/import` });
+    if (dryRun) result = makePreview(target, payload, questions, { endpoint: '/v1/ai-indexing-task/custom/import' });
     else {
       const created = await requestJson(`${baseUrl(cfg)}/v1/ai-indexing-task/custom/import`, { method: 'POST', headers: buildHeaders(cfg), body: JSON.stringify(payload) });
       const recent = await listCustomTasks(cfg, { companyId, limit: Math.min(50, Math.max(20, questions.length + 5)) });
@@ -253,7 +325,7 @@ async function main() {
     const tags = parseList(first(args, ['tags'], '深层用户问题,手动导入'));
     const knowledgeBaseIds = parseIds(first(args, ['knowledge-base-ids', 'knowledgeBaseIds'], '')).map(Number).filter(Boolean);
     const payload = { topic: questions.join('\n'), productId, tags, knowledgeBaseIds };
-    if (dryRun) result = makePreview(target, payload, questions, { endpoint: `${baseUrl(cfg)}/v1/geo-product-topic` });
+    if (dryRun) result = makePreview(target, payload, questions, { endpoint: '/v1/geo-product-topic' });
     else {
       const created = await requestJson(`${baseUrl(cfg)}/v1/geo-product-topic`, { method: 'POST', headers: buildHeaders(cfg), body: JSON.stringify(payload) });
       const recent = await listProductTopics(cfg, { companyId, productId, limit: Math.min(50, Math.max(20, questions.length + 5)) });
@@ -281,7 +353,7 @@ async function main() {
     }
     if (!selectedIds.length) throw new Error('需要 --selected-ids，或使用 --match-file 从任务结果精确匹配。');
     const payload = { selectedIds };
-    if (dryRun) result = makePreview(target, payload, selectedIds, { endpoint: `${baseUrl(cfg)}/v1/topic-task/${taskId}/select`, matchInfo });
+    if (dryRun) result = makePreview(target, payload, selectedIds, { endpoint: `/v1/topic-task/${taskId}/select`, matchInfo });
     else {
       const selected = await requestJson(`${baseUrl(cfg)}/v1/topic-task/${taskId}/select`, { method: 'POST', headers: buildHeaders(cfg), body: JSON.stringify(payload) });
       const topics = await listProductTopics(cfg, { companyId, productId, limit: 30 }).catch(() => []);

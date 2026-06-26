@@ -61,8 +61,12 @@ node geo-article/scripts/delete_articles.js --id 123 --force
 ## 问题导入 / 收录检测
 
 ```bash
-# 本地问题导入自定义 AI 收录任务
-node geo-indexing/scripts/import_questions.js --target indexing-custom --file questions.md --brand "品牌名" --platforms all --dry-run
+# 创建 Scheduled Indexing 定时收录计划
+node geo-indexing/scripts/scheduled_indexing.js --action create --file questions.md --name "品牌名-每日收录" --platforms deepseek,doubao,qwen,kimi --schedule-type daily --times-per-day 1 --dry-run
+
+# 创建后立即执行一次
+node geo-indexing/scripts/scheduled_indexing.js --action run-now --id 123 --dry-run
+node geo-indexing/scripts/scheduled_indexing.js --action answers --id 123 --limit 50
 
 # 本地深层用户问题导入产品主题库
 node geo-indexing/scripts/import_questions.js --target product-topic --file deep_questions.md --tags "深层用户问题,手动导入" --dry-run

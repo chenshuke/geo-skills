@@ -21,6 +21,7 @@ const coreScripts = [
   'geo-article/scripts/upload_article.js',
   'geo-article/scripts/delete_articles.js',
   'geo-indexing/scripts/import_questions.js',
+  'geo-indexing/scripts/scheduled_indexing.js',
   'geo-content-production/scripts/generate_image.js',
   'geo-content-production/scripts/generate_cover.js',
   'geo-content/scripts/generate_image.js',

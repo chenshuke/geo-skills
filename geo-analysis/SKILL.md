@@ -1,6 +1,6 @@
 ---
 name: geo-analysis
-description: "GEO 收录结果分析和可视化报告技能。Use when the user says 分析收录结果、分析 AI 引用来源、证据链分析、平台引用偏好、品牌相关性、竞品/引用风险、PDCA 仪表盘、生成 HTML 报告、分析 DeepSeek/豆包/Kimi/ChatGPT 回答数据. Do not create/upload articles; use geo-content-production or geo-article."
+description: "GEO 收录结果分析和可视化报告技能。Use when the user says 分析收录结果、分析 AI 引用来源、证据链分析、平台引用偏好、品牌相关性、竞品/引用风险、PDCA 仪表盘、生成 HTML 报告、分析 DeepSeek/豆包/Kimi/ChatGPT/nami/grok/perp/poe 回答数据. Do not create/upload articles; use geo-content-production or geo-article."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
@@ -28,7 +28,7 @@ metadata:
 **触发场景**：收录监测完成后，需分析引用偏好、评估证据链完整度、确定发布渠道。
 
 **核心框架（六步）**：
-1. **数据采集**：分页调用 `GET /v1/ai-indexing/custom`，每页200条
+1. **数据采集**：先用 `GET /v1/scheduled-indexing` 选择计划，再调用 `GET /v1/scheduled-indexing/{id}/answers` 分页读取完整回答和引用来源；需要状态矩阵时调用 `/topic-platform-matrix`，需要统计趋势时调用 `/topic-stats` 与 `/metrics`
 2. **来源分类**：通过域名模式匹配将引用URL分为8种类型（专业平台/权威媒体/论坛社区/自媒体/评测导购/百科/聚合内容/品牌官网），支持 `--platform-profiles` 导入动态画像替代硬编码表
 3. **平台证据画像**：按平台分组计算来源分布、引用性格标签、Top域名、收录率
 4. **证据链评分**：四维评分——多样性(30%) + 权威性(30%) + 收录率(25%) + 品牌存在感(15%)，综合评级 A/B/C/D

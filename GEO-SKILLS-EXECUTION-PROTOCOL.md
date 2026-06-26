@@ -29,7 +29,7 @@
    - 文章上传：`geo-article/scripts/upload_article.js`
    - 文章删除：`geo-article/scripts/delete_articles.js`
    - 首次配置公司/产品：`geo-config/scripts/setup_defaults.js`
-   - 问题导入/收录检测：`geo-indexing/scripts/import_questions.js`
+   - Scheduled Indexing 收录检测：`geo-indexing/scripts/scheduled_indexing.js`（产品主题库导入仍用 `geo-indexing/scripts/import_questions.js`）
    - 图片生成：`geo-content-production/scripts/generate_image.js`
    - 封面生成：`geo-content-production/scripts/generate_cover.js`
 2. 没有专用脚本时，用通用 Node API 工具：`geo-runtime/scripts/api_request.js`。
