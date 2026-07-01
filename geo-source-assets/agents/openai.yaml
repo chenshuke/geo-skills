@@ -1,0 +1,4 @@
+interface:
+  display_name: "GEO引用源资产库"
+  short_description: "从AI引用来源沉淀我方、竞品、行业和媒体信源资产，并输出补强建议。"
+  default_prompt: "使用 geo-source-assets，从收录 answers 结果生成引用源资产库和信源补强建议。"

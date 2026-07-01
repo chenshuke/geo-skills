@@ -30,6 +30,7 @@
    - 文章删除：`geo-article/scripts/delete_articles.js`
    - 首次配置公司/产品：`geo-config/scripts/setup_defaults.js`
    - Scheduled Indexing 收录检测：`geo-indexing/scripts/scheduled_indexing.js`（产品主题库导入仍用 `geo-indexing/scripts/import_questions.js`）
+   - 引用源资产库：`geo-source-assets/scripts/source_assets.js`
    - 图片生成：`geo-content-production/scripts/generate_image.js`
    - 封面生成：`geo-content-production/scripts/generate_cover.js`
 2. 没有专用脚本时，用通用 Node API 工具：`geo-runtime/scripts/api_request.js`。
@@ -100,6 +101,7 @@ node geo-content-archive/scripts/project_paths.js --project-dir "项目_品牌GE
 | 审核报告 | `audit-*` | `05_质量审核/` |
 | 发布记录 | `publish-record` | `06_发布记录/` |
 | 收录/分析报告 | `indexing-report` / `evidence-report` | `07_监测分析/` |
+| 引用源资产库 | `source-assets` | `07_监测分析/引用源资产库/` |
 
 如果无法判断类型，写入 `00_项目概览/_待分类/`，并提示用户后续用 `geo-content-archive` 归位。
 
@@ -135,6 +137,10 @@ node geo-article/scripts/upload_article.js --file "文章.md" --cover-url "https
 # 本地问题导入 GEO 平台
 node geo-indexing/scripts/import_questions.js --target indexing-custom --file "questions.md" --brand "品牌名" --dry-run
 node geo-indexing/scripts/import_questions.js --target product-topic --file "deep_questions.md" --tags "深层用户问题,手动导入" --dry-run
+
+# 引用源资产库
+node geo-indexing/scripts/scheduled_indexing.js --action answers --id <计划ID> --limit 200 --json-out answers.json
+node geo-source-assets/scripts/source_assets.js --action import --project-dir "项目_品牌GEO" --answers-json answers.json --owned-domains "example.com" --owned-brands "示例品牌A"
 ```
 
 ## 公开技能包脱敏规则

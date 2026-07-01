@@ -1,11 +1,11 @@
 ---
 name: geo-workflow-hub
-description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、品牌搭建、资料整理、写文章、审核优化、归档分析、完整运营流程、线下课练习流程. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
+description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、品牌搭建、资料整理、写文章、审核优化、归档分析、完整运营流程、线下课练习流程、引用源资产库、信源资产、AI引用来源沉淀. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.3.0"
+  version: "3.4.0"
   category: router
 ---
 
@@ -15,7 +15,7 @@ metadata:
 
 > **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
 
-> **版本**：v3.1 | **更新日期**：2026-05-09
+> **版本**：v3.4 | **更新日期**：2026-07-01
 > **定位**：GEO完整运营工作流的中央控制台
 
 ## 技能说明
@@ -23,7 +23,7 @@ metadata:
 `geo-workflow-hub` 是**GEO运营工作流**的统一入口，覆盖全流程：
 
 ```
-品牌创建 → 知识库搭建 → 关键词规划 → 标题创作 → 内容创作 → 内容审核 → 上传发布预览 → 内容归档
+品牌创建 → 知识库搭建 → 关键词规划 → 标题创作 → 内容创作 → 内容审核 → 上传发布预览 → 内容归档 → 收录监测 → 引用源资产沉淀
 ```
 
 ---
@@ -40,7 +40,7 @@ metadata:
 
 ---
 
-## 📚 6 大功能模块
+## 📚 7 大功能模块
 
 ### ⑥ geo-brand — 品牌创建
 > 创建企业品牌、产品品牌、个人品牌、获客内容账号
@@ -91,6 +91,15 @@ metadata:
 
 ---
 
+### ⑪ geo-source-assets — 引用源资产库
+> 从 Scheduled Indexing answers 的 searchedSites 沉淀我方、竞品、行业、媒体信源资产，并输出补强建议
+
+**适用场景**：学员要把 AI 引用来源资产化，判断哪些来源可控、可复用、需补强、是否稳定引用。
+
+**推荐说法**：`使用 geo-source-assets 帮我从收录结果生成引用源资产库`
+
+---
+
 ### ⑨ geo-analysis — 数据分析
 > 证据链分析、AI平台逆向分析、飞书方案同步、项目仪表盘
 
@@ -111,6 +120,7 @@ metadata:
 | "归档内容" / "整理创作文件" | ⑩ geo-content-archive |
 | "一条龙发布" / "上传并发布预览" / "从标题到发布" | ⑧c geo-content-to-publish-pipeline |
 | "证据链" / "逆向分析" / "仪表盘" | ⑨ geo-analysis |
+| "引用源资产库" / "信源资产" / "searchedSites" / "补强建议" | ⑪ geo-source-assets |
 
 ---
 
@@ -133,6 +143,8 @@ metadata:
 第6步：用户确认后使用 geo-content-to-publish-pipeline / geo-publish 创建发布任务
 第7步：使用 geo-content-archive 归档整理
 第8步：使用 geo-indexing 检测收录排名
+第9步：使用 geo-source-assets 沉淀引用源资产库和补强动作
+第10步：使用 geo-analysis 做证据链和平台偏好复盘
 ```
 
 > **geo-workflow-hub 负责"想清楚并做出来"，geo-hub 负责"落到平台并看结果"。**
@@ -152,4 +164,5 @@ metadata:
 | **上传文章到平台** | ❌ | ✅ |
 | **查看文章/账号** | ❌ | ✅ |
 | **检测收录排名** | ❌ | ✅ |
+| 引用源资产沉淀与补强建议 | ✅ | ❌ |
 | **管理配置** | ❌ | ✅ |

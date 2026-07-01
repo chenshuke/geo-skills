@@ -75,6 +75,21 @@ node geo-indexing/scripts/import_questions.js --target product-topic --file deep
 node geo-indexing/scripts/import_questions.js --target topic-task-select --task-id 123 --selected-ids 0,2,5 --dry-run
 ```
 
+
+## 引用源资产库 / 信源补强
+
+```bash
+# 先导出 Scheduled Indexing answers，再沉淀 searchedSites 为资产库
+node geo-indexing/scripts/scheduled_indexing.js --action answers --id 123 --limit 200 --json-out answers.json
+node geo-source-assets/scripts/source_assets.js --action import --project-dir "项目_品牌GEO" --answers-json answers.json --owned-domains "example.com" --owned-brands "示例品牌A" --competitor-brands "竞品A,竞品B"
+
+# 直接从计划拉取并生成资产库
+node geo-source-assets/scripts/source_assets.js --action fetch --project-dir "项目_品牌GEO" --schedule-id 123 --limit 200 --owned-domains "example.com" --owned-brands "示例品牌A"
+
+# 更新下一步补强建议
+node geo-source-assets/scripts/source_assets.js --action next --project-dir "项目_品牌GEO"
+```
+
 ## 项目目录和输出路径
 
 ```bash
