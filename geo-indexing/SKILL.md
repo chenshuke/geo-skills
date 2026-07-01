@@ -122,6 +122,19 @@ node geo-indexing/scripts/scheduled_indexing.js --action metrics --id 123 --plat
 ```
 
 
+
+### 学员判断规则（重要）
+
+```text
+articleId ≠ 已发布
+publishedUrl ≠ AI 已看见
+weak_title_account_hit ≠ 精确收录
+exact_url_hit = URL 被 answers.searchedSites 精确引用/检索到的证据
+stable = 需要跨批次或跨平台持续出现
+```
+
+所以发布后必须按顺序判断：先用 `geo-publish` 拿 publishedUrl，再用 `published_url_match.js` 判断 exact / weak / not_hit。
+
 ### 2.1 Published URL 精确命中检测
 
 发布任务拿到 `publishedUrl` 后，不能直接认为 AI 已经看见。用本脚本检查 answers 里的 `searchedSites`：

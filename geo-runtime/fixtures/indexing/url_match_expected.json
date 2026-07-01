@@ -1,0 +1,7 @@
+{
+  "expectations": [
+    { "articleId": 691, "status": "exact_url_hit", "latestOnly": false },
+    { "articleId": 692, "status": "manual_required" },
+    { "articleId": 693, "status": "pending" }
+  ]
+}

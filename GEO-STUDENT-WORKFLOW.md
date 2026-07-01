@@ -65,6 +65,21 @@
 我失败了但不知道原因，请用 90 GEO故障排查告诉我问题、原因、证据和下一步。
 ```
 
+
+## 发布与收录判断口诀
+
+```text
+articleId ≠ 已发布
+publishedUrl ≠ AI 已看见
+weak_title_account_hit ≠ 精确收录
+exact_url_hit 才能作为 URL 被 AI 引用/检索到的证据
+stable 需要跨批次/跨平台持续出现
+```
+
+- `08 geo-publish` 负责确认平台是否生成真实 publishedUrl。
+- `09 geo-indexing` 负责确认 AI answers 的 searchedSites 是否命中该 URL。
+- 只有 `exact_url_hit` 才能说“这个 URL 被 AI 检索/引用到了”。
+
 ## 重要说明
 
 - 技术技能名和文件夹名不加数字，避免破坏安装、脚本路径和已有提示词。

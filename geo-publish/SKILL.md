@@ -76,6 +76,10 @@ node geo-publish/scripts/publication_status.js \
 - `publication_status_YYYY-MM-DD.csv`：表格版
 - `publication_status_YYYY-MM-DD.json`：给 `geo-indexing/scripts/published_url_match.js` 继续做 URL 命中检测
 
+
+
+多 URL 说明：同一 `articleId` 可能存在多条平台发布记录。状态表会额外输出 `publicationId/sourceRecordId`、`publishAccountName`、`createdAt/updatedAt`、`isLatest`，方便区分历史 URL 和最新 URL。`isLatest=yes` 代表当前脚本按更新时间/记录 ID 判断的最新发布记录；如平台后台显示不一致，以平台后台为准。
+
 状态判定：
 
 | status | 含义 | 下一步 |

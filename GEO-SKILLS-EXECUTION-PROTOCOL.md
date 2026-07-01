@@ -40,6 +40,7 @@
    - Scheduled Indexing 收录检测：`geo-indexing/scripts/scheduled_indexing.js`（产品主题库导入仍用 `geo-indexing/scripts/import_questions.js`）
    - 发布 URL 命中检测：`geo-indexing/scripts/published_url_match.js`
    - 发布状态回查：`geo-publish/scripts/publication_status.js`
+   - 发布链路回归测试：`geo-runtime/scripts/regression_publication_chain.js`
    - 引用源资产库：`geo-source-assets/scripts/source_assets.js`
    - 故障排查：`geo-troubleshooter/scripts/troubleshoot.js`
    - 技能自进化：`geo-skill-evolution/scripts/evolve.js`

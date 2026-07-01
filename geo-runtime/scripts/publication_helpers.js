@@ -31,6 +31,23 @@ function publicationArticleTitle(row) {
 function publicationTaskId(row) {
   return Number(pickFirst(row, ['publicationTaskId','publication_task_id','taskId','task.id','publicationTask.id']) || 0) || '';
 }
+function publicationId(row) {
+  return Number(pickFirst(row, ['publicationId','publication_id','id']) || 0) || '';
+}
+function sourceRecordId(row) {
+  return String(pickFirst(row, ['sourceRecordId','recordId','id','publicationId']) || '');
+}
+function createdAtOf(row) {
+  return String(pickFirst(row, ['createdAt','createTime','created_at','publishTime','publishedAt','publishAt']) || '');
+}
+function updatedAtOf(row) {
+  return String(pickFirst(row, ['updatedAt','updateTime','updated_at','modifiedAt','publishedAt']) || '');
+}
+function rowTimeValue(row) {
+  const t = Date.parse(row.updatedAt || row.createdAt || '');
+  if (Number.isFinite(t)) return t;
+  return Number(row.publicationId || row.sourceRecordId || 0) || 0;
+}
 function publicationPlatform(row) {
   return String(pickFirst(row, ['platform','publishPlatform','mediaPlatform','publishAccount.platform','account.platform']) || '');
 }
@@ -64,12 +81,17 @@ function normalizePublicationRow(row) {
   const rawStatus = String(rawStatusOf(row) ?? '');
   const rawMessage = String(rawMessageOf(row) ?? '');
   const out = {
+    publicationId: publicationId(row),
+    sourceRecordId: sourceRecordId(row),
     articleId: publicationArticleId(row),
     taskId: publicationTaskId(row),
     platform: publicationPlatform(row),
     accountId: publicationAccountId(row),
     accountName: publicationAccountName(row),
     title: publicationArticleTitle(row),
+    createdAt: createdAtOf(row),
+    updatedAt: updatedAtOf(row),
+    isLatest: '',
     rawStatus,
     rawMessage,
     publishedUrl,
@@ -104,12 +126,17 @@ function collectTaskIds(obj, out = new Set(), depth = 0, seen = new Set()) {
 function taskRowForArticle(task, articleId) {
   const tids = [...collectTaskIds(task)];
   return {
+    publicationId: '',
+    sourceRecordId: '',
     articleId: Number(articleId) || '',
     taskId: Number(tids[0] || task.id || task.taskId || 0) || '',
     platform: String(pickFirst(task, ['platform','publishPlatform']) || ''),
     accountId: '',
     accountName: '',
     title: String(pickFirst(task, ['name','title']) || ''),
+    createdAt: String(pickFirst(task, ['createdAt','createTime']) || ''),
+    updatedAt: String(pickFirst(task, ['updatedAt','updateTime']) || ''),
+    isLatest: '',
     rawStatus: String(rawStatusOf(task) ?? ''),
     rawMessage: String(rawMessageOf(task) ?? ''),
     publishedUrl: '',
@@ -146,7 +173,7 @@ function normalizePublicationStatus({ tasks = [], publications = [], articleFilt
   }
   for (const articleId of articleFilter) {
     if (seenArticleIds.has(Number(articleId))) continue;
-    rows.push({ articleId: Number(articleId), taskId: '', platform: '', accountId: '', accountName: '', title: '', rawStatus: '', rawMessage: '', publishedUrl: '', failureReason: '', status: 'task_mapping_only', nextAction: nextAction({ status: 'task_mapping_only' }), raw: null });
+    rows.push({ publicationId: '', sourceRecordId: '', articleId: Number(articleId), taskId: '', platform: '', accountId: '', accountName: '', title: '', createdAt: '', updatedAt: '', isLatest: '', rawStatus: '', rawMessage: '', publishedUrl: '', failureReason: '', status: 'task_mapping_only', nextAction: nextAction({ status: 'task_mapping_only' }), raw: null });
   }
   const deduped = [];
   const seenRows = new Set();
@@ -156,10 +183,18 @@ function normalizePublicationStatus({ tasks = [], publications = [], articleFilt
     seenRows.add(key);
     deduped.push(r);
   }
-  return deduped.sort((a,b) => Number(a.articleId||0) - Number(b.articleId||0) || Number(a.taskId||0) - Number(b.taskId||0));
+  const byArticle = new Map();
+  for (const r of deduped) {
+    if (!r.articleId || !r.publishedUrl) continue;
+    const key = Number(r.articleId);
+    const cur = byArticle.get(key);
+    if (!cur || rowTimeValue(r) >= rowTimeValue(cur)) byArticle.set(key, r);
+  }
+  for (const r of deduped) r.isLatest = r.publishedUrl ? (byArticle.get(Number(r.articleId)) === r ? 'yes' : 'no') : '';
+  return deduped.sort((a,b) => Number(a.articleId||0) - Number(b.articleId||0) || rowTimeValue(b) - rowTimeValue(a) || Number(a.taskId||0) - Number(b.taskId||0));
 }
 function normalizePublicationJson(json) {
-  return unwrapRows(json).map(normalizePublicationRow);
+  return normalizePublicationStatus({ publications: unwrapRows(json), tasks: [] });
 }
 function hasAnyId(obj, ids) {
   if (!ids.length) return true;

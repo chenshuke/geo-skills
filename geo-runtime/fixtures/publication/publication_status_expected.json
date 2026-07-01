@@ -1,0 +1,8 @@
+{
+  "expectations": [
+    { "articleId": 691, "publishedUrlCount": 2, "latestUrl": "https://example.com/article/latest-691", "latestPublicationId": 9102, "status": "published_url_ready" },
+    { "articleId": 692, "publishedUrlCount": 0, "status": "manual_required" },
+    { "articleId": 693, "publishedUrlCount": 0, "status": "pending" }
+  ],
+  "forbiddenPublishedUrlPatterns": ["oss-cn", "aliyuncs.com", "userImg", ".png", ".jpg", ".webp"]
+}

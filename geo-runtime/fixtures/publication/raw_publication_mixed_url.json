@@ -1,0 +1,45 @@
+{
+  "data": {
+    "data": {
+      "data": [
+        {
+          "id": 9101,
+          "article": { "id": 691, "title": "示例品牌A GEO 获客文章" },
+          "publishAccount": { "id": 301, "name": "示例账号A", "platform": "toutiao" },
+          "publishedUrl": "https://example.com/article/old-691",
+          "coverImageUrl": "https://example.oss-cn-shanghai.aliyuncs.com/userImg/cover-691.png",
+          "status": "published",
+          "createdAt": "2026-07-01T08:00:00.000Z",
+          "updatedAt": "2026-07-01T08:10:00.000Z"
+        },
+        {
+          "id": 9102,
+          "article": { "id": 691, "title": "示例品牌A GEO 获客文章" },
+          "publishAccount": { "id": 301, "name": "示例账号A", "platform": "toutiao" },
+          "publishedUrl": "https://example.com/article/latest-691",
+          "coverImageUrl": "https://example.oss-cn-shanghai.aliyuncs.com/userImg/cover-691-new.png",
+          "status": "published",
+          "createdAt": "2026-07-01T09:00:00.000Z",
+          "updatedAt": "2026-07-01T09:20:00.000Z"
+        },
+        {
+          "id": 9201,
+          "article": { "id": 692, "title": "示例品牌A 人工处理文章" },
+          "publishAccount": { "id": 302, "name": "示例账号B", "platform": "sohu_news" },
+          "coverImageUrl": "https://example.oss-cn-shanghai.aliyuncs.com/userImg/cover-692.png",
+          "status": "manual_required",
+          "remark": "需要人工处理",
+          "createdAt": "2026-07-01T09:30:00.000Z"
+        },
+        {
+          "id": 9301,
+          "article": { "id": 693, "title": "示例品牌A 处理中文章" },
+          "publishAccount": { "id": 303, "name": "示例账号C", "platform": "zhihu" },
+          "platformUrl": "https://example.oss-cn-shanghai.aliyuncs.com/userImg/body-693.png",
+          "status": "processing",
+          "createdAt": "2026-07-01T09:40:00.000Z"
+        }
+      ]
+    }
+  }
+}

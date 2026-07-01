@@ -85,13 +85,16 @@ function renderMd(rows, meta) {
   lines.push(`- openKey：${meta.openKey || '(empty)'}`);
   lines.push(`- companyId/productId：${meta.companyId || 0} / ${meta.productId || 0}`);
   lines.push(`- 结论提醒：有 publishedUrl 只代表平台发布 URL 已拿到；是否被 AI 看见，还必须交给 geo-indexing 做 searchedSites 命中检测。`);
-  lines.push('', '| articleId | taskId | platform | account | status | publishedUrl | 下一步 |', '|---:|---:|---|---|---|---|---|');
-  for (const r of rows) lines.push(`| ${r.articleId || ''} | ${r.taskId || ''} | ${mdEscape(r.platform)} | ${mdEscape(r.accountName || r.accountId)} | ${r.status} | ${r.publishedUrl ? `[URL](${r.publishedUrl})` : ''} | ${mdEscape(r.nextAction)} |`);
+  lines.push('', '| articleId | publicationId | taskId | platform | account | status | 最新 | 时间 | publishedUrl | 下一步 |', '|---:|---:|---:|---|---|---|---|---|---|---|');
+  for (const r of rows) {
+    const time = r.updatedAt || r.createdAt || '';
+    lines.push(`| ${r.articleId || ''} | ${r.publicationId || r.sourceRecordId || ''} | ${r.taskId || ''} | ${mdEscape(r.platform)} | ${mdEscape(r.accountName || r.accountId)} | ${r.status} | ${r.isLatest || ''} | ${mdEscape(time)} | ${r.publishedUrl ? `[URL](${r.publishedUrl})` : ''} | ${mdEscape(r.nextAction)} |`);
+  }
   return lines.join('\n');
 }
 function csvEscape(v) { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function renderCsv(rows) {
-  const fields = ['articleId','taskId','platform','accountId','accountName','title','status','rawStatus','rawMessage','publishedUrl','nextAction'];
+  const fields = ['articleId','publicationId','sourceRecordId','taskId','platform','accountId','accountName','title','status','isLatest','createdAt','updatedAt','rawStatus','rawMessage','publishedUrl','nextAction'];
   return [fields.join(','), ...rows.map(r => fields.map(f => csvEscape(r[f])).join(','))].join('\n') + '\n';
 }
 async function main() {

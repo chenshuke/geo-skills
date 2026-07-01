@@ -1,0 +1,16 @@
+{
+  "data": {
+    "data": [
+      {
+        "id": 1,
+        "runId": "run-fixture-1",
+        "topic": "示例品牌A GEO 获客文章",
+        "platform": "doubao",
+        "content": "示例账号A 发布过示例品牌A GEO 获客文章。",
+        "searchedSites": [
+          { "url": "https://example.com/article/latest-691", "title": "示例品牌A GEO 获客文章", "articleIndexed": true }
+        ]
+      }
+    ]
+  }
+}

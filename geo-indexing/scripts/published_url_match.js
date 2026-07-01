@@ -95,6 +95,11 @@ function readJson(file) { return JSON.parse(fs.readFileSync(path.resolve(file), 
 function targetFromRow(r) {
   return {
     publishedUrl: r.publishedUrl || '',
+    publicationId: r.publicationId || '',
+    sourceRecordId: r.sourceRecordId || '',
+    isLatest: r.isLatest || '',
+    createdAt: r.createdAt || '',
+    updatedAt: r.updatedAt || '',
     title: r.title || '',
     account: r.accountName || r.account || '',
     articleId: r.articleId || '',
@@ -222,17 +227,17 @@ function renderMd(results, meta) {
   lines.push(`- openKey：${meta.openKey || '(empty)'}`);
   if (meta.path) lines.push(`- 接口路径：${meta.path}`);
   lines.push(`- 判定层级：exact_url_hit（URL 精确命中）→ weak_title_account_hit（标题/账号弱命中）→ not_hit（未命中）`);
-  lines.push('', '| articleId | publishedUrl | 状态 | 精确 | 弱命中 | 命中平台/问题 | 建议 |', '|---:|---|---|---:|---:|---|---|');
+  lines.push('', '| articleId | publicationId | 最新 | publishedUrl | 状态 | 精确 | 弱命中 | 命中平台/问题 | 建议 |', '|---:|---:|---|---|---|---:|---:|---|---|');
   for (const r of results) {
     const m = r.matches?.[0];
     const hit = m ? `${m.aiPlatform || ''} / ${mdEscape(m.topic)}` : '';
-    lines.push(`| ${r.articleId || ''} | ${r.publishedUrl ? `[URL](${r.publishedUrl})` : ''} | ${r.status} | ${r.exactCount} | ${r.weakCount} | ${hit} | ${mdEscape(r.suggestion)} |`);
+    lines.push(`| ${r.articleId || ''} | ${r.publicationId || r.sourceRecordId || ''} | ${r.isLatest || ''} | ${r.publishedUrl ? `[URL](${r.publishedUrl})` : ''} | ${r.status} | ${r.exactCount} | ${r.weakCount} | ${hit} | ${mdEscape(r.suggestion)} |`);
   }
   return lines.join('\n');
 }
 function csvEscape(v) { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function renderCsv(results) {
-  const fields = ['articleId','publishedUrl','title','account','status','exactCount','weakCount','suggestion'];
+  const fields = ['articleId','publicationId','sourceRecordId','isLatest','createdAt','updatedAt','publishedUrl','title','account','status','exactCount','weakCount','suggestion'];
   return [fields.join(','), ...results.map(r => fields.map(f => csvEscape(r[f])).join(','))].join('\n') + '\n';
 }
 async function main() {

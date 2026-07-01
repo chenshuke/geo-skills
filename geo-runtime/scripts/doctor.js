@@ -18,6 +18,7 @@ const coreScripts = [
   'geo-runtime/scripts/doctor.js',
   'geo-runtime/scripts/json_helpers.js',
   'geo-runtime/scripts/publication_helpers.js',
+  'geo-runtime/scripts/regression_publication_chain.js',
   'geo-config/scripts/setup_defaults.js',
   'geo-content-archive/scripts/project_paths.js',
   'geo-article/scripts/upload_article.js',

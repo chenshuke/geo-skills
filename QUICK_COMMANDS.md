@@ -18,6 +18,9 @@
 node geo-runtime/scripts/doctor.js
 node geo-runtime/scripts/doctor.js --check-api
 node geo-runtime/scripts/doctor.js --json
+
+# publication 链路回归测试（防止把 OSS 图片误判为 publishedUrl）
+node geo-runtime/scripts/regression_publication_chain.js
 ```
 
 ## 查看配置（不展示真实 openKey）
