@@ -1,11 +1,11 @@
 ---
 name: geo-workflow-hub
-description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、品牌搭建、资料整理、写文章、审核优化、归档分析、完整运营流程、线下课练习流程、引用源资产库、信源资产、AI引用来源沉淀、故障排查、失败原因、下一步怎么处理. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
+description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、品牌搭建、资料整理、写文章、审核优化、归档分析、完整运营流程、线下课练习流程、引用源资产库、信源资产、AI引用来源沉淀、故障排查、失败原因、下一步怎么处理、技能自进化、把客户问题沉淀成技能. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.5.0"
+  version: "3.6.0"
   category: router
 ---
 
@@ -40,7 +40,7 @@ metadata:
 
 ---
 
-## 📚 8 大功能模块
+## 📚 9 大功能模块
 
 ### ⑥ geo-brand — 品牌创建
 > 创建企业品牌、产品品牌、个人品牌、获客内容账号
@@ -117,6 +117,16 @@ metadata:
 
 **推荐说法**：`使用 geo-troubleshooter 帮我排查这次 GEO 流程哪里出问题了`
 
+
+---
+
+### ⑬ geo-skill-evolution — 技能自进化
+> 把不同行业、客户和学员遇到的新问题沉淀为技能改进方案、回归测试和发布验收清单
+
+**适用场景**：客户行业差异明显、同类问题反复出现、修复 P0/P1 后需要固化回归测试、想让 GEO 技能持续进化。
+
+**推荐说法**：`使用 geo-skill-evolution，把这次客户问题沉淀成技能改进方案`
+
 ---
 
 ## 🎯 智能路由
@@ -132,6 +142,7 @@ metadata:
 | "证据链" / "逆向分析" / "仪表盘" | ⑨ geo-analysis |
 | "引用源资产库" / "信源资产" / "searchedSites" / "补强建议" | ⑪ geo-source-assets |
 | "失败" / "报错" / "排查" / "下一步怎么办" / "人工处理" | ⑫ geo-troubleshooter |
+| "技能自进化" / "沉淀成技能" / "客户问题复盘" / "生成回归测试" | ⑬ geo-skill-evolution |
 
 ---
 
@@ -157,6 +168,7 @@ metadata:
 第9步：使用 geo-source-assets 沉淀引用源资产库和补强动作
 第10步：使用 geo-analysis 做证据链和平台偏好复盘
 遇到失败或结果不符合预期：随时使用 geo-troubleshooter 输出原因、证据和下一步
+同类问题重复出现或行业差异明显：使用 geo-skill-evolution 沉淀为技能改进和回归测试
 ```
 
 > **geo-workflow-hub 负责"想清楚并做出来"，geo-hub 负责"落到平台并看结果"。**

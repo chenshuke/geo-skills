@@ -78,6 +78,17 @@ node geo-indexing/scripts/import_questions.js --target topic-task-select --task-
 
 
 
+
+## 技能自进化
+
+```bash
+# 把客户/行业/学员新问题沉淀成：目标技能、改进建议、回归测试、发布验收
+node geo-skill-evolution/scripts/evolve.js --symptom "某行业客户发布后 AI 提到了竞品但没有引用我方" --industry "本地生活" --learner-level "新手" --project-dir "项目_示例品牌GEO"
+
+# 带证据文件沉淀 P0/P1 问题
+node geo-skill-evolution/scripts/evolve.js --symptom "发布状态回查把图片 URL 当成 publishedUrl" --evidence "publication_status.json,error.log" --severity P0 --project-dir "项目_示例品牌GEO"
+```
+
 ## 故障排查
 
 ```bash

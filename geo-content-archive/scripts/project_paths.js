@@ -53,7 +53,7 @@ Options:
   --json                  Output JSON
 
 Artifact types:
-  overview, dashboard, troubleshooting, brand-positioning, raw-material, knowledge, supplement-list,
+  overview, dashboard, troubleshooting, skill-evolution, brand-positioning, raw-material, knowledge, supplement-list,
   keyword-plan, keyword-map, title-plan, tracking-table,
   article, optimized-article, cover, image, cover-mapping, compliant-list,
   audit-consistency, audit-media, audit-ai, audit-coverage, audit-gap, audit-quality,
@@ -68,6 +68,7 @@ function artifactDir(artifact, batch) {
     'overview': '00_项目概览',
     'dashboard': '00_项目概览',
     'troubleshooting': '00_项目概览/故障排查',
+    'skill-evolution': '00_项目概览/技能进化',
     'brand-positioning': '00_项目概览/品牌定位',
     'raw-material': '01_项目资料',
     'knowledge': '02_知识库',
@@ -114,7 +115,7 @@ function defaultFilename(artifact) {
 function ensureDirs(root, dryRun = false) {
   const dirs = new Set(STANDARD_DIRS);
   for (const a of [
-    'troubleshooting','brand-positioning','keyword-plan','title-plan','article','optimized-article','cover','image','compliant-list',
+    'troubleshooting','skill-evolution','brand-positioning','keyword-plan','title-plan','article','optimized-article','cover','image','compliant-list',
     'audit-consistency','audit-media','audit-ai','audit-coverage','audit-gap','audit-quality',
     'publication-status',
     'indexing-report','published-url-match','evidence-report','source-assets','pdca-report','platform-profile','industry-insight','screenshot','unknown'
