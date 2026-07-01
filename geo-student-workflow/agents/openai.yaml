@@ -1,0 +1,4 @@
+interface:
+  display_name: "00A GEO新手一键入口"
+  short_description: "用一句话从0跑GEO项目，按项目资料、品牌诊断、关键词池、内容、发布、收录、信源、复盘逐步引导。"
+  default_prompt: "我是新学员，帮我从0跑一个GEO项目。"

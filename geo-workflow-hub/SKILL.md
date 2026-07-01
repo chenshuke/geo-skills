@@ -1,6 +1,6 @@
 ---
 name: geo-workflow-hub
-description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、品牌搭建、资料整理、关键词池、关键词状态机、先优化哪个关键词、每个关键词推进到哪一步、写文章、审核优化、归档分析、完整运营流程、线下课练习流程、引用源资产库、信源资产、AI引用来源沉淀、故障排查、失败原因、下一步怎么处理、技能自进化、把客户问题沉淀成技能. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
+description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、我是新学员、从0跑一个GEO项目、一步一步带我做GEO、品牌搭建、资料整理、关键词池、关键词状态机、先优化哪个关键词、每个关键词推进到哪一步、写文章、审核优化、归档分析、完整运营流程、线下课练习流程、引用源资产库、信源资产、AI引用来源沉淀、故障排查、失败原因、下一步怎么处理、技能自进化、把客户问题沉淀成技能. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
@@ -21,7 +21,7 @@ metadata:
 
 ## 🧭 学员顺序
 
-当用户是新手或课堂学员时，优先按这个顺序解释，不要一上来堆模块名：
+当用户是完全新手或说“从0跑项目”时，先路由到 `geo-student-workflow`；当用户已有明确目标时，再按这个顺序解释，不要一上来堆模块名：
 
 ```text
 00 环境诊断 → 01 平台初始化 → 02 账号资源检查 → 03 品牌定位 → 04 知识库搭建
@@ -43,7 +43,15 @@ metadata:
 
 ## 快速开始
 
-直接对 Claude Code 或 Codex 说：
+完全新手优先说：
+
+```text
+我是新学员，帮我从 0 跑一个 GEO 项目。
+```
+
+这类请求路由到 `geo-student-workflow`，按项目资料→品牌诊断→关键词池→内容→发布→收录→引用源→复盘报告逐步陪跑。
+
+也可以直接对 Claude Code 或 Codex 说：
 
 ```text
 使用 geo-workflow-hub，帮我规划一个完整 GEO 运营工作流。
@@ -155,6 +163,7 @@ metadata:
 
 | 用户说 | 推荐模块 |
 |--------|---------|
+| "我是新学员" / "从0跑一个GEO项目" / "一步一步带我做GEO" | 00A geo-student-workflow |
 | "创建品牌" / "企业入驻" | ⑥ geo-brand |
 | "搭建知识库" / "整理资料" | ⑦ geo-knowledge |
 | "关键词池" / "状态机" / "先优化哪个关键词" / "推进到哪一步" | ⑦a geo-keyword-pool |

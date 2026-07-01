@@ -45,6 +45,7 @@ skills/
 ├── geo-runtime/
 ├── geo-hub/
 ├── geo-workflow-hub/
+├── geo-student-workflow/
 ├── geo-config/
 ├── geo-account/
 ├── geo-article/

@@ -7,7 +7,7 @@ const { configPath, loadGeoConfig, ensureConfig, mask, headers } = require('./cr
 const args = process.argv.slice(2);
 const suite = path.resolve(__dirname, '../..');
 const required = [
-  'geo-runtime','geo-hub','geo-workflow-hub','geo-config','geo-account','geo-article',
+  'geo-runtime','geo-hub','geo-workflow-hub','geo-student-workflow','geo-config','geo-account','geo-article',
   'geo-indexing','geo-publish','geo-brand','geo-knowledge','geo-keyword-pool','geo-content','geo-content-production',
   'geo-content-audit','geo-content-to-publish-pipeline','geo-content-archive','geo-analysis','geo-source-assets','geo-troubleshooter','geo-skill-evolution'
 ];
