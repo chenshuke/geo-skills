@@ -1,0 +1,4 @@
+interface:
+  display_name: "05B GEO内容审核优化"
+  short_description: "审核文章质量、覆盖度、合规性和发布前风险。"
+  default_prompt: "使用 geo-content-audit 帮我审核并优化这篇 GEO 文章。"

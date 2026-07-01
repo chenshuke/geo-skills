@@ -50,6 +50,32 @@ GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 16 个业务
 
 ---
 
+
+## 2.1 学员工作流顺序
+
+为了降低新手理解成本，技能展示名称采用“序号 + 中文名称”，但技术技能名不变。
+
+```text
+00 geo-runtime 环境诊断
+01 geo-config 平台初始化
+02 geo-account 账号资源检查
+03 geo-brand 品牌定位（03A geo-brand-diagnosis 品牌AI诊断）
+04 geo-knowledge 知识库搭建
+05A geo-content-production 内容生产
+05B geo-content-audit 内容审核优化
+06 geo-article 文章素材管理
+07 geo-content-to-publish-pipeline 内容到发布流水线
+08 geo-publish 发布与状态回查
+09 geo-indexing 收录检测
+10 geo-source-assets 引用源资产库
+11 geo-analysis 数据分析复盘
+12 geo-content-archive 项目归档整理
+90 geo-troubleshooter 故障排查
+91 geo-skill-evolution 技能自进化
+```
+
+两个入口不参与线性步骤：`geo-hub` 是平台操作入口，`geo-workflow-hub` 是运营工作流入口。
+
 ## 3. 路由口诀
 
 ### 平台执行类

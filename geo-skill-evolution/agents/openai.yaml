@@ -1,4 +1,4 @@
 interface:
-  display_name: "GEO技能自进化"
+  display_name: "91 GEO技能自进化"
   short_description: "把不同行业、客户和学员遇到的新问题沉淀为技能改进建议、回归测试和发布验收。"
   default_prompt: "使用 geo-skill-evolution，把这次 GEO 实操问题沉淀成技能改进方案和回归测试。"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "09 GEO收录检测"
+  short_description: "创建定时收录计划、查询answers/matrix，并检测publishedUrl命中。"
+  default_prompt: "使用 geo-indexing 帮我查 AI 是否收录和引用我的文章。"

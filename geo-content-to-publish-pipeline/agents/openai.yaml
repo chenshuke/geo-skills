@@ -1,4 +1,4 @@
 interface:
-  display_name: "GEO内容发布流水线"
-  short_description: "从标题/文章到上传、审核、账号查询和发布预览的GEO总控流程。"
-  default_prompt: "使用 geo-content-to-publish-pipeline，根据我的标题方案和文章文件生成上传与发布预览清单。"
+  display_name: "07 GEO内容到发布流水线"
+  short_description: "编排封面OSS、文章上传、审核、账号查询、发布预览和确认清单。"
+  default_prompt: "使用 geo-content-to-publish-pipeline 帮我从内容到发布生成确认清单。"

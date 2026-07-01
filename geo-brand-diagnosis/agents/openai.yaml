@@ -1,0 +1,4 @@
+interface:
+  display_name: "03A GEO品牌AI诊断"
+  short_description: "测试AI是否认识品牌，分析品牌词、品类词和竞品风险。"
+  default_prompt: "使用 geo-brand-diagnosis 帮我做一次品牌 AI 认知诊断。"

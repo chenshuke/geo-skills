@@ -1,0 +1,4 @@
+interface:
+  display_name: "08 GEO发布与状态回查"
+  short_description: "创建发布任务，回查发布状态，并获取articleId对应的publishedUrl。"
+  default_prompt: "使用 geo-publish 帮我创建发布任务并回查 publishedUrl。"

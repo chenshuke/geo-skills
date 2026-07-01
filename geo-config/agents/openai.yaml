@@ -1,0 +1,4 @@
+interface:
+  display_name: "01 GEO平台初始化"
+  short_description: "配置openKey、Referer和默认公司/产品，完成首次平台初始化。"
+  default_prompt: "使用 geo-config 初始化 GEO 平台配置，并设置默认公司和产品。"

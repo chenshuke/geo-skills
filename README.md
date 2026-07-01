@@ -10,7 +10,7 @@
 - 中文文章上传统一使用 `geo-article/scripts/upload_article.js`，避免 `curl -d` 或 PowerShell 单行 JSON 导致乱码。
 - 图片和封面统一走 GEO 平台 `/v1/text-to-img`，默认 `model=v2`，不再使用本地 SVG 封面 fallback。
 
-详见：`GEO-SKILLS-EXECUTION-PROTOCOL.md`；常用命令见：`QUICK_COMMANDS.md`。
+详见：`GEO-SKILLS-EXECUTION-PROTOCOL.md`；常用命令见：`QUICK_COMMANDS.md`；学员顺序见：`GEO-STUDENT-WORKFLOW.md`。
 
 ## 兼容性
 
@@ -147,6 +147,32 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 你可以让 AI 执行：
 
 > 使用 geo-config 帮我初始化 GEO 平台 openKey 配置。
+
+
+## 学员工作流序号
+
+技术技能名和文件夹名保持不变；为了方便课堂理解，学员版在展示名称和文档中使用 00-12 的主线顺序，90/91 为横向能力。
+
+| 序号 | 技能 | 学员理解 |
+|---:|---|---|
+| 00 | `geo-runtime` | 环境诊断 |
+| 01 | `geo-config` | 平台初始化 |
+| 02 | `geo-account` | 账号资源检查 |
+| 03 | `geo-brand` | 品牌定位 |
+| 04 | `geo-knowledge` | 知识库搭建 |
+| 05A | `geo-content-production` | 内容生产 |
+| 05B | `geo-content-audit` | 内容审核优化 |
+| 06 | `geo-article` | 文章素材管理 |
+| 07 | `geo-content-to-publish-pipeline` | 内容到发布流水线 |
+| 08 | `geo-publish` | 发布与状态回查 |
+| 09 | `geo-indexing` | 收录检测 |
+| 10 | `geo-source-assets` | 引用源资产库 |
+| 11 | `geo-analysis` | 数据分析复盘 |
+| 12 | `geo-content-archive` | 项目归档整理 |
+| 90 | `geo-troubleshooter` | 故障排查 |
+| 91 | `geo-skill-evolution` | 技能自进化 |
+
+完整说明见：`GEO-STUDENT-WORKFLOW.md`。
 
 ## 技能结构
 

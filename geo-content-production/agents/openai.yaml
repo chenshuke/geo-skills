@@ -1,0 +1,4 @@
+interface:
+  display_name: "05A GEO内容生产"
+  short_description: "生成关键词方案、标题方案、文章、封面、配图和脚本。"
+  default_prompt: "使用 geo-content-production 帮我生成关键词、标题和 GEO 文章。"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "03 GEO品牌定位"
+  short_description: "创建企业、产品、个人品牌定位和基础内容资料。"
+  default_prompt: "使用 geo-brand 帮我创建品牌定位和基础资料。"

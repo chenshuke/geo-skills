@@ -1,0 +1,4 @@
+interface:
+  display_name: "入口01 GEO平台操作总入口"
+  short_description: "路由配置、账号、文章、发布、收录等GEO平台API操作。"
+  default_prompt: "使用 geo-hub 帮我判断这个 GEO 平台操作应该调用哪个技能。"

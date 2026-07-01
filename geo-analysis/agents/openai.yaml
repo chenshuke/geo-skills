@@ -1,0 +1,4 @@
+interface:
+  display_name: "11 GEO数据分析复盘"
+  short_description: "分析证据链、平台引用偏好、竞品风险、PDCA和项目仪表盘。"
+  default_prompt: "使用 geo-analysis 帮我分析收录结果和证据链。"

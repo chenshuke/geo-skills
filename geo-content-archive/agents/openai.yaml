@@ -1,0 +1,4 @@
+interface:
+  display_name: "12 GEO项目归档整理"
+  short_description: "按项目标准目录归档文章、报告、发布记录和监测分析文件。"
+  default_prompt: "使用 geo-content-archive 帮我整理 GEO 项目文件。"

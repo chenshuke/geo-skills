@@ -1,0 +1,4 @@
+interface:
+  display_name: "入口02 GEO运营工作流总入口"
+  short_description: "路由品牌、知识库、内容、发布、分析、排障和自进化工作流。"
+  default_prompt: "使用 geo-workflow-hub 帮我规划一个完整 GEO 运营工作流。"

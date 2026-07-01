@@ -1,0 +1,4 @@
+interface:
+  display_name: "04 GEO知识库搭建"
+  short_description: "整理项目资料，搭建可用于内容生产的本地知识库。"
+  default_prompt: "使用 geo-knowledge 帮我整理资料并搭建 GEO 知识库。"

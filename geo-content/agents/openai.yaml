@@ -1,0 +1,4 @@
+interface:
+  display_name: "05 GEO内容工作流总入口"
+  short_description: "路由关键词、标题、文章、封面、审核和优化等内容工作。"
+  default_prompt: "使用 geo-content 帮我判断内容生产下一步怎么走。"

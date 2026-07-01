@@ -1,0 +1,4 @@
+interface:
+  display_name: "06 GEO文章素材管理"
+  short_description: "上传文章、管理文章、审核文章、上传图片素材和OSS链接。"
+  default_prompt: "使用 geo-article 帮我上传文章并检查是否成功。"
