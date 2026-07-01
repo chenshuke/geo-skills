@@ -160,6 +160,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | 02 | `geo-account` | 账号资源检查 |
 | 03 | `geo-brand` | 品牌定位 |
 | 04 | `geo-knowledge` | 知识库搭建 |
+| 04A | `geo-keyword-pool` | 关键词池/状态机 |
 | 05A | `geo-content-production` | 内容生产 |
 | 05B | `geo-content-audit` | 内容审核优化 |
 | 06 | `geo-article` | 文章素材管理 |
@@ -200,6 +201,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | `geo-workflow-hub` | GEO 运营流程路由入口 |
 | `geo-brand` | 企业/产品/个人品牌内容创建 |
 | `geo-knowledge` | 知识库创建、资料整理、补充清单 |
+| `geo-keyword-pool` | 关键词池、P0-P3优先级、状态机和下一步动作 |
 | `geo-content` | 内容生产/审核路由入口 |
 | `geo-content-production` | 关键词、标题、文章、封面、图片生产 |
 | `geo-content-audit` | 一致性审核、媒体就绪、AI 检测、覆盖/Gap/优化 |
@@ -215,7 +217,8 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 ```mermaid
 graph LR
     A[geo-workflow-hub: brand] --> B[geo-workflow-hub: knowledge]
-    B --> C[geo-content-production]
+    B --> K[geo-keyword-pool]
+    K --> C[geo-content-production]
     C --> D[geo-content-audit]
     D --> P[geo-content-to-publish-pipeline]
     P --> E[geo-content-archive]

@@ -7,7 +7,7 @@
 
 ## 1. 总体结构
 
-GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 16 个业务技能** 组织。所有 `geo-*` 文件夹应作为同级技能安装。
+GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 17 个业务技能** 组织。所有 `geo-*` 文件夹应作为同级技能安装。
 
 ### 0. `geo-runtime` — 运行时与诊断
 - 技能完整性检查、凭证读取、依赖诊断、API 连通性检查
@@ -38,6 +38,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 16 个业务
 |------|------|
 | **⑥ geo-brand** | 创建企业/产品/个人/获客品牌账号 |
 | **⑦ geo-knowledge** | 知识库搭建、整理、补充清单 |
+| **⑦a geo-keyword-pool** | 关键词池、P0-P3优先级、状态机和下一步动作 |
 | **⑧ geo-content** | 内容总入口（已拆分为 production + audit 两个子模块） |
 | **⑧a geo-content-production** | 关键词规划、标题创作、图片生成、封面生成 |
 | **⑧b geo-content-audit** | 一致性审核、媒体就绪审核、AI检测、覆盖度检查、内容优化、合规榜单 |
@@ -61,6 +62,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 16 个业务
 02 geo-account 账号资源检查
 03 geo-brand 品牌定位（03A geo-brand-diagnosis 品牌AI诊断）
 04 geo-knowledge 知识库搭建
+04A geo-keyword-pool 关键词池/状态机
 05A geo-content-production 内容生产
 05B geo-content-audit 内容审核优化
 06 geo-article 文章素材管理
@@ -106,7 +108,8 @@ GEO 技能体系以 **1 个运行时支撑技能 + 2 个总入口 + 16 个业务
 ```text
 第1步：使用 geo-brand 创建品牌
 第2步：使用 geo-knowledge 搭建知识库（建立标准目录结构）
-第3步：使用 geo-content-production 完成关键词、标题、图片与内容创作
+第2.5步：使用 geo-keyword-pool 建立关键词池、分级并输出下一步动作
+第3步：使用 geo-content-production 完成标题、图片与内容创作
 第4步：使用 geo-content-audit 审核、覆盖度检查与优化
 第5步：使用 geo-content-to-publish-pipeline 完成封面 OSS、文章上传、审核通过、账号查询和发布 dry-run
 第6步：用户确认后创建发布任务，并用 GET/list 回查确认

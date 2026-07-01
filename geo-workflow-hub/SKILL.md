@@ -1,6 +1,6 @@
 ---
 name: geo-workflow-hub
-description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、品牌搭建、资料整理、写文章、审核优化、归档分析、完整运营流程、线下课练习流程、引用源资产库、信源资产、AI引用来源沉淀、故障排查、失败原因、下一步怎么处理、技能自进化、把客户问题沉淀成技能. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
+description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、品牌搭建、资料整理、关键词池、关键词状态机、先优化哪个关键词、每个关键词推进到哪一步、写文章、审核优化、归档分析、完整运营流程、线下课练习流程、引用源资产库、信源资产、AI引用来源沉淀、故障排查、失败原因、下一步怎么处理、技能自进化、把客户问题沉淀成技能. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
@@ -25,7 +25,7 @@ metadata:
 
 ```text
 00 环境诊断 → 01 平台初始化 → 02 账号资源检查 → 03 品牌定位 → 04 知识库搭建
-→ 05 内容生产/审核 → 06 文章素材管理 → 07 内容到发布流水线 → 08 发布状态回查
+→ 04A 关键词池/状态机 → 05 内容生产/审核 → 06 文章素材管理 → 07 内容到发布流水线 → 08 发布状态回查
 → 09 收录检测 → 10 引用源资产库 → 11 数据分析复盘 → 12 项目归档
 ```
 
@@ -36,7 +36,7 @@ metadata:
 `geo-workflow-hub` 是**GEO运营工作流**的统一入口，覆盖全流程：
 
 ```
-品牌创建 → 知识库搭建 → 关键词规划 → 标题创作 → 内容创作 → 内容审核 → 上传发布预览 → 内容归档 → 收录监测 → 引用源资产沉淀
+品牌创建 → 知识库搭建 → 关键词池/状态机 → 标题创作 → 内容创作 → 内容审核 → 上传发布预览 → 内容归档 → 收录监测 → 引用源资产沉淀
 ```
 
 ---
@@ -70,6 +70,15 @@ metadata:
 **适用场景**：新项目启动、资料整理、内容体系搭建
 
 **推荐说法**：`使用 geo-knowledge 帮我搭建知识库`
+
+---
+
+### ⑦a geo-keyword-pool — 关键词池 / 状态机
+> 批量导入问题，给关键词分 P0/P1/P2/P3，维护 planned/baseline_done/need_content/published/postpublish_monitoring/source_gap/stable/regression/blocked 状态，并输出下一步动作。
+
+**适用场景**：学员不知道先优化哪个关键词，或不知道每个关键词推进到哪一步。
+
+**推荐说法**：`使用 geo-keyword-pool 帮我创建关键词池并输出下一步动作`
 
 ---
 
@@ -148,6 +157,7 @@ metadata:
 |--------|---------|
 | "创建品牌" / "企业入驻" | ⑥ geo-brand |
 | "搭建知识库" / "整理资料" | ⑦ geo-knowledge |
+| "关键词池" / "状态机" / "先优化哪个关键词" / "推进到哪一步" | ⑦a geo-keyword-pool |
 | "规划关键词" / "生成标题" / "写内容" | ⑧a geo-content-production |
 | "审核" / "覆盖度" / "优化内容" | ⑧b geo-content-audit |
 | "归档内容" / "整理创作文件" | ⑩ geo-content-archive |
@@ -172,7 +182,8 @@ metadata:
 ```text
 第1步：使用 geo-brand 创建品牌
 第2步：使用 geo-knowledge 搭建知识库
-第3步：使用 geo-content-production 完成关键词、标题和内容创作
+第2.5步：使用 geo-keyword-pool 建立关键词池、分级和下一步动作
+第3步：使用 geo-content-production 完成标题和内容创作
 第4步：使用 geo-content-audit 审核、覆盖度检查和优化
 第5步：使用 geo-content-to-publish-pipeline 生成封面、上传文章、审核通过并输出发布确认清单
 第6步：用户确认后使用 geo-content-to-publish-pipeline / geo-publish 创建发布任务

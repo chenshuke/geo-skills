@@ -1,0 +1,4 @@
+interface:
+  display_name: "04A GEO关键词池"
+  short_description: "创建和维护关键词池、优先级、状态机和下一步动作，支撑多关键词GEO闭环。"
+  default_prompt: "使用 geo-keyword-pool，帮我创建关键词池并输出下一步优化动作。"

@@ -9,7 +9,7 @@
 
 - 技术技能名、文件夹名、脚本路径不加数字，保持兼容。
 - 学员看到的展示名和教学文档使用序号，帮助理解工作流顺序。
-- 主线序号为 00-12；90 是故障排查；91 是技能自进化。
+- 主线序号为 00-12，其中 04A 是关键词池/状态机；90 是故障排查；91 是技能自进化。
 - 详细顺序见 `GEO-STUDENT-WORKFLOW.md`。
 
 ## 1. 默认运行时
@@ -34,6 +34,7 @@
 ## 3. API 调用优先级
 
 1. 有专用 Node 脚本时，优先使用专用脚本：
+   - 关键词池/状态机：`geo-keyword-pool/scripts/keyword_pool.js`
    - 文章上传：`geo-article/scripts/upload_article.js`
    - 文章删除：`geo-article/scripts/delete_articles.js`
    - 首次配置公司/产品：`geo-config/scripts/setup_defaults.js`
@@ -114,6 +115,7 @@ node geo-content-archive/scripts/project_paths.js --project-dir "项目_品牌GE
 |---|---|---|
 | 知识库 | `knowledge` | `02_知识库/` |
 | 关键词方案 | `keyword-plan` | `03_规划方案/关键词方案/` |
+| 关键词池 | `keyword-pool` | `03_规划方案/关键词池/` |
 | 标题方案 | `title-plan` | `03_规划方案/标题方案/` |
 | 文章 | `article` | `04_内容创作/{日期}/articles/` |
 | 优化版文章 | `optimized-article` | `04_内容创作/{日期}/optimized/` |
@@ -154,6 +156,11 @@ node geo-runtime/scripts/api_request.js --method POST --path /v1/example --body-
 # 图片/封面
 node geo-content-production/scripts/generate_image.js --prompt "图片描述" --dry-run
 node geo-content-production/scripts/generate_cover.js --title "文章标题" --dry-run
+
+# 关键词池/状态机
+node geo-keyword-pool/scripts/keyword_pool.js --action init --project-dir "项目_品牌GEO"
+node geo-keyword-pool/scripts/keyword_pool.js --action import --project-dir "项目_品牌GEO" --file questions.md --source "课堂调研"
+node geo-keyword-pool/scripts/keyword_pool.js --action next --project-dir "项目_品牌GEO" --top 20
 
 # 中文文章上传
 node geo-article/scripts/upload_article.js --file "文章.md" --dry-run

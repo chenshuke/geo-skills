@@ -6,7 +6,7 @@
 ## 学员顺序速记
 
 ```text
-00诊断 → 01初始化 → 02查资源 → 03定品牌 → 04建知识库 → 05做内容 → 06传文章 → 07发布预览 → 08发布回查 → 09查收录 → 10沉淀信源 → 11分析复盘 → 12归档
+00诊断 → 01初始化 → 02查资源 → 03定品牌 → 04建知识库 → 04A建关键词池 → 05做内容 → 06传文章 → 07发布预览 → 08发布回查 → 09查收录 → 10沉淀信源 → 11分析复盘 → 12归档
 90排障 / 91进化
 ```
 
@@ -54,6 +54,14 @@ node geo-runtime/scripts/api_request.js --method POST --path /v1/article --body-
 ```bash
 node geo-content-production/scripts/generate_image.js --prompt "必火AI科技感封面图，无文字" --aspect-ratio 16:9 --dry-run
 node geo-content-production/scripts/generate_cover.js --title "2026年GEO优化服务商推荐TOP5" --brand "必火AI" --dry-run
+```
+
+## 关键词池 / 状态机
+
+```bash
+node geo-keyword-pool/scripts/keyword_pool.js --action init --project-dir "项目_示例品牌GEO"
+node geo-keyword-pool/scripts/keyword_pool.js --action import --project-dir "项目_示例品牌GEO" --file questions.md --source "课堂调研" --brand "示例品牌A"
+node geo-keyword-pool/scripts/keyword_pool.js --action next --project-dir "项目_示例品牌GEO" --top 20
 ```
 
 ## 中文文章上传

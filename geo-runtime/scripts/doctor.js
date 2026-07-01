@@ -8,7 +8,7 @@ const args = process.argv.slice(2);
 const suite = path.resolve(__dirname, '../..');
 const required = [
   'geo-runtime','geo-hub','geo-workflow-hub','geo-config','geo-account','geo-article',
-  'geo-indexing','geo-publish','geo-brand','geo-knowledge','geo-content','geo-content-production',
+  'geo-indexing','geo-publish','geo-brand','geo-knowledge','geo-keyword-pool','geo-content','geo-content-production',
   'geo-content-audit','geo-content-to-publish-pipeline','geo-content-archive','geo-analysis','geo-source-assets','geo-troubleshooter','geo-skill-evolution'
 ];
 const optional = ['geo-brand-diagnosis'];
@@ -21,6 +21,7 @@ const coreScripts = [
   'geo-runtime/scripts/regression_publication_chain.js',
   'geo-config/scripts/setup_defaults.js',
   'geo-content-archive/scripts/project_paths.js',
+  'geo-keyword-pool/scripts/keyword_pool.js',
   'geo-article/scripts/upload_article.js',
   'geo-article/scripts/delete_articles.js',
   'geo-indexing/scripts/import_questions.js',

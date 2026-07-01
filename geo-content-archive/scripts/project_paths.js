@@ -54,7 +54,7 @@ Options:
 
 Artifact types:
   overview, dashboard, troubleshooting, skill-evolution, brand-positioning, raw-material, knowledge, supplement-list,
-  keyword-plan, keyword-map, title-plan, tracking-table,
+  keyword-plan, keyword-pool, keyword-map, title-plan, tracking-table,
   article, optimized-article, cover, image, cover-mapping, compliant-list,
   audit-consistency, audit-media, audit-ai, audit-coverage, audit-gap, audit-quality,
   publish-record, publication-status, indexing-report, published-url-match, evidence-report, source-assets, pdca-report, platform-profile,
@@ -74,6 +74,7 @@ function artifactDir(artifact, batch) {
     'knowledge': '02_知识库',
     'supplement-list': '02_知识库',
     'keyword-plan': '03_规划方案/关键词方案',
+    'keyword-pool': '03_规划方案/关键词池',
     'keyword-map': '03_规划方案',
     'title-plan': '03_规划方案/标题方案',
     'tracking-table': '03_规划方案',
@@ -115,7 +116,7 @@ function defaultFilename(artifact) {
 function ensureDirs(root, dryRun = false) {
   const dirs = new Set(STANDARD_DIRS);
   for (const a of [
-    'troubleshooting','skill-evolution','brand-positioning','keyword-plan','title-plan','article','optimized-article','cover','image','compliant-list',
+    'troubleshooting','skill-evolution','brand-positioning','keyword-plan','keyword-pool','title-plan','article','optimized-article','cover','image','compliant-list',
     'audit-consistency','audit-media','audit-ai','audit-coverage','audit-gap','audit-quality',
     'publication-status',
     'indexing-report','published-url-match','evidence-report','source-assets','pdca-report','platform-profile','industry-insight','screenshot','unknown'

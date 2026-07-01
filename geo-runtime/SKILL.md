@@ -51,12 +51,18 @@ skills/
 ├── geo-indexing/
 ├── geo-publish/
 ├── geo-brand/
+├── geo-brand-diagnosis/        # 可选
 ├── geo-knowledge/
+├── geo-keyword-pool/
 ├── geo-content/
 ├── geo-content-production/
 ├── geo-content-audit/
+├── geo-content-to-publish-pipeline/
 ├── geo-content-archive/
-└── geo-analysis/
+├── geo-analysis/
+├── geo-source-assets/
+├── geo-troubleshooter/
+└── geo-skill-evolution/
 ```
 
 共享配置不应放在技能目录中，而应放在用户级目录：
@@ -119,6 +125,7 @@ node geo-runtime/scripts/doctor.js --check-api
 | `scripts/credentials.js` | 无 Python 跨技能读取 GEO 凭证 |
 | `scripts/api_request.js` | 无 Python 通用 GEO API 调用工具，替代 curl，写操作需 `--force` |
 | `scripts/doctor.js` | 无 Python 检查技能完整性、Node/lark-cli、配置和 API 连通性 |
+| `../geo-keyword-pool/scripts/keyword_pool.js` | 关键词池、P0-P3 优先级、状态机和下一步动作 |
 | `../geo-config/scripts/setup_defaults.js` | 首次安装后获取公司/产品列表，并写入默认 companyId/productId |
 | `scripts/credentials.py` | 旧版 Python 凭证读取，保留兼容 |
 | `scripts/doctor.py` | 旧版 Python 诊断，保留兼容 |
