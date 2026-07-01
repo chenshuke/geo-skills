@@ -18,8 +18,8 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 ### B. `geo-workflow-hub` — 运营工作流入口
 - 品牌创建、知识库、关键词规划、内容创作、审核优化、报表分析
 
-### C. `geo-student-workflow` — 新手一键入口
-- 一句话从 0 跑项目，按项目资料、品牌诊断、关键词池、内容、发布、收录、引用源、复盘报告逐步陪跑
+### C. `geo-student-workflow` — 课程一键入口
+- 一句话选择三种模式：私教班快速闭环、大师班20问题上榜、持续运营飞轮
 
 ---
 
@@ -60,7 +60,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 为了降低新手理解成本，技能展示名称采用“序号 + 中文名称”，但技术技能名不变。
 
 ```text
-00A geo-student-workflow 新手一键入口
+00A geo-student-workflow 课程一键入口（三模式）
 00 geo-runtime 环境诊断
 01 geo-config 平台初始化
 02 geo-account 账号资源检查
@@ -80,7 +80,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 91 geo-skill-evolution 技能自进化
 ```
 
-`geo-student-workflow` 是完全新手的一句话入口；`geo-hub` 是平台操作入口，`geo-workflow-hub` 是运营工作流入口。
+`geo-student-workflow` 是课程/新手的一句话入口，负责三模式选择；`geo-hub` 是平台操作入口，`geo-workflow-hub` 是运营工作流入口。
 
 ## 3. 路由口诀
 
@@ -110,7 +110,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 ## 4. 推荐工作流
 
 ```text
-新手推荐入口：先说“我是新学员，帮我从 0 跑一个 GEO 项目”，由 `geo-student-workflow` 逐步陪跑。
+课程推荐入口：先说“我是新学员，帮我选择合适模式并跑一个 GEO 项目”，由 `geo-student-workflow` 在快速闭环、20问题上榜、持续运营飞轮之间选择并陪跑。
 
 第1步：使用 geo-brand 创建品牌
 第2步：使用 geo-knowledge 搭建知识库（建立标准目录结构）

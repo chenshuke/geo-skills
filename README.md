@@ -156,7 +156,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | 序号 | 技能 | 学员理解 |
 |---:|---|---|
 | 00 | `geo-runtime` | 环境诊断 |
-| 00A | `geo-student-workflow` | 新手一键入口 |
+| 00A | `geo-student-workflow` | 课程一键入口（三模式） |
 | 01 | `geo-config` | 平台初始化 |
 | 02 | `geo-account` | 账号资源检查 |
 | 03 | `geo-brand` | 品牌定位 |
@@ -200,7 +200,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | 技能 | 用途 |
 |------|------|
 | `geo-workflow-hub` | GEO 运营流程路由入口 |
-| `geo-student-workflow` | 新手一句话入口：从项目资料到复盘报告逐步陪跑 |
+| `geo-student-workflow` | 课程一句话入口：私教班快速闭环、大师班20问题上榜、持续运营飞轮 |
 | `geo-brand` | 企业/产品/个人品牌内容创建 |
 | `geo-knowledge` | 知识库创建、资料整理、补充清单 |
 | `geo-keyword-pool` | 关键词池、P0-P3优先级、状态机和下一步动作 |
@@ -218,7 +218,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 
 ```mermaid
 graph LR
-    Z[geo-student-workflow: 新手一键入口] --> A[geo-workflow-hub: brand] --> B[geo-workflow-hub: knowledge]
+    Z[geo-student-workflow: 三模式课程入口] --> A[geo-workflow-hub: brand] --> B[geo-workflow-hub: knowledge]
     B --> K[geo-keyword-pool]
     K --> C[geo-content-production]
     C --> D[geo-content-audit]
@@ -262,9 +262,15 @@ node geo-content-production/scripts/generate_cover.js  # GEO 平台封面生成�
 
 ## 学员推荐用法
 
-安装完成后，新学员优先直接说：
+安装完成后，学员优先直接说：
 
-> 我是新学员，帮我从 0 跑一个 GEO 项目。
+> 我是新学员，帮我选择合适模式并跑一个 GEO 项目。
+
+也可按场景说：
+
+> 我是私教班学员，帮我快速跑通 GEO 闭环。
+> 我是大师班学员，帮我围绕 20 个问题做上榜实战。
+> 帮我进入 GEO 持续运营飞轮。
 
 也可以向 Claude Code 或 Codex 提问：
 
