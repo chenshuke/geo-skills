@@ -22,6 +22,8 @@ const coreScripts = [
   'geo-article/scripts/delete_articles.js',
   'geo-indexing/scripts/import_questions.js',
   'geo-indexing/scripts/scheduled_indexing.js',
+  'geo-indexing/scripts/published_url_match.js',
+  'geo-publish/scripts/publication_status.js',
   'geo-content-production/scripts/generate_image.js',
   'geo-content-production/scripts/generate_cover.js',
   'geo-content/scripts/generate_image.js',

@@ -1,11 +1,11 @@
 ---
 name: geo-publish
-description: "GEO 发布任务和分发管理技能。Use when the user says 发布文章、分发到公众号/知乎/搜狐/头条/CSDN/小红书/抖音/B站、创建发布任务、定时发布、删除发布任务、查看发布状态、发布失败排查、投稿记录、媒体发布平台、发布统计. Do not draft/upload articles; use geo-content-production or geo-article first."
+description: "GEO 发布任务和分发管理技能。Use when the user says 发布文章、分发到公众号/知乎/搜狐/头条/CSDN/小红书/抖音/B站、创建发布任务、定时发布、删除发布任务、查看发布状态、发布状态回查、articleId 转 publishedUrl、发布失败/人工处理识别、投稿记录、媒体发布平台、发布统计. Do not draft/upload articles; use geo-content-production or geo-article first."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
-  version: "3.3.0"
+  version: "3.4.0"
   category: api
 ---
 
@@ -43,6 +43,44 @@ metadata:
 
 - **创建发布任务**：单篇/多篇文章发布到单个/多个平台账号，支持定时发布和 AIGC 开关
 - **删除发布任务**：清理测试任务或取消已有发布任务（支持批量）
+- **发布状态回查**：从 `/v1/publication-task` 和 `/v1/publication` 建立 `articleId → publishedUrl` 状态表，识别发布失败、无 URL、人工处理等情况
+
+---
+
+
+## 推荐脚本：发布状态回查 / articleId → publishedUrl
+
+发布任务创建后，不能把“任务已创建”误判为“平台已发布”或“AI 已看见”。必须继续回查投稿记录：
+
+```bash
+node geo-publish/scripts/publication_status.js \
+  --article-ids 101,102 \
+  --project-dir "项目_品牌GEO"
+
+# 只查指定发布任务
+node geo-publish/scripts/publication_status.js \
+  --task-ids 88,89 \
+  --project-dir "项目_品牌GEO"
+```
+
+输出到 `06_发布记录/发布状态回查/`：
+
+- `发布状态回查_YYYY-MM-DD.md`：人工可读状态表
+- `publication_status_YYYY-MM-DD.csv`：表格版
+- `publication_status_YYYY-MM-DD.json`：给 `geo-indexing/scripts/published_url_match.js` 继续做 URL 命中检测
+
+状态判定：
+
+| status | 含义 | 下一步 |
+|---|---|---|
+| `published_url_ready` | 已拿到 publishedUrl | 交给 geo-indexing 做 searchedSites 精确 URL 命中 |
+| `task_created_no_publication_url` | 有发布任务但还没拿到发布 URL | 继续回查 `/v1/publication`，不要判定为已被 AI 看见 |
+| `published_no_url` | 状态像已发布但 URL 缺失 | 人工核验平台后台或稍后复查 |
+| `manual_required` | 疑似需要人工处理、登录、验证码、授权 | 到平台账号处理后再回查 |
+| `failed` | 发布失败/驳回/异常 | 修复账号、封面、标题或平台规则后重发 |
+| `pending_or_processing` | 仍在排队或处理中 | 等待后复查 |
+
+> 拿到 `publishedUrl` 后，下一步使用 `geo-indexing/scripts/published_url_match.js` 判断 AI answers 的 `searchedSites` 是否命中新 URL。
 
 ---
 
@@ -52,6 +90,8 @@ metadata:
 |------|------|------|
 | POST | /v1/publication-task | 创建发布任务 |
 | DELETE | /v1/publication-task | 删除发布任务 |
+| GET | /v1/publication-task | 回查发布任务是否真实创建、任务与 articleId 是否匹配 |
+| GET | /v1/publication | 回查平台投稿/发布记录，提取 articleId 对应的 publishedUrl 和失败原因 |
 
 ---
 
@@ -182,6 +222,7 @@ curl -s -X DELETE "${baseUrl}/v1/publication-task" \
 5. 参数验证：任务名称非空、文章 ID 与平台账号数量匹配、平台名称有效
 6. 构造请求体并发送请求
 7. **Write-then-Read 校验**：创建完成后立即调用 `GET /v1/publication-task` 回查确认（见下方强制校验规则）
+8. **Published URL 回查**：任务存在后继续调用 `GET /v1/publication`，用 `articleId` 提取 `publishedUrl`、失败原因或人工处理状态
 
 ---
 
@@ -193,6 +234,7 @@ curl -s -X DELETE "${baseUrl}/v1/publication-task" \
 3. 使用 geo-account 查询目标平台可用账号和每日额度。
 4. 如需测试发布，使用 geo-publish 创建测试任务；测试后必须立即删除并回查。
 5. 使用 geo-publish 创建正式发布任务；执行前必须展示文章 ID、账号 ID、平台、额度和发布时间并等待确认。
+6. 发布任务创建后运行 `geo-publish/scripts/publication_status.js` 生成发布状态表；拿到 publishedUrl 后再交给 `geo-indexing/scripts/published_url_match.js` 检测 AI searchedSites 是否命中新 URL。
 ```
 
 ---
@@ -220,7 +262,7 @@ GEO API 在参数错误（如 Referer 不匹配、账号额度不足）时可能
 
 | 操作 | 必须执行的校验 | 校验内容 |
 |------|---------------|---------|
-| **创建发布任务** | 立即调用 `GET /v1/publication-task` | 确认任务存在于列表中、关联的文章 ID 和账号 ID 正确、任务状态符合预期 |
+| **创建发布任务** | 立即调用 `GET /v1/publication-task`，随后调用 `GET /v1/publication` | 确认任务存在；再用 articleId 提取 publishedUrl、失败原因或人工处理状态 |
 | **删除发布任务** | 立即调用 `GET /v1/publication-task` | 确认被删除的任务已不在列表中 |
 
 ### 执行原则
@@ -230,6 +272,7 @@ GEO API 在参数错误（如 Referer 不匹配、账号额度不足）时可能
 3. **批量操作分批校验**：批量创建/删除时，每批完成后立即回查，不要等全部完成再查
 4. **发现异常立即停止**：回查发现数据不符时，**停止后续操作**，先排查原因
 5. **注意响应结构**：`GET /v1/publication-task` 返回数据在 `data.data`（嵌套数组），不是 `data.list`
+6. **不要混淆状态**：有 `articleId` 只说明文章进入发布任务；有 `publishedUrl` 才说明平台发布 URL 已生成；是否被 AI 看见还要用 `geo-indexing` 检查 `searchedSites` 命中
 
 ### 示例
 
@@ -257,5 +300,5 @@ curl -s -X GET "${baseUrl}/v1/publication-task?companyId=${companyId}&productId=
 
 所有技能统一从 `~/.geo-skills/credentials/geo-config.json` 读取认证信息：
 - openKey：接口密钥
-- 统一请求头：Authorization: Bearer ${openKey} + Referer: https://geo.bihuoai.com/
+- 统一请求头：Authorization: Bearer ${openKey} + Referer（可展示 Referer，不展示 Base URL）
 - Base URL：内部自动识别，不对用户展示

@@ -76,6 +76,21 @@ node geo-indexing/scripts/import_questions.js --target topic-task-select --task-
 ```
 
 
+
+## 发布状态回查 / URL 精确命中
+
+```bash
+# 发布任务创建后：articleId -> publishedUrl 状态表
+node geo-publish/scripts/publication_status.js --article-ids 101,102 --project-dir "项目_品牌GEO"
+
+# 判断 publishedUrl 是否被 AI answers.searchedSites 精确命中
+node geo-indexing/scripts/published_url_match.js --publication-json "项目_品牌GEO/06_发布记录/发布状态回查/publication_status_YYYY-MM-DD.json" --schedule-id 123 --project-dir "项目_品牌GEO"
+
+# 本地 answers JSON 模式
+node geo-indexing/scripts/scheduled_indexing.js --action answers --id 123 --limit 200 --json-out answers.json
+node geo-indexing/scripts/published_url_match.js --published-url "https://..." --answers-json answers.json --title "文章标题" --account "账号名" --project-dir "项目_品牌GEO"
+```
+
 ## 引用源资产库 / 信源补强
 
 ```bash

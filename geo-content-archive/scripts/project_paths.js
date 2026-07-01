@@ -57,7 +57,7 @@ Artifact types:
   keyword-plan, keyword-map, title-plan, tracking-table,
   article, optimized-article, cover, image, cover-mapping, compliant-list,
   audit-consistency, audit-media, audit-ai, audit-coverage, audit-gap, audit-quality,
-  publish-record, indexing-report, evidence-report, source-assets, pdca-report, platform-profile,
+  publish-record, publication-status, indexing-report, published-url-match, evidence-report, source-assets, pdca-report, platform-profile,
   industry-insight, screenshot, unknown
 `);
 }
@@ -88,7 +88,9 @@ function artifactDir(artifact, batch) {
     'audit-gap': '05_质量审核/缺口分析',
     'audit-quality': '05_质量审核/内容质量报告',
     'publish-record': '06_发布记录',
+    'publication-status': '06_发布记录/发布状态回查',
     'indexing-report': '07_监测分析/收录监测',
+    'published-url-match': '07_监测分析/收录监测/URL命中回查',
     'evidence-report': '07_监测分析/证据链分析',
     'source-assets': '07_监测分析/引用源资产库',
     'pdca-report': '07_监测分析/PDCA对比',
@@ -113,7 +115,8 @@ function ensureDirs(root, dryRun = false) {
   for (const a of [
     'brand-positioning','keyword-plan','title-plan','article','optimized-article','cover','image','compliant-list',
     'audit-consistency','audit-media','audit-ai','audit-coverage','audit-gap','audit-quality',
-    'indexing-report','evidence-report','source-assets','pdca-report','platform-profile','industry-insight','screenshot','unknown'
+    'publication-status',
+    'indexing-report','published-url-match','evidence-report','source-assets','pdca-report','platform-profile','industry-insight','screenshot','unknown'
   ]) dirs.add(artifactDir(a, today()));
   const created = [];
   for (const rel of dirs) {

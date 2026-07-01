@@ -1,6 +1,6 @@
 ---
 name: geo-indexing
-description: "GEO Scheduled Indexing 定时收录检测技能。Use when the user says 导入问题、创建定时收录计划、立即查收录、查 AI 是否收录、收录检测、排名检测、问题×平台矩阵、AI 回答引用来源、DeepSeek/豆包/Kimi/ChatGPT/Gemini/nami/grok/perp/poe 检测、暂停/删除收录计划. Do not create publication tasks; use geo-publish. Use geo-analysis for deep evidence-chain analysis."
+description: "GEO Scheduled Indexing 定时收录检测技能。Use when the user says 导入问题、创建定时收录计划、立即查收录、查 AI 是否收录、收录检测、排名检测、问题×平台矩阵、AI 回答引用来源、publishedUrl 精确命中、searchedSites URL 命中检测、title/account 弱命中、DeepSeek/豆包/Kimi/ChatGPT/Gemini/nami/grok/perp/poe 检测、暂停/删除收录计划. Do not create publication tasks; use geo-publish. Use geo-analysis for deep evidence-chain analysis."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
@@ -49,6 +49,7 @@ node geo-content-archive/scripts/project_paths.js --artifact indexing-report --p
 | topic 聚合统计 | GET | `/v1/scheduled-indexing/{id}/topic-stats` |
 | topic 统计 Excel 导出 | GET | `/v1/scheduled-indexing/{id}/topic-stats/export` |
 | AI 建议竞品 | POST | `/v1/scheduled-indexing/suggest-competitors` |
+| 发布 URL 命中检测 | 本地脚本 | `geo-indexing/scripts/published_url_match.js` 读取 answers.searchedSites |
 
 > 旧自定义收录接口 `/v1/ai-indexing-task/custom/import`、`/v1/ai-indexing-task/custom`、`/v1/ai-indexing/custom` 仅保留为 legacy rollback，不再作为默认查收录链路。
 
@@ -119,6 +120,40 @@ node geo-indexing/scripts/scheduled_indexing.js --action topic-stats --id 123 --
 # 趋势指标
 node geo-indexing/scripts/scheduled_indexing.js --action metrics --id 123 --platform deepseek
 ```
+
+
+### 2.1 Published URL 精确命中检测
+
+发布任务拿到 `publishedUrl` 后，不能直接认为 AI 已经看见。用本脚本检查 answers 里的 `searchedSites`：
+
+```bash
+# 先从发布状态回查 JSON 中读取 publishedUrl，再拉取 Scheduled Indexing answers 检测
+node geo-indexing/scripts/published_url_match.js \
+  --publication-json "项目_品牌GEO/06_发布记录/发布状态回查/publication_status_YYYY-MM-DD.json" \
+  --schedule-id 123 \
+  --project-dir "项目_品牌GEO"
+
+# 或使用本地 answers JSON
+node geo-indexing/scripts/scheduled_indexing.js --action answers --id 123 --limit 200 --json-out answers.json
+node geo-indexing/scripts/published_url_match.js \
+  --published-url "https://example.com/published/article" \
+  --answers-json answers.json \
+  --title "文章标题" \
+  --account "账号名" \
+  --project-dir "项目_品牌GEO"
+```
+
+输出到 `07_监测分析/收录监测/URL命中回查/`。
+
+命中层级：
+
+| status | 含义 | 行动建议 |
+|---|---|---|
+| `exact_url_hit` | `searchedSites.url` 与 publishedUrl 规范化后精确一致 | 说明 AI 已引用/检索到新 URL，继续观察稳定性 |
+| `weak_title_account_hit` | URL 未命中，但标题、账号或品牌弱命中 | 继续复测；检查发布页标题、摘要、账号名是否一致 |
+| `not_hit` | URL、标题、账号均未命中 | 等待抓取后复测；必要时补外链、媒体分发和可抓取性 |
+
+> 这一步用于区分“已发布”和“已被 AI 看见”，避免学员误判 GEO 效果。
 
 ### 3. 更新、停用、删除计划
 

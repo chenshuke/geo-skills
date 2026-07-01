@@ -164,8 +164,8 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | `geo-config` | openKey、baseUrl、referer、默认 companyId/productId 配置 |
 | `geo-account` | 账号、公司、产品、套餐、视频、看板等资源查询 |
 | `geo-article` | 文章与素材上传、创建、查询、审核、删除 |
-| `geo-indexing` | 收录任务导入、查询、删除、批量管理、结果查询 |
-| `geo-publish` | 发布任务创建、校验、删除 |
+| `geo-indexing` | 收录任务导入、查询、删除、批量管理、结果查询、publishedUrl 命中回查 |
+| `geo-publish` | 发布任务创建、校验、删除、发布状态回查、articleId → publishedUrl |
 
 ### 运营工作流入口
 
