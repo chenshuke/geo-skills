@@ -33,6 +33,7 @@
    - 发布 URL 命中检测：`geo-indexing/scripts/published_url_match.js`
    - 发布状态回查：`geo-publish/scripts/publication_status.js`
    - 引用源资产库：`geo-source-assets/scripts/source_assets.js`
+   - 故障排查：`geo-troubleshooter/scripts/troubleshoot.js`
    - 图片生成：`geo-content-production/scripts/generate_image.js`
    - 封面生成：`geo-content-production/scripts/generate_cover.js`
 2. 没有专用脚本时，用通用 Node API 工具：`geo-runtime/scripts/api_request.js`。
@@ -105,6 +106,7 @@ node geo-content-archive/scripts/project_paths.js --project-dir "项目_品牌GE
 | 发布状态回查 | `publication-status` | `06_发布记录/发布状态回查/` |
 | 收录/分析报告 | `indexing-report` / `evidence-report` | `07_监测分析/` |
 | 发布 URL 命中回查 | `published-url-match` | `07_监测分析/收录监测/URL命中回查/` |
+| 故障排查报告 | `troubleshooting` | `00_项目概览/故障排查/` |
 | 引用源资产库 | `source-assets` | `07_监测分析/引用源资产库/` |
 
 如果无法判断类型，写入 `00_项目概览/_待分类/`，并提示用户后续用 `geo-content-archive` 归位。
@@ -141,6 +143,10 @@ node geo-article/scripts/upload_article.js --file "文章.md" --cover-url "https
 # 本地问题导入 GEO 平台
 node geo-indexing/scripts/import_questions.js --target indexing-custom --file "questions.md" --brand "品牌名" --dry-run
 node geo-indexing/scripts/import_questions.js --target product-topic --file "deep_questions.md" --tags "深层用户问题,手动导入" --dry-run
+
+# 故障排查
+node geo-troubleshooter/scripts/troubleshoot.js --symptom "发布任务创建成功但没有 publishedUrl" --project-dir "项目_品牌GEO"
+node geo-troubleshooter/scripts/troubleshoot.js --symptom "answers 有数据但 matrix 没数据" --answers-json answers.json --matrix-json matrix.json --project-dir "项目_品牌GEO"
 
 # 发布状态回查 / Published URL 命中
 node geo-publish/scripts/publication_status.js --article-ids <文章ID列表> --project-dir "项目_品牌GEO"

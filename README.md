@@ -1,4 +1,4 @@
-# GEO Skills Suite v3.4
+# GEO Skills Suite v3.5
 
 > 面向 Claude Code、Codex 与其他 Agent Skills 兼容客户端的 GEO（Generative Engine Optimization）运营技能套件。
 > 设计目标：**直接安装所有 `geo-*` 技能文件夹即可使用**，不依赖安装器，不绑定单一 AI 工具。
@@ -181,6 +181,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | `geo-content-archive` | GEO 项目文件归档、迁移、结构校验 |
 | `geo-analysis` | 证据链、平台逆向、引用审核、PDCA 仪表盘、飞书同步 |
 | `geo-source-assets` | 从 searchedSites 沉淀引用源资产库、来源分类和信源补强建议 |
+| `geo-troubleshooter` | 新手友好故障排查：问题、原因、证据、下一步、人工确认 |
 
 ## 工作流概览
 
@@ -195,6 +196,7 @@ graph LR
     F --> G[geo-indexing]
     G --> S[geo-source-assets]
     S --> H[geo-analysis]
+    H --> T[geo-troubleshooter]
 ```
 
 ## 依赖

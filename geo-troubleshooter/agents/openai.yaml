@@ -1,0 +1,4 @@
+interface:
+  display_name: "GEO故障排查"
+  short_description: "把GEO常见失败场景诊断成原因、证据、下一步和人工确认清单。"
+  default_prompt: "使用 geo-troubleshooter，帮我排查这次 GEO 流程失败的原因和下一步处理。"

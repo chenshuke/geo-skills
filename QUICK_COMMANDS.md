@@ -77,6 +77,17 @@ node geo-indexing/scripts/import_questions.js --target topic-task-select --task-
 
 
 
+
+## 故障排查
+
+```bash
+# 不知道哪里失败时，先用固定格式输出：问题/原因/证据/下一步/是否人工确认
+node geo-troubleshooter/scripts/troubleshoot.js --symptom "发布任务创建成功但没有 publishedUrl" --project-dir "项目_品牌GEO"
+
+# 带证据文件诊断
+node geo-troubleshooter/scripts/troubleshoot.js --symptom "answers 有数据但 matrix 没数据" --answers-json answers.json --matrix-json matrix.json --project-dir "项目_品牌GEO"
+```
+
 ## 发布状态回查 / URL 精确命中
 
 ```bash
