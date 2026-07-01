@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { loadGeoConfig, headers: geoHeaders, mask } = require('../../geo-runtime/scripts/credentials.js');
+const { unwrapRows, normalizePublicationJson } = require('../../geo-runtime/scripts/publication_helpers.js');
 
 function parseArgs(argv) {
   const out = { _: [] };
@@ -91,40 +92,48 @@ function tokenHit(hay, words) {
   return hits >= Math.min(2, unique.length);
 }
 function readJson(file) { return JSON.parse(fs.readFileSync(path.resolve(file), 'utf8')); }
-function unwrapRows(json) {
-  if (Array.isArray(json)) return json;
-  if (Array.isArray(json.rows)) return json.rows;
-  const d = json && json.data !== undefined ? json.data : json;
-  if (Array.isArray(d)) return d;
-  if (Array.isArray(d?.data)) return d.data;
-  if (Array.isArray(d?.list)) return d.list;
-  if (Array.isArray(d?.rows)) return d.rows;
-  if (Array.isArray(d?.records)) return d.records;
-  return [];
+function targetFromRow(r) {
+  return {
+    publishedUrl: r.publishedUrl || '',
+    title: r.title || '',
+    account: r.accountName || r.account || '',
+    articleId: r.articleId || '',
+    platform: r.platform || '',
+    publicationStatus: r.status || (r.publishedUrl ? 'published_url_ready' : 'pending'),
+    rawStatus: r.rawStatus || '',
+    rawMessage: r.rawMessage || '',
+    nextAction: r.nextAction || '',
+  };
 }
 function readPublishedTargets(args) {
   const targets = [];
   const one = first(args, ['published-url','publishedUrl','url']);
-  if (one) targets.push({ publishedUrl: String(one), title: String(first(args, ['title'], '')), account: String(first(args, ['account','accountName','brand'], '')), articleId: first(args, ['article-id','articleId'], '') });
+  if (one) targets.push({ publishedUrl: String(one), title: String(first(args, ['title'], '')), account: String(first(args, ['account','accountName','brand'], '')), articleId: first(args, ['article-id','articleId'], ''), publicationStatus: 'published_url_ready' });
   const many = first(args, ['published-urls','publishedUrls','urls']);
   if (many) {
     const p = path.resolve(String(many));
     const raw = fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : String(many);
-    for (const url of splitList(raw)) targets.push({ publishedUrl: url, title: String(first(args, ['title'], '')), account: String(first(args, ['account','accountName','brand'], '')), articleId: '' });
+    for (const url of splitList(raw)) targets.push({ publishedUrl: url, title: String(first(args, ['title'], '')), account: String(first(args, ['account','accountName','brand'], '')), articleId: '', publicationStatus: 'published_url_ready' });
   }
   const publicationJson = first(args, ['publication-json','publicationJson','publish-status-json','publishStatusJson']);
   if (publicationJson) {
     const json = readJson(publicationJson);
-    for (const r of unwrapRows(json)) {
-      if (!r.publishedUrl) continue;
-      targets.push({ publishedUrl: r.publishedUrl, title: r.title || '', account: r.accountName || r.account || '', articleId: r.articleId || '', platform: r.platform || '' });
-    }
+    const normalized = normalizePublicationJson(json);
+    for (const r of normalized) targets.push(targetFromRow(r));
   }
   const seen = new Set();
   return targets.filter(t => {
+    if (!t.publishedUrl) {
+      const key = `no-url:${t.articleId || ''}:${t.platform || ''}:${t.publicationStatus || ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }
     const n = normalizeUrl(t.publishedUrl);
-    if (!n || seen.has(n)) return false;
-    seen.add(n); t.normalizedUrl = n; t.domainPath = domainPath(n); t.domain = domainOf(n); return true;
+    if (!n) return false;
+    const key = `${t.articleId || ''}:${n}`;
+    if (seen.has(key)) return false;
+    seen.add(key); t.normalizedUrl = n; t.domainPath = domainPath(n); t.domain = domainOf(n); return true;
   });
 }
 function readAnswers(args) {
@@ -164,6 +173,14 @@ function searchedSitesOf(answer) {
   return Array.isArray(sites) ? sites : [];
 }
 function matchOne(target, answers) {
+  if (!target.publishedUrl) {
+    const status = target.publicationStatus === 'manual_required' ? 'manual_required' : target.publicationStatus === 'failed' ? 'failed' : target.publicationStatus === 'task_mapping_only' ? 'task_mapping_only' : 'pending';
+    const suggestion = status === 'manual_required' ? '发布状态需要人工处理，先处理账号登录/授权/验证码后再回查 publishedUrl'
+      : status === 'failed' ? '发布失败，先修复失败原因并重新发布，拿到 publishedUrl 后再做 AI 命中检测'
+      : status === 'task_mapping_only' ? '只有发布任务映射，没有平台发布 URL；继续回查 /v1/publication'
+      : '尚未拿到 publishedUrl；等待发布完成或人工核验平台后台后再检测';
+    return { ...target, status, exactCount: 0, weakCount: 0, matches: [], suggestion };
+  }
   const exact = [];
   const weak = [];
   const targetTitleTokens = tokens(target.title);
@@ -222,7 +239,7 @@ async function main() {
   const args = parseArgs(process.argv);
   if (args.help || args.h) { usage(); return; }
   const targets = readPublishedTargets(args);
-  if (!targets.length) throw new Error('没有 publishedUrl。请传 --published-url/--published-urls 或 --publication-json。');
+  if (!targets.length) throw new Error('没有可检测的 publishedUrl 或发布状态记录。请传 --published-url/--published-urls 或 --publication-json。');
   let answers = readAnswers(args);
   let meta = { openKey: '', referer: '', path: '' };
   const dryRun = Boolean(args['dry-run'] || args.dryRun);
@@ -251,6 +268,6 @@ async function main() {
   fs.writeFileSync(files.json, JSON.stringify({ meta, results }, null, 2), 'utf8');
   const jsonOut = first(args, ['json-out','jsonOut']);
   if (jsonOut) { ensureDir(path.dirname(path.resolve(jsonOut))); fs.writeFileSync(path.resolve(jsonOut), JSON.stringify({ meta, results, files }, null, 2), 'utf8'); }
-  console.log(JSON.stringify({ action: 'published-url-match', targetCount: results.length, exactHits: results.filter(r => r.status === 'exact_url_hit').length, weakHits: results.filter(r => r.status === 'weak_title_account_hit').length, notHits: results.filter(r => r.status === 'not_hit').length, files }, null, 2));
+  console.log(JSON.stringify({ action: 'published-url-match', targetCount: results.length, exactHits: results.filter(r => r.status === 'exact_url_hit').length, weakHits: results.filter(r => r.status === 'weak_title_account_hit').length, notHits: results.filter(r => r.status === 'not_hit').length, notReady: results.filter(r => ['manual_required','failed','task_mapping_only','pending'].includes(r.status)).length, files }, null, 2));
 }
 main().catch(e => { console.error(e.message || e); process.exit(1); });

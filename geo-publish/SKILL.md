@@ -63,6 +63,13 @@ node geo-publish/scripts/publication_status.js \
   --project-dir "项目_品牌GEO"
 ```
 
+
+### Published URL 严格判定规则
+
+- 只能把 `publishedUrl`、`publishUrl`、`postUrl`、`platformUrl` 这 4 类字段作为发布页 URL。
+- 不得把 `coverImageUrl`、正文图片、OSS URL、`userImg`、图片 CDN URL 当成 publishedUrl。
+- publication 行必须按自己的 `article.id` / `articleId` 精确绑定文章；发布任务里的 articleId 只能做辅助映射，不能把同一个 URL 套到多个 articleId 上。
+
 输出到 `06_发布记录/发布状态回查/`：
 
 - `发布状态回查_YYYY-MM-DD.md`：人工可读状态表

@@ -143,7 +143,7 @@ node geo-indexing/scripts/published_url_match.js \
   --project-dir "项目_品牌GEO"
 ```
 
-输出到 `07_监测分析/收录监测/URL命中回查/`。
+输出到 `07_监测分析/收录监测/URL命中回查/`。兼容 `geo-publish` 标准化 JSON，也兼容平台原始 `/v1/publication` 多层回包（如 `data.data.data[]`）。无 publishedUrl 的记录会输出 `manual_required` / `pending` / `task_mapping_only`，不会中断。
 
 命中层级：
 

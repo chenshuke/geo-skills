@@ -16,6 +16,8 @@ const coreScripts = [
   'geo-runtime/scripts/credentials.js',
   'geo-runtime/scripts/api_request.js',
   'geo-runtime/scripts/doctor.js',
+  'geo-runtime/scripts/json_helpers.js',
+  'geo-runtime/scripts/publication_helpers.js',
   'geo-config/scripts/setup_defaults.js',
   'geo-content-archive/scripts/project_paths.js',
   'geo-article/scripts/upload_article.js',

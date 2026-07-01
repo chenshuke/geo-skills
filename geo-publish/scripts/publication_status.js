@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { loadGeoConfig, headers: geoHeaders, mask } = require('../../geo-runtime/scripts/credentials.js');
+const { unwrapRows, normalizePublicationStatus, hasAnyId } = require('../../geo-runtime/scripts/publication_helpers.js');
 
 function parseArgs(argv) {
   const out = { _: [] };
@@ -76,148 +77,7 @@ async function request(cfg, pathname, query = {}) {
   }
   return body;
 }
-function rowsOf(body) {
-  const d = body && body.data !== undefined ? body.data : body;
-  if (Array.isArray(d)) return d;
-  if (Array.isArray(d?.data)) return d.data;
-  if (Array.isArray(d?.list)) return d.list;
-  if (Array.isArray(d?.rows)) return d.rows;
-  if (Array.isArray(d?.records)) return d.records;
-  return [];
-}
-function stableJson(v) { try { return JSON.stringify(v); } catch { return String(v); } }
-function includesAnyId(obj, ids) {
-  if (!ids.length) return true;
-  const s = stableJson(obj);
-  return ids.some(id => s.includes(String(id)));
-}
-function collectArticleIds(obj, out = new Set()) {
-  if (!obj || typeof obj !== 'object') return out;
-  if (Array.isArray(obj)) { for (const x of obj) collectArticleIds(x, out); return out; }
-  for (const [k,v] of Object.entries(obj)) {
-    if (/article[_-]?id/i.test(k) && Number(v)) out.add(Number(v));
-    if (v && typeof v === 'object') collectArticleIds(v, out);
-  }
-  return out;
-}
-function collectTaskIds(obj, out = new Set(), includeGenericId = false) {
-  if (!obj || typeof obj !== 'object') return out;
-  if (Array.isArray(obj)) { for (const x of obj) collectTaskIds(x, out, includeGenericId); return out; }
-  for (const [k,v] of Object.entries(obj)) {
-    if (((includeGenericId && /^id$/i.test(k)) || /task[_-]?id/i.test(k) || /publication[_-]?task[_-]?id/i.test(k)) && Number(v)) out.add(Number(v));
-    if (v && typeof v === 'object') collectTaskIds(v, out, includeGenericId);
-  }
-  return out;
-}
-function collectUrls(obj, out = []) {
-  if (!obj || typeof obj !== 'object') return out;
-  if (Array.isArray(obj)) { for (const x of obj) collectUrls(x, out); return out; }
-  for (const [k,v] of Object.entries(obj)) {
-    if (typeof v === 'string' && /^https?:\/\//i.test(v) && /(published|publish|url|link|href)/i.test(k)) out.push({ key: k, url: v });
-    else if (v && typeof v === 'object') collectUrls(v, out);
-  }
-  return out;
-}
-function pickFirst(obj, names) {
-  if (!obj || typeof obj !== 'object') return '';
-  for (const n of names) if (obj[n] !== undefined && obj[n] !== null && obj[n] !== '') return obj[n];
-  return '';
-}
-function findByKeyRegex(obj, regex) {
-  if (!obj || typeof obj !== 'object') return '';
-  if (Array.isArray(obj)) { for (const x of obj) { const r = findByKeyRegex(x, regex); if (r !== '') return r; } return ''; }
-  for (const [k,v] of Object.entries(obj)) {
-    if (regex.test(k) && (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')) return v;
-    if (v && typeof v === 'object') { const r = findByKeyRegex(v, regex); if (r !== '') return r; }
-  }
-  return '';
-}
-function inferStatus(row) {
-  const publishedUrl = row.publishedUrl || '';
-  const text = `${row.rawStatus || ''} ${row.rawMessage || ''} ${row.failureReason || ''}`.toLowerCase();
-  if (publishedUrl) return 'published_url_ready';
-  if (/fail|error|失败|异常|驳回|拒绝/.test(text)) return 'failed';
-  if (/人工|手动|待处理|需处理|登录|验证码|授权|cookie/.test(text)) return 'manual_required';
-  if (/success|done|完成|已发布|published/.test(text)) return 'published_no_url';
-  return 'pending_or_processing';
-}
-function nextAction(row) {
-  if (row.status === 'published_url_ready') return '拿 publishedUrl 去 geo-indexing 做 searchedSites 精确命中检测';
-  if (row.status === 'published_no_url') return '继续回查 /v1/publication；若长时间无 URL，人工核验平台后台';
-  if (row.status === 'failed') return '查看 failureReason/rawMessage，修复账号/封面/标题/平台规则后重发';
-  if (row.status === 'manual_required') return '进入平台账号做人工处理/重新授权/验证码处理后再回查';
-  return '等待发布完成，稍后再次运行 publication_status.js 回查';
-}
-function normalizePublicationRows({ tasks, publications, articleFilter, taskFilter }) {
-  const taskByArticle = new Map();
-  const taskById = new Map();
-  for (const t of tasks) {
-    const tids = [...collectTaskIds(t, new Set(), true)];
-    for (const tid of tids) taskById.set(Number(tid), t);
-    for (const aid of collectArticleIds(t)) {
-      if (!taskByArticle.has(Number(aid))) taskByArticle.set(Number(aid), []);
-      taskByArticle.get(Number(aid)).push(t);
-    }
-  }
-  const rows = [];
-  for (const p of publications) {
-    const articleIds = [...collectArticleIds(p)];
-    const taskIds = [...collectTaskIds(p, new Set(), false)].filter(id => taskById.has(Number(id)) || /publicationTaskId|taskId/i.test(stableJson(p)));
-    const urls = collectUrls(p);
-    const publishedUrl = String(pickFirst(p, ['publishedUrl','publishUrl','articleUrl','postUrl','platformUrl','url']) || urls[0]?.url || '');
-    const primaryArticleIds = articleIds.length ? articleIds : articleFilter;
-    for (const articleId of (primaryArticleIds.length ? primaryArticleIds : [0])) {
-      if (articleFilter.length && !articleFilter.includes(Number(articleId))) continue;
-      const relatedTasks = taskByArticle.get(Number(articleId)) || [];
-      const taskId = Number(taskIds[0] || relatedTasks[0]?.id || relatedTasks[0]?.taskId || 0);
-      if (taskFilter.length && !taskFilter.includes(taskId) && !includesAnyId(p, taskFilter)) continue;
-      const rawStatus = pickFirst(p, ['status','publishStatus','state','resultStatus','auditStatus']) || findByKeyRegex(p, /status|state/i);
-      const rawMessage = pickFirst(p, ['message','msg','remark','reason','errorMessage']) || findByKeyRegex(p, /message|remark|reason|error/i);
-      const row = {
-        articleId: Number(articleId) || '',
-        taskId: taskId || '',
-        platform: String(pickFirst(p, ['platform','publishPlatform','mediaPlatform']) || findByKeyRegex(p, /platform/i) || ''),
-        accountId: String(pickFirst(p, ['accountId','publishAccountId','publicationAccountId']) || findByKeyRegex(p, /account.*id/i) || ''),
-        accountName: String(pickFirst(p, ['accountName','name','nickname']) || findByKeyRegex(p, /account.*name|nickname/i) || ''),
-        title: String(pickFirst(p, ['title','articleTitle']) || findByKeyRegex(p, /title/i) || ''),
-        rawStatus: String(rawStatus ?? ''),
-        rawMessage: String(rawMessage ?? ''),
-        publishedUrl,
-        failureReason: String(rawMessage ?? ''),
-        raw: p,
-      };
-      row.status = inferStatus(row);
-      row.nextAction = nextAction(row);
-      rows.push(row);
-    }
-  }
-  // If no publication rows yet, still emit task-level rows so users do not mistake task-created for published.
-  if (!rows.length) {
-    for (const t of tasks) {
-      const tids = [...collectTaskIds(t, new Set(), true)];
-      if (taskFilter.length && !tids.some(id => taskFilter.includes(Number(id)))) continue;
-      const articleIds = [...collectArticleIds(t)].filter(id => !articleFilter.length || articleFilter.includes(Number(id)));
-      for (const articleId of (articleIds.length ? articleIds : articleFilter.length ? articleFilter : [0])) {
-        rows.push({
-          articleId: Number(articleId) || '',
-          taskId: Number(tids[0] || t.id || t.taskId || 0) || '',
-          platform: String(findByKeyRegex(t, /platform/i) || ''),
-          accountId: String(findByKeyRegex(t, /account.*id/i) || ''),
-          accountName: String(findByKeyRegex(t, /account.*name|nickname/i) || ''),
-          title: String(findByKeyRegex(t, /title|name/i) || ''),
-          rawStatus: String(findByKeyRegex(t, /status|state/i) || ''),
-          rawMessage: String(findByKeyRegex(t, /message|remark|reason|error/i) || ''),
-          publishedUrl: '',
-          failureReason: '',
-          status: 'task_created_no_publication_url',
-          nextAction: '任务已存在但未拿到 publishedUrl：继续回查 /v1/publication，不能判定为已被 AI 看见',
-          raw: t,
-        });
-      }
-    }
-  }
-  return rows.sort((a,b) => Number(a.articleId||0) - Number(b.articleId||0) || Number(a.taskId||0) - Number(b.taskId||0));
-}
+function rowsOf(body) { return unwrapRows(body); }
 function mdEscape(s) { return String(s || '').replace(/\|/g, '\\|').replace(/\n/g, ' ').slice(0, 160); }
 function renderMd(rows, meta) {
   const lines = ['# 发布状态回查表', '', `更新时间：${nowIso()}`, ''];
@@ -258,9 +118,10 @@ async function main() {
     request(cfg, '/v1/publication-task', query),
     request(cfg, '/v1/publication', query),
   ]);
-  const tasks = rowsOf(taskBody).filter(t => includesAnyId(t, [...articleFilter, ...taskFilter]));
-  const publications = rowsOf(publicationBody).filter(p => includesAnyId(p, [...articleFilter, ...taskFilter]));
-  const rows = normalizePublicationRows({ tasks, publications, articleFilter, taskFilter });
+  const filters = [...articleFilter, ...taskFilter];
+  const tasks = rowsOf(taskBody).filter(t => hasAnyId(t, filters));
+  const publications = rowsOf(publicationBody).filter(p => hasAnyId(p, filters));
+  const rows = normalizePublicationStatus({ tasks, publications, articleFilter, taskFilter });
   const dir = outputDir(args);
   ensureDir(dir);
   const stamp = today();

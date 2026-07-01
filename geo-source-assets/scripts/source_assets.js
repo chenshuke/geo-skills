@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { loadGeoConfig, headers: geoHeaders, mask } = require('../../geo-runtime/scripts/credentials.js');
+const { unwrapRows } = require('../../geo-runtime/scripts/json_helpers.js');
 
 const CSV_FIELDS = [
   'url','domain','title','platform','source_type','control_level','reusable','needs_strengthening','stable_cited',
@@ -175,16 +176,6 @@ function extractRowsFromAnswers(answers, opts = {}) {
     }
   }
   return extracted;
-}
-function unwrapRows(json) {
-  if (Array.isArray(json)) return json;
-  if (Array.isArray(json.rows)) return json.rows;
-  const d = json.data !== undefined ? json.data : json;
-  if (Array.isArray(d)) return d;
-  if (Array.isArray(d?.data)) return d.data;
-  if (Array.isArray(d?.list)) return d.list;
-  if (Array.isArray(d?.rows)) return d.rows;
-  return [];
 }
 function readAnswersJson(file) {
   const raw = JSON.parse(fs.readFileSync(path.resolve(file), 'utf8'));

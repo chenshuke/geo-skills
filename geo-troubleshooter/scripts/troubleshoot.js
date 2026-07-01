@@ -6,6 +6,8 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { unwrapRows } = require('../../geo-runtime/scripts/json_helpers.js');
+const { normalizePublicationJson } = require('../../geo-runtime/scripts/publication_helpers.js');
 
 function parseArgs(argv) {
   const out = { _: [] };
@@ -61,18 +63,7 @@ function readJson(file) {
   if (!file) return null;
   try { return JSON.parse(readText(file)); } catch { return null; }
 }
-function rowsOf(json) {
-  if (!json) return [];
-  if (Array.isArray(json)) return json;
-  if (Array.isArray(json.rows)) return json.rows;
-  if (Array.isArray(json.results)) return json.results;
-  const d = json.data !== undefined ? json.data : json;
-  if (Array.isArray(d)) return d;
-  if (Array.isArray(d?.data)) return d.data;
-  if (Array.isArray(d?.list)) return d.list;
-  if (Array.isArray(d?.rows)) return d.rows;
-  return [];
-}
+function rowsOf(json) { return unwrapRows(json); }
 function parseCsv(text) {
   const lines = String(text || '').split(/\r?\n/).filter(Boolean);
   if (!lines.length) return [];
@@ -130,7 +121,8 @@ function collectEvidence(args) {
   };
   const sourceAssetRows = files.sourceAssetsCsv ? parseCsv(readText(files.sourceAssetsCsv)) : rowsOf(json.sourceAssets);
   const logText = redact(readText(files.log));
-  return { files, json, rows: { publication: rowsOf(json.publication), urlMatch: rowsOf(json.urlMatch), answers: rowsOf(json.answers), matrix: rowsOf(json.matrix), sourceAssets: sourceAssetRows }, logText };
+  const publicationRows = json.publication ? normalizePublicationJson(json.publication) : [];
+  return { files, json, rows: { publication: publicationRows, urlMatch: rowsOf(json.urlMatch), answers: rowsOf(json.answers), matrix: rowsOf(json.matrix), sourceAssets: sourceAssetRows }, logText };
 }
 function newIssue(id, title) {
   return { id, title, problem: title, causes: [], evidence: [], nextSteps: [], humanConfirmation: '否' };
@@ -139,10 +131,11 @@ function add(issue, key, values) { issue[key].push(...[].concat(values).filter(B
 function diagnose(args, ev) {
   const symptom = String(first(args, ['symptom','problem','question'], args._.join(' '))).trim();
   const hay = `${symptom}\n${ev.logText}\n${JSON.stringify(ev.json).slice(0, 5000)}`;
+  const symptomLog = `${symptom}\n${ev.logText}`;
   const issues = [];
   const addIssue = (issue) => { issues.push(issue); return issue; };
 
-  if (hasText(hay, ['openkey','401','unauthorized','认证','鉴权','密钥','token'])) {
+  if (hasText(symptomLog, ['openkey','401','unauthorized','认证','鉴权','密钥','token']) || /\"status\"\s*:\s*\"FAIL\"|\"status\"\s*:\s*\"WARN\"/.test(JSON.stringify(ev.json.doctor || {}))) {
     const i = addIssue(newIssue('openkey_invalid', 'openKey 可能配置错误或已失效'));
     add(i, 'causes', ['openKey 填错、复制时多了空格，或密钥属于另一个 GEO 平台/Referer。', '当前配置文件没有被实际运行环境读取。']);
     add(i, 'evidence', [evidenceLine('doctor JSON', ev.files.doctor), ev.logText && `错误日志：${ev.logText}`]);
@@ -150,7 +143,7 @@ function diagnose(args, ev) {
     i.humanConfirmation = '需要：确认用户提供的 openKey 是否为当前账号/当前平台生成。';
   }
 
-  if (hasText(hay, ['companyid','productid','10108','公司','产品','defaults.companyId','defaults.productId'])) {
+  if (hasText(symptomLog, ['companyid','productid','10108','公司产品错误','产品id','公司id','defaults.companyId','defaults.productId']) || /10108/.test(JSON.stringify(ev.json.doctor || {}))) {
     const i = addIssue(newIssue('company_product_mismatch', 'companyId/productId 可能为空、选错或与文章不匹配'));
     add(i, 'causes', ['默认 companyId/productId 仍为 0。', '文章、产品、发布任务不属于同一个 productId。', '切换 openKey 后沿用了旧公司/产品 ID。']);
     add(i, 'evidence', [evidenceLine('doctor JSON', ev.files.doctor), ev.logText && `错误日志：${ev.logText}`]);
@@ -158,7 +151,7 @@ function diagnose(args, ev) {
     i.humanConfirmation = '需要：让用户确认要操作的是哪个公司和产品。';
   }
 
-  if (hasText(hay, ['文章上传失败','上传文章失败','upload_article','upload-json','article upload','summary','summaries','请求参数错误','coverImageUrl','封面上传'])) {
+  if (ev.files.upload || hasText(symptomLog, ['文章上传失败','上传文章失败','upload_article','upload-json','article upload','summary','summaries','请求参数错误','封面上传'])) {
     const uploadRows = rowsOf(ev.json.upload);
     const i = addIssue(newIssue('article_upload_failed', '文章上传失败或上传参数不兼容'));
     add(i, 'causes', ['文章 payload 字段不符合当前接口，例如应使用 `summaries: []`。', '封面 URL 不可访问，或第三方长签名图片没有先转存到 GEO OSS。', 'Markdown 编码不是 UTF-8 或正文为空。']);
@@ -181,7 +174,7 @@ function diagnose(args, ev) {
 
   const answers = ev.rows.answers;
   const matrix = ev.rows.matrix;
-  if (hasText(hay, ['没跑完','pending','processing','查收录任务没有跑完']) || answers.some(a => [0,1,'pending','processing'].includes(a.status))) {
+  if (hasText(symptomLog, ['没跑完','查收录任务没有跑完']) || answers.some(a => [0,1,'pending','processing'].includes(a.status))) {
     const i = addIssue(newIssue('indexing_not_finished', '收录任务还没有跑完'));
     add(i, 'causes', ['Scheduled Indexing 执行仍在 Pending/Processing。', '立即执行后平台还在排队，answers/matrix 尚未完全刷新。']);
     add(i, 'evidence', [evidenceLine('answers JSON', ev.files.answers, `answers ${answers.length} 条`)]);
@@ -206,7 +199,7 @@ function diagnose(args, ev) {
     i.humanConfirmation = '通常不需要；如果要新增发布渠道/投放媒体，需要用户确认。';
   }
 
-  if (hasText(hay, ['竞品','competitor']) || answers.some(a => Array.isArray(a.competitors) && a.competitors.length)) {
+  if (hasText(symptomLog, ['竞品','competitor']) || answers.some(a => Array.isArray(a.competitors) && a.competitors.length)) {
     const i = addIssue(newIssue('competitor_mentioned_not_owned', 'AI 提到竞品或竞品来源，但我方存在感不足'));
     add(i, 'causes', ['竞品在现有引用源中更权威或更高频。', '我方缺少对比、替代、榜单、场景型内容。', '问题意图更接近竞品已有内容。']);
     add(i, 'evidence', [evidenceLine('answers JSON', ev.files.answers, `answers ${answers.length} 条`)]);

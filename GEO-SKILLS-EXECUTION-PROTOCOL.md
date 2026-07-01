@@ -59,6 +59,14 @@ node geo-article/scripts/upload_article.js --file "文章.md" --dry-run
 - 返回优先使用 GEO OSS URL；不要把临时外部供应商 URL 当作最终发布素材。
 - 不再使用本地 SVG 封面 fallback，因为真实发布链路兼容性不足。
 
+
+## 5.1 发布状态与 AI 命中判定
+
+- “发布任务创建成功”不等于“平台已发布”；必须通过 `geo-publish/scripts/publication_status.js` 回查 `/v1/publication` 并拿到真实 publishedUrl。
+- publishedUrl 只允许来自 `publishedUrl`、`publishUrl`、`postUrl`、`platformUrl`；不得把 OSS 图片、coverImageUrl、userImg、正文图片当作发布页。
+- `publication.article.id` / `articleId` 必须精确绑定，不能把一个发布 URL 套到同一任务下的多个 articleId。
+- “平台已发布”不等于“AI 已看见”；必须用 `geo-indexing/scripts/published_url_match.js` 检查 answers.searchedSites 的精确 URL 命中或弱命中。
+
 ## 6. 速度策略
 
 - 普通诊断默认不访问业务写接口。
