@@ -28,7 +28,7 @@ description: "GEO 课程/新手统一入口，支持三种模式：快速闭环�
 - API 写操作必须先预览/确认；真实执行后必须回查。
 - 不暴露内部 Base URL；可以展示 Referer、脱敏 openKey、companyId/productId、articleId、publishedUrl、scheduleId 等业务证据。
 - 如果失败，立即切到 `geo-troubleshooter`，固定输出“问题/原因/证据/下一步/是否人工确认”。
-- 遇到行业差异或重复问题，最后建议用 `geo-skill-evolution` 沉淀。
+- 遇到行业差异或重复问题，最后建议助教/内部团队用 `geo-skill-evolution` 沉淀。
 
 ## 通用开场
 
@@ -123,7 +123,7 @@ description: "GEO 课程/新手统一入口，支持三种模式：快速闭环�
 7. `geo-content-to-publish-pipeline` + `geo-publish`：发布并回查。
 8. `geo-indexing`：复测 publishedUrl 命中。
 9. `geo-keyword-pool` + `geo-content-archive`：更新状态机并归档。
-10. `geo-skill-evolution`：把重复问题沉淀为技能改进。
+10. `geo-skill-evolution`：由助教/内部团队把重复问题沉淀为技能改进。
 
 ### 产物要求
 

@@ -50,7 +50,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 | **⑩ geo-source-assets** | 引用源资产库：从 searchedSites 沉淀我方/竞品/行业/媒体信源和补强建议 |
 | **⑪ geo-content-archive** | 内容归档，按日期/AI平台/发布平台自动分类 |
 | **⑫ geo-troubleshooter** | 故障排查：固定输出问题、原因、证据、下一步、人工确认 |
-| **⑬ geo-skill-evolution** | 技能自进化：客户/行业/学员问题沉淀、回归测试、发布验收 |
+| **⑬ geo-skill-evolution** | 内部/助教技能自进化：客户/行业/学员问题沉淀、回归测试、发布验收 |
 
 ---
 
@@ -77,7 +77,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 11 geo-analysis 数据分析复盘
 12 geo-content-archive 项目归档整理
 90 geo-troubleshooter 故障排查
-91 geo-skill-evolution 技能自进化
+91 geo-skill-evolution 技能自进化（内部/助教）
 ```
 
 `geo-student-workflow` 是课程/新手的一句话入口，负责三模式选择；`geo-hub` 是平台操作入口，`geo-workflow-hub` 是运营工作流入口。
@@ -124,7 +124,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 第9步：使用 geo-source-assets 沉淀引用源资产库和信源补强动作
 第10步：使用 geo-analysis 完成证据链分析与策略优化
 异常处理：任何环节失败时使用 geo-troubleshooter 输出新手可执行的处理清单
-持续进化：重复出现的新问题使用 geo-skill-evolution 沉淀为技能改进方案和回归测试
+持续进化：重复出现的新问题由助教/内部团队使用 geo-skill-evolution 沉淀为技能改进方案和回归测试
 ```
 
 > **geo-workflow-hub 负责"想清楚并做出来"，geo-hub 负责"落到平台并看结果"。**

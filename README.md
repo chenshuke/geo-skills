@@ -172,7 +172,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | 11 | `geo-analysis` | 数据分析复盘 |
 | 12 | `geo-content-archive` | 项目归档整理 |
 | 90 | `geo-troubleshooter` | 故障排查 |
-| 91 | `geo-skill-evolution` | 技能自进化 |
+| 91 | `geo-skill-evolution` | 技能自进化（内部/助教） |
 
 完整说明见：`GEO-STUDENT-WORKFLOW.md`。
 
@@ -212,7 +212,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | `geo-analysis` | 证据链、平台逆向、引用审核、PDCA 仪表盘、飞书同步 |
 | `geo-source-assets` | 从 searchedSites 沉淀引用源资产库、来源分类和信源补强建议 |
 | `geo-troubleshooter` | 新手友好故障排查：问题、原因、证据、下一步、人工确认 |
-| `geo-skill-evolution` | 技能自进化：把客户/行业/学员新问题沉淀为改进方案、回归测试和发布验收 |
+| `geo-skill-evolution` | 内部/助教技能自进化：把客户/行业/学员新问题沉淀为改进方案、回归测试和发布验收 |
 
 ## 工作流概览
 

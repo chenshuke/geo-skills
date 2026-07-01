@@ -111,7 +111,7 @@ node geo-indexing/scripts/import_questions.js --target topic-task-select --task-
 
 
 
-## 技能自进化
+## 技能自进化（内部/助教）
 
 ```bash
 # 把客户/行业/学员新问题沉淀成：目标技能、改进建议、回归测试、发布验收

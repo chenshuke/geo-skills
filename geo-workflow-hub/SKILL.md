@@ -29,7 +29,7 @@ metadata:
 → 09 收录检测 → 10 引用源资产库 → 11 数据分析复盘 → 12 项目归档
 ```
 
-出问题随时用 `90 geo-troubleshooter`；重复问题或行业差异沉淀用 `91 geo-skill-evolution`。
+出问题随时用 `90 geo-troubleshooter`；重复问题或行业差异由助教/内部团队用 `91 geo-skill-evolution` 沉淀。
 
 ## 技能说明
 
@@ -150,10 +150,10 @@ metadata:
 
 ---
 
-### ⑬ geo-skill-evolution — 技能自进化
+### ⑬ geo-skill-evolution — 技能自进化（内部/助教）
 > 把不同行业、客户和学员遇到的新问题沉淀为技能改进方案、回归测试和发布验收清单
 
-**适用场景**：客户行业差异明显、同类问题反复出现、修复 P0/P1 后需要固化回归测试、想让 GEO 技能持续进化。
+**适用场景**：客户行业差异明显、同类问题反复出现、修复 P0/P1 后需要固化回归测试；主要给助教/内部交付团队使用，不作为普通学员主入口。
 
 **推荐说法**：`使用 geo-skill-evolution，把这次客户问题沉淀成技能改进方案`
 
@@ -201,7 +201,7 @@ metadata:
 第9步：使用 geo-source-assets 沉淀引用源资产库和补强动作
 第10步：使用 geo-analysis 做证据链和平台偏好复盘
 遇到失败或结果不符合预期：随时使用 geo-troubleshooter 输出原因、证据和下一步
-同类问题重复出现或行业差异明显：使用 geo-skill-evolution 沉淀为技能改进和回归测试
+同类问题重复出现或行业差异明显：由助教/内部团队使用 geo-skill-evolution 沉淀为技能改进和回归测试
 ```
 
 > **geo-workflow-hub 负责"想清楚并做出来"，geo-hub 负责"落到平台并看结果"。**
