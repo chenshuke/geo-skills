@@ -53,6 +53,20 @@ node geo-content-archive/scripts/project_paths.js --artifact indexing-report --p
 
 > 旧自定义收录接口 `/v1/ai-indexing-task/custom/import`、`/v1/ai-indexing-task/custom`、`/v1/ai-indexing/custom` 仅作为内部人工回滚入口保留，学员和 Agent 默认禁止使用；正常查收录必须走 Scheduled Indexing。
 
+## 常见“参数不正确”排查规则
+
+学员创建收录计划时，Agent 必须优先使用保守参数，避免把平台接口错误暴露给新手：
+
+1. **不要默认 `--platforms all`**：`all` 会包含账号未开通或已禁用的平台，容易报“所选平台已被禁用”。课堂默认用 `--platforms doubao`，多平台必须由用户或账号资源确认后再加。
+2. **`source` 只能是 `1` 或 `3`**：默认 `1` 本地/设备模式；云端模式才传 `--source 3`。
+3. **`scheduleConfig` 必须完整**：
+   - `once`：一次性计划；
+   - `daily`：建议 `--hours 9`；
+   - `weekly`：必须传 `--weekdays`，例如 `--weekdays 1,3,5`；
+   - `interval`：必须传 `--interval-days`。
+4. **`screenshotPlatforms` 必须是 `platforms` 子集**，不能单独传未选择的平台。
+5. 创建前先 dry-run，看 payload 里是否是 `/v1/scheduled-indexing`、`platforms: ["doubao"]`、`source: 1`、`scheduleConfig` 合法。
+
 ## 推荐脚本
 
 ### 1. 创建定时收录计划（默认新接口）
@@ -63,9 +77,9 @@ node geo-indexing/scripts/scheduled_indexing.js \
   --action create \
   --file questions.md \
   --name "示例品牌A-每日收录" \
-  --platforms deepseek,doubao,qwen,kimi \
+  --platforms doubao \
   --schedule-type daily \
-  --times-per-day 1 \
+  --hours 9 \
   --dry-run
 
 # 真实创建；如需立刻查一次，加 --run-now
@@ -73,9 +87,9 @@ node geo-indexing/scripts/scheduled_indexing.js \
   --action create \
   --file questions.md \
   --name "示例品牌A-每日收录" \
-  --platforms deepseek,doubao,qwen,kimi \
+  --platforms doubao \
   --schedule-type daily \
-  --times-per-day 1 \
+  --hours 9 \
   --run-now \
   --force
 ```
@@ -88,7 +102,7 @@ node geo-indexing/scripts/import_questions.js \
   --target indexing-custom \
   --file questions.md \
   --name "示例品牌A-收录计划" \
-  --platforms all \
+  --platforms doubao \
   --dry-run
 ```
 
@@ -190,8 +204,8 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
   "companyId": 101,
   "productId": 93,
   "topics": ["2026年GEO优化服务商怎么选？", "AI搜索为什么推荐不到我的品牌？"],
-  "platforms": ["deepseek", "doubao", "qwen", "kimi"],
-  "scheduleConfig": { "type": "daily", "timesPerDay": 1 },
+  "platforms": ["doubao"],
+  "scheduleConfig": { "type": "daily", "hours": [9] },
   "source": 1,
   "enabled": true
 }
@@ -201,6 +215,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 
 | 字段 | 说明 |
 |---|---|
+| `platforms` | AI 平台数组。课堂默认建议只用 `doubao`；`all` 只有在账号已开通全部平台时才能用，否则会报“所选平台已被禁用” |
 | `screenshotPlatforms` | 截图平台数组，必须是 `platforms` 子集 |
 | `source` | 采集模式：`1` 本地/设备模式（默认），`3` 云端模式 |
 | `competitorBrands` | 竞品品牌数组，仅用于 `(竞)` 标记 |
@@ -210,9 +225,9 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 | type | 常用字段 |
 |---|---|
 | `once` | 一次性计划 |
-| `daily` | `hours` 或 `timesPerDay` |
-| `weekly` | `weekdays` + `hours` 或 `timesPerActiveDay` |
-| `interval` | `intervalDays` + `hours` 或 `timesPerCycle` |
+| `daily` | 推荐 `hours: [9]`；也兼容 `timesPerDay` |
+| `weekly` | 必须有 `weekdays`，再配 `hours` 或 `timesPerActiveDay` |
+| `interval` | 必须有 `intervalDays`，再配 `hours` 或 `timesPerCycle` |
 
 
 ## 本地模式与云端模式
@@ -258,7 +273,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 
 ## 支持平台
 
-`deepseek`、`doubao`、`yuanbao`、`qwen`、`yiyan`、`kimi`、`zhipu`、`chatgpt`、`gemini`、`nami`、`grok`、`perp`、`poe`
+`deepseek`、`doubao`、`yuanbao`、`qwen`、`yiyan`、`kimi`、`zhipu`、`chatgpt`、`gemini`、`nami`、`grok`、`perp`、`poe`。注意：平台枚举“支持”不等于每个 openKey 都“已开通”；学员默认用 `doubao`，需要多平台时再显式传账号已开通的平台。
 
 ## 产品主题库接口仍保留
 

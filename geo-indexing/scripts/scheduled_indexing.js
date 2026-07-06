@@ -10,6 +10,22 @@ const path = require('path');
 const { loadGeoConfig, headers: geoHeaders, mask } = require('../../geo-runtime/scripts/credentials.js');
 
 const ALL_PLATFORMS = ['deepseek','doubao','yuanbao','qwen','yiyan','kimi','zhipu','chatgpt','gemini','nami','grok','perp','poe'];
+const DEFAULT_PLATFORMS = ['doubao'];
+const PLATFORM_ALIASES = {
+  '豆包': 'doubao', 'doubao': 'doubao',
+  'deepseek': 'deepseek', 'deepseek深度求索': 'deepseek', '深度求索': 'deepseek',
+  '元宝': 'yuanbao', '腾讯元宝': 'yuanbao', 'yuanbao': 'yuanbao',
+  '通义': 'qwen', '通义千问': 'qwen', '千问': 'qwen', 'qwen': 'qwen',
+  '文心': 'yiyan', '文心一言': 'yiyan', 'yiyan': 'yiyan',
+  'kimi': 'kimi', '月之暗面': 'kimi',
+  '智谱': 'zhipu', '智谱清言': 'zhipu', 'zhipu': 'zhipu',
+  'chatgpt': 'chatgpt', 'gpt': 'chatgpt', 'openai': 'chatgpt',
+  'gemini': 'gemini', 'google': 'gemini',
+  '纳米': 'nami', 'nami': 'nami',
+  'grok': 'grok',
+  'perplexity': 'perp', 'perp': 'perp',
+  'poe': 'poe',
+};
 const WRITE_ACTIONS = new Set(['create','update','delete','run-now','suggest-competitors']);
 
 function parseArgs(argv) {
@@ -54,11 +70,11 @@ Create input:
   --question <text>          单个问题
   --questions <a|b|c>        多个问题，用 | 或换行分隔
   --name <text>              计划名称，默认 定时收录-YYYY-MM-DD
-  --platforms <list|all>     默认 all（含新增 nami/grok/perp/poe）
-  --schedule-type <type>     daily | weekly | interval | once，默认 once
+  --platforms <list|all>     默认 doubao；all 仅在账号已开通全部平台时使用
+  --schedule-type <type>     once | daily | weekly | interval，默认 once
   --hours <0,8,16>           执行小时
   --weekdays <1,3,5>         weekly: 1=周一..7=周日
-  --times-per-day <n>        daily 均分预设
+  --times-per-day <n>        daily 均分预设；课堂建议直接用 --hours 9
   --interval-days <n>        interval 必填
   --times-per-cycle <n>      interval 均分预设
   --competitor-brands <a,b>  竞品品牌数组
@@ -74,6 +90,12 @@ Safety:
 function splitList(v, sep = /[,，]/) { return String(v || '').split(sep).map(s => s.trim()).filter(Boolean); }
 function parseBool(v, fallback) { if (v === undefined || v === '') return fallback; if (typeof v === 'boolean') return v; return /^(1|true|yes|y|on)$/i.test(String(v)); }
 function parseIds(v) { return splitList(v).map(Number).filter(n => Number.isFinite(n)); }
+function normalizePlatform(v) {
+  const raw = String(v || '').trim();
+  if (!raw) return '';
+  const lower = raw.toLowerCase();
+  return PLATFORM_ALIASES[raw] || PLATFORM_ALIASES[lower] || lower;
+}
 function today() { return new Date().toISOString().slice(0, 10); }
 function decodeUtf8Strict(file) {
   const buf = fs.readFileSync(file);
@@ -194,33 +216,77 @@ async function request(cfg, method, pathname, { query = {}, body, headers = {} }
   let data; try { data = JSON.parse(text); } catch { data = text; }
   if (!res.ok || (data && typeof data === 'object' && data.statusCode !== undefined && data.statusCode !== 0)) {
     const msg = data && typeof data === 'object' ? (data.message || data.msg || JSON.stringify(data).slice(0,500)) : String(data).slice(0,500);
-    throw new Error(`GEO API ${method} ${pathname} failed: HTTP ${res.status}; ${msg}`);
+    let hint = '';
+    if (/所选平台已被禁用|平台.*禁用/.test(msg)) hint = '；建议不要使用 --platforms all，改用 --platforms doubao 或账号已开通的平台。';
+    else if (/请求参数错误|参数/.test(msg)) hint = '；请检查 platforms、source、schedule-type、hours/weekdays/interval-days。课堂默认建议：--platforms doubao --schedule-type once 或 --schedule-type daily --hours 9。';
+    throw new Error(`GEO API ${method} ${pathname} failed: HTTP ${res.status}; ${msg}${hint}`);
   }
   return data;
 }
+function validatePositiveInt(value, name) {
+  if (!Number.isInteger(value) || value <= 0) throw new Error(`${name} 必须是正整数。`);
+}
+function validateHourList(hours, name = 'hours') {
+  for (const h of hours) {
+    if (!Number.isInteger(h) || h < 0 || h > 23) throw new Error(`${name} 必须是 0-23 的整数，当前包含 ${h}。`);
+  }
+}
 function scheduleConfig(args) {
   const inline = first(args, ['schedule-config-json','scheduleConfigJson']);
-  if (inline) return JSON.parse(String(inline));
-  const cfg = { type: String(first(args, ['schedule-type','scheduleType'], 'once')) };
-  const hours = parseIds(first(args, ['hours'], '')); if (hours.length) cfg.hours = hours;
-  const weekdays = parseIds(first(args, ['weekdays'], '')); if (weekdays.length) cfg.weekdays = weekdays;
-  for (const [argKey, prop] of [
-    ['times-per-day','timesPerDay'], ['timesPerDay','timesPerDay'],
-    ['times-per-active-day','timesPerActiveDay'], ['timesPerActiveDay','timesPerActiveDay'],
-    ['interval-days','intervalDays'], ['intervalDays','intervalDays'],
-    ['times-per-cycle','timesPerCycle'], ['timesPerCycle','timesPerCycle'],
-  ]) {
-    const v = first(args, [argKey]);
-    if (v !== undefined) cfg[prop] = Number(v);
+  const cfg = inline ? JSON.parse(String(inline)) : { type: String(first(args, ['schedule-type','scheduleType'], 'once')) };
+  cfg.type = String(cfg.type || 'once').toLowerCase();
+  if (!['once','daily','weekly','interval'].includes(cfg.type)) throw new Error('scheduleConfig.type 不合法；只能是 once / daily / weekly / interval。');
+
+  if (!inline) {
+    const hours = parseIds(first(args, ['hours'], '')); if (hours.length) cfg.hours = hours;
+    const weekdays = parseIds(first(args, ['weekdays'], '')); if (weekdays.length) cfg.weekdays = weekdays;
+    for (const [argKey, prop] of [
+      ['times-per-day','timesPerDay'], ['timesPerDay','timesPerDay'],
+      ['times-per-active-day','timesPerActiveDay'], ['timesPerActiveDay','timesPerActiveDay'],
+      ['interval-days','intervalDays'], ['intervalDays','intervalDays'],
+      ['times-per-cycle','timesPerCycle'], ['timesPerCycle','timesPerCycle'],
+    ]) {
+      const v = first(args, [argKey]);
+      if (v !== undefined) cfg[prop] = Number(v);
+    }
+  }
+
+  if (cfg.hours) validateHourList(cfg.hours);
+  if (cfg.weekdays) {
+    for (const d of cfg.weekdays) if (!Number.isInteger(d) || d < 1 || d > 7) throw new Error(`weekdays 必须是 1-7 的整数，当前包含 ${d}。`);
+  }
+  for (const [prop, label] of [['timesPerDay','times-per-day'], ['timesPerActiveDay','times-per-active-day'], ['intervalDays','interval-days'], ['timesPerCycle','times-per-cycle']]) {
+    if (cfg[prop] !== undefined) validatePositiveInt(Number(cfg[prop]), label);
+  }
+
+  if (cfg.type === 'once') {
+    if (!Array.isArray(cfg.hours)) cfg.hours = [];
+  } else if (cfg.type === 'daily') {
+    if (!Array.isArray(cfg.hours) && cfg.timesPerDay === undefined) cfg.hours = [9];
+  } else if (cfg.type === 'weekly') {
+    if (!Array.isArray(cfg.weekdays) || !cfg.weekdays.length) throw new Error('weekly 计划必须传 --weekdays，例如 --weekdays 1,3,5。');
+    if (!Array.isArray(cfg.hours) && cfg.timesPerActiveDay === undefined) cfg.hours = [9];
+  } else if (cfg.type === 'interval') {
+    if (cfg.intervalDays === undefined) throw new Error('interval 计划必须传 --interval-days，例如 --interval-days 3。');
+    if (!Array.isArray(cfg.hours) && cfg.timesPerCycle === undefined) cfg.hours = [9];
   }
   return cfg;
 }
 function platforms(args) {
-  const raw = String(first(args, ['platforms'], 'all')).trim();
-  if (raw === 'all') return ALL_PLATFORMS;
-  const out = splitList(raw).filter(p => ALL_PLATFORMS.includes(p));
-  if (!out.length) throw new Error(`platforms 为空或不合法；可选 ${ALL_PLATFORMS.join(',')}`);
+  const raw = String(first(args, ['platforms'], DEFAULT_PLATFORMS.join(','))).trim();
+  if (/^(default|默认)$/i.test(raw)) return DEFAULT_PLATFORMS.slice();
+  if (/^all$/i.test(raw)) return ALL_PLATFORMS.slice();
+  const requested = splitList(raw).map(normalizePlatform);
+  const invalid = requested.filter(p => !ALL_PLATFORMS.includes(p));
+  if (invalid.length) throw new Error(`platforms 包含不支持的平台：${invalid.join(',')}；可选 ${ALL_PLATFORMS.join(',')}；中文可用：豆包、DeepSeek、通义、Kimi、元宝、文心等。`);
+  const out = [...new Set(requested)];
+  if (!out.length) throw new Error(`platforms 为空；默认建议 doubao，可选 ${ALL_PLATFORMS.join(',')}`);
   return out;
+}
+function sourceValue(args) {
+  const value = Number(first(args, ['source'], 1));
+  if (![1, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）或 3（云端模式）。');
+  return value;
 }
 function createPayload(args, cfg) {
   const companyId = Number(first(args, ['company-id','companyId'], cfg.defaults.companyId || 0));
@@ -237,9 +303,13 @@ function createPayload(args, cfg) {
     scheduleConfig: scheduleConfig(args),
     enabled: parseBool(first(args, ['enabled'], undefined), true),
   };
-  const screenshotPlatforms = splitList(first(args, ['screenshot-platforms','screenshotPlatforms'], ''));
-  if (screenshotPlatforms.length) payload.screenshotPlatforms = screenshotPlatforms.filter(p => payload.platforms.includes(p));
-  payload.source = Number(first(args, ['source'], 1));
+  const screenshotPlatforms = splitList(first(args, ['screenshot-platforms','screenshotPlatforms'], '')).map(normalizePlatform);
+  if (screenshotPlatforms.length) {
+    const invalidShots = screenshotPlatforms.filter(p => !payload.platforms.includes(p));
+    if (invalidShots.length) throw new Error(`screenshot-platforms 必须是 platforms 子集，当前不匹配：${invalidShots.join(',')}`);
+    payload.screenshotPlatforms = [...new Set(screenshotPlatforms)];
+  }
+  payload.source = sourceValue(args);
   const competitors = splitList(first(args, ['competitor-brands','competitorBrands'], ''));
   if (competitors.length) payload.competitorBrands = competitors;
   return payload;
@@ -248,13 +318,19 @@ function updatePayload(args, cfg) {
   const payload = {};
   for (const k of ['name']) { const v = first(args, [k]); if (v !== undefined) payload[k] = String(v); }
   for (const [arg, prop] of [['company-id','companyId'],['companyId','companyId'],['product-id','productId'],['productId','productId'],['source','source']]) {
-    const v = first(args, [arg]); if (v !== undefined) payload[prop] = Number(v);
+    const v = first(args, [arg]); if (v !== undefined) payload[prop] = prop === 'source' ? sourceValue(args) : Number(v);
   }
   if (args.file || args.question || args.questions || args.topic || args.topics) payload.topics = readQuestions(args);
   if (first(args, ['platforms']) !== undefined) payload.platforms = platforms(args);
-  if (first(args, ['screenshot-platforms','screenshotPlatforms']) !== undefined) payload.screenshotPlatforms = splitList(first(args, ['screenshot-platforms','screenshotPlatforms'], '')).filter(p => ALL_PLATFORMS.includes(p));
+  if (first(args, ['screenshot-platforms','screenshotPlatforms']) !== undefined) {
+    const shots = splitList(first(args, ['screenshot-platforms','screenshotPlatforms'], '')).map(normalizePlatform);
+    const basePlatforms = payload.platforms || ALL_PLATFORMS;
+    const invalidShots = shots.filter(p => !basePlatforms.includes(p));
+    if (invalidShots.length) throw new Error(`screenshot-platforms 必须是 platforms 子集，当前不匹配：${invalidShots.join(',')}`);
+    payload.screenshotPlatforms = [...new Set(shots)];
+  }
   if (first(args, ['competitor-brands','competitorBrands']) !== undefined) payload.competitorBrands = splitList(first(args, ['competitor-brands','competitorBrands'], ''));
-  if (first(args, ['schedule-type','scheduleType','schedule-config-json','scheduleConfigJson','hours','weekdays','times-per-day','timesPerDay','interval-days','intervalDays']) !== undefined) payload.scheduleConfig = scheduleConfig(args);
+  if (first(args, ['schedule-type','scheduleType','schedule-config-json','scheduleConfigJson','hours','weekdays','times-per-day','timesPerDay','times-per-active-day','timesPerActiveDay','interval-days','intervalDays','times-per-cycle','timesPerCycle']) !== undefined) payload.scheduleConfig = scheduleConfig(args);
   if (first(args, ['enabled']) !== undefined) payload.enabled = parseBool(first(args, ['enabled']), true);
   return payload;
 }

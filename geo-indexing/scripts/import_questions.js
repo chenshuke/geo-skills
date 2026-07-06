@@ -13,6 +13,22 @@ const path = require('path');
 const { loadGeoConfig, headers: geoHeaders } = require('../../geo-runtime/scripts/credentials.js');
 
 const ALL_PLATFORMS = ['deepseek','doubao','yuanbao','qwen','yiyan','kimi','zhipu','chatgpt','gemini','nami','grok','perp','poe'];
+const DEFAULT_PLATFORMS = ['doubao'];
+const PLATFORM_ALIASES = {
+  '豆包': 'doubao', 'doubao': 'doubao',
+  'deepseek': 'deepseek', 'deepseek深度求索': 'deepseek', '深度求索': 'deepseek',
+  '元宝': 'yuanbao', '腾讯元宝': 'yuanbao', 'yuanbao': 'yuanbao',
+  '通义': 'qwen', '通义千问': 'qwen', '千问': 'qwen', 'qwen': 'qwen',
+  '文心': 'yiyan', '文心一言': 'yiyan', 'yiyan': 'yiyan',
+  'kimi': 'kimi', '月之暗面': 'kimi',
+  '智谱': 'zhipu', '智谱清言': 'zhipu', 'zhipu': 'zhipu',
+  'chatgpt': 'chatgpt', 'gpt': 'chatgpt', 'openai': 'chatgpt',
+  'gemini': 'gemini', 'google': 'gemini',
+  '纳米': 'nami', 'nami': 'nami',
+  'grok': 'grok',
+  'perplexity': 'perp', 'perp': 'perp',
+  'poe': 'poe',
+};
 const TARGETS = new Set(['scheduled-indexing', 'indexing-custom', 'product-topic', 'topic-task-select', 'legacy-indexing-custom']);
 
 function parseArgs(argv) {
@@ -62,10 +78,12 @@ Common options:
 
 scheduled-indexing options:
   --name <text>          计划名称，默认 定时收录-YYYY-MM-DD
-  --platforms <list|all> 默认 all（deepseek/doubao/.../poe）
-  --schedule-type <type> daily | weekly | interval | once，默认 once
-  --hours <0,8,16>       执行小时数组
-  --weekdays <1,3,5>     weekly 生效，1=周一..7=周日
+  --platforms <list|all> 默认 doubao；all 仅在账号已开通全部平台时使用
+  --schedule-type <type> once | daily | weekly | interval，默认 once
+  --hours <0,8,16>       执行小时数组；课堂默认建议 --hours 9
+  --weekdays <1,3,5>     weekly 必填，1=周一..7=周日
+  --times-per-day <n>    daily 均分预设；课堂建议直接用 --hours 9
+  --interval-days <n>    interval 必填
   --run-now              创建成功后立即执行一次
   --source <1|3>         采集模式：1=本地/设备模式（默认），3=云端模式
 
@@ -194,7 +212,10 @@ async function requestJson(url, options) {
   let body; try { body = JSON.parse(text); } catch { body = text; }
   if (!res.ok || (body && typeof body === 'object' && body.statusCode !== undefined && body.statusCode !== 0)) {
     const msg = body && typeof body === 'object' ? (body.message || body.msg || JSON.stringify(body)) : String(body).slice(0, 500);
-    const err = new Error(`GEO API failed: HTTP ${res.status} ${res.statusText}; ${msg}`);
+    let hint = '';
+    if (/所选平台已被禁用|平台.*禁用/.test(msg)) hint = '；建议不要使用 --platforms all，改用 --platforms doubao 或账号已开通的平台。';
+    else if (/请求参数错误|参数/.test(msg)) hint = '；请检查 platforms、source、schedule-type、hours/weekdays/interval-days。课堂默认建议：--platforms doubao --schedule-type once 或 --schedule-type daily --hours 9。';
+    const err = new Error(`GEO API failed: HTTP ${res.status} ${res.statusText}; ${msg}${hint}`);
     err.response = body; throw err;
   }
   return body;
@@ -224,31 +245,76 @@ function parseBool(v, fallback) {
   if (typeof v === 'boolean') return v;
   return /^(1|true|yes|y|on)$/i.test(String(v));
 }
+function normalizePlatform(v) {
+  const raw = String(v || '').trim();
+  if (!raw) return '';
+  const lower = raw.toLowerCase();
+  return PLATFORM_ALIASES[raw] || PLATFORM_ALIASES[lower] || lower;
+}
 function today() { return new Date().toISOString().slice(0, 10); }
+function validatePositiveInt(value, name) {
+  if (!Number.isInteger(value) || value <= 0) throw new Error(`${name} 必须是正整数。`);
+}
+function validateHourList(hours, name = 'hours') {
+  for (const h of hours) if (!Number.isInteger(h) || h < 0 || h > 23) throw new Error(`${name} 必须是 0-23 的整数，当前包含 ${h}。`);
+}
 function scheduleConfig(args) {
   const inline = first(args, ['schedule-config-json','scheduleConfigJson']);
-  if (inline) return JSON.parse(String(inline));
-  const cfg = { type: String(first(args, ['schedule-type','scheduleType'], 'once')) };
-  const hours = parseIds(first(args, ['hours'], '')).map(Number).filter(n => Number.isFinite(n));
-  if (hours.length) cfg.hours = hours;
-  const weekdays = parseIds(first(args, ['weekdays'], '')).map(Number).filter(n => Number.isFinite(n));
-  if (weekdays.length) cfg.weekdays = weekdays;
-  const mappings = [
-    ['times-per-day','timesPerDay'], ['timesPerDay','timesPerDay'],
-    ['times-per-active-day','timesPerActiveDay'], ['timesPerActiveDay','timesPerActiveDay'],
-    ['interval-days','intervalDays'], ['intervalDays','intervalDays'],
-    ['times-per-cycle','timesPerCycle'], ['timesPerCycle','timesPerCycle'],
-  ];
-  for (const [arg, prop] of mappings) {
-    const v = first(args, [arg]);
-    if (v !== undefined) cfg[prop] = Number(v);
+  const cfg = inline ? JSON.parse(String(inline)) : { type: String(first(args, ['schedule-type','scheduleType'], 'once')) };
+  cfg.type = String(cfg.type || 'once').toLowerCase();
+  if (!['once','daily','weekly','interval'].includes(cfg.type)) throw new Error('scheduleConfig.type 不合法；只能是 once / daily / weekly / interval。');
+  if (!inline) {
+    const hours = parseIds(first(args, ['hours'], '')).map(Number).filter(n => Number.isFinite(n));
+    if (hours.length) cfg.hours = hours;
+    const weekdays = parseIds(first(args, ['weekdays'], '')).map(Number).filter(n => Number.isFinite(n));
+    if (weekdays.length) cfg.weekdays = weekdays;
+    const mappings = [
+      ['times-per-day','timesPerDay'], ['timesPerDay','timesPerDay'],
+      ['times-per-active-day','timesPerActiveDay'], ['timesPerActiveDay','timesPerActiveDay'],
+      ['interval-days','intervalDays'], ['intervalDays','intervalDays'],
+      ['times-per-cycle','timesPerCycle'], ['timesPerCycle','timesPerCycle'],
+    ];
+    for (const [arg, prop] of mappings) {
+      const v = first(args, [arg]);
+      if (v !== undefined) cfg[prop] = Number(v);
+    }
+  }
+  if (cfg.hours) validateHourList(cfg.hours);
+  if (cfg.weekdays) for (const d of cfg.weekdays) if (!Number.isInteger(d) || d < 1 || d > 7) throw new Error(`weekdays 必须是 1-7 的整数，当前包含 ${d}。`);
+  for (const [prop, label] of [['timesPerDay','times-per-day'], ['timesPerActiveDay','times-per-active-day'], ['intervalDays','interval-days'], ['timesPerCycle','times-per-cycle']]) {
+    if (cfg[prop] !== undefined) validatePositiveInt(Number(cfg[prop]), label);
+  }
+  if (cfg.type === 'once') {
+    if (!Array.isArray(cfg.hours)) cfg.hours = [];
+  } else if (cfg.type === 'daily') {
+    if (!Array.isArray(cfg.hours) && cfg.timesPerDay === undefined) cfg.hours = [9];
+  } else if (cfg.type === 'weekly') {
+    if (!Array.isArray(cfg.weekdays) || !cfg.weekdays.length) throw new Error('weekly 计划必须传 --weekdays，例如 --weekdays 1,3,5。');
+    if (!Array.isArray(cfg.hours) && cfg.timesPerActiveDay === undefined) cfg.hours = [9];
+  } else if (cfg.type === 'interval') {
+    if (cfg.intervalDays === undefined) throw new Error('interval 计划必须传 --interval-days，例如 --interval-days 3。');
+    if (!Array.isArray(cfg.hours) && cfg.timesPerCycle === undefined) cfg.hours = [9];
   }
   return cfg;
 }
+function parsePlatforms(args, fallback = DEFAULT_PLATFORMS.join(',')) {
+  const raw = String(first(args, ['platforms'], fallback)).trim();
+  if (/^(default|默认)$/i.test(raw)) return DEFAULT_PLATFORMS.slice();
+  if (/^all$/i.test(raw)) return ALL_PLATFORMS.slice();
+  const requested = parseList(raw).map(normalizePlatform);
+  const invalid = requested.filter(p => !ALL_PLATFORMS.includes(p));
+  if (invalid.length) throw new Error(`platforms 包含不支持的平台：${invalid.join(',')}；可选：${ALL_PLATFORMS.join(',')}；中文可用：豆包、DeepSeek、通义、Kimi、元宝、文心等。`);
+  const out = [...new Set(requested)];
+  if (!out.length) throw new Error(`platforms 为空；默认建议 doubao；可选：${ALL_PLATFORMS.join(',')}`);
+  return out;
+}
+function sourceValue(args) {
+  const value = Number(first(args, ['source'], 1));
+  if (![1, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）或 3（云端模式）。');
+  return value;
+}
 function buildScheduledIndexingPayload(args, questions, companyId, productId) {
-  const platformsRaw = String(first(args, ['platforms'], 'all')).trim();
-  const platforms = platformsRaw === 'all' ? ALL_PLATFORMS : parseList(platformsRaw).filter(p => ALL_PLATFORMS.includes(p));
-  if (!platforms.length) throw new Error(`platforms 为空或不合法；可选：${ALL_PLATFORMS.join(',')}`);
+  const platforms = parsePlatforms(args);
   const payload = {
     name: String(first(args, ['name'], `定时收录-${today()}`)),
     companyId,
@@ -258,9 +324,13 @@ function buildScheduledIndexingPayload(args, questions, companyId, productId) {
     scheduleConfig: scheduleConfig(args),
     enabled: parseBool(first(args, ['enabled'], undefined), true),
   };
-  const screenshotPlatforms = parseList(first(args, ['screenshot-platforms','screenshotPlatforms'], ''));
-  if (screenshotPlatforms.length) payload.screenshotPlatforms = screenshotPlatforms.filter(p => platforms.includes(p));
-  payload.source = Number(first(args, ['source'], 1));
+  const screenshotPlatforms = parseList(first(args, ['screenshot-platforms','screenshotPlatforms'], '')).map(normalizePlatform);
+  if (screenshotPlatforms.length) {
+    const invalidShots = screenshotPlatforms.filter(p => !platforms.includes(p));
+    if (invalidShots.length) throw new Error(`screenshot-platforms 必须是 platforms 子集，当前不匹配：${invalidShots.join(',')}`);
+    payload.screenshotPlatforms = [...new Set(screenshotPlatforms)];
+  }
+  payload.source = sourceValue(args);
   const competitorBrands = parseList(first(args, ['competitor-brands','competitorBrands'], ''));
   if (competitorBrands.length) payload.competitorBrands = competitorBrands;
   return payload;
@@ -312,13 +382,13 @@ async function main() {
     if (!questions.length) throw new Error('没有读取到问题，请传 --file/--question/--questions。');
     const hits = suspiciousMojibake(questions.join('\n'));
     if (hits.length && !args['allow-suspicious'] && !args.allowSuspicious) throw new Error(`检测到疑似乱码：${hits.join(', ')}`);
-    const platformsRaw = String(first(args, ['platforms'], 'all')).trim();
-    const platforms = platformsRaw === 'all' ? ALL_PLATFORMS.slice(0, 9) : parseList(platformsRaw).filter(p => ALL_PLATFORMS.includes(p));
+    const platformsRaw = String(first(args, ['platforms'], DEFAULT_PLATFORMS.join(','))).trim();
+    const platforms = /^all$/i.test(platformsRaw) ? ALL_PLATFORMS.slice(0, 9) : parsePlatforms(args, DEFAULT_PLATFORMS.join(','));
     if (!platforms.length) throw new Error(`platforms 为空或不合法；可选：${ALL_PLATFORMS.join(',')}`);
     const brand = first(args, ['brand', 'brands'], '');
     const dataLines = questions.map(q => ensureBrandFormat(q, brand));
     const payload = { data: dataLines.join('\n'), platforms, companyId };
-    const source = first(args, ['source']); if (source !== undefined) payload.source = Number(source);
+    const source = first(args, ['source']); if (source !== undefined) payload.source = sourceValue(args);
     if (dryRun) result = makePreview(target, payload, questions, { endpoint: '/v1/ai-indexing-task/custom/import' });
     else {
       const created = await requestJson(`${baseUrl(cfg)}/v1/ai-indexing-task/custom/import`, { method: 'POST', headers: buildHeaders(cfg), body: JSON.stringify(payload) });

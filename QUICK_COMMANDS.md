@@ -94,7 +94,7 @@ node geo-article/scripts/delete_articles.js --id 123 --force
 
 ```bash
 # 创建 Scheduled Indexing 定时收录计划
-node geo-indexing/scripts/scheduled_indexing.js --action create --file questions.md --name "品牌名-每日收录" --platforms deepseek,doubao,qwen,kimi --schedule-type daily --times-per-day 1 --dry-run
+node geo-indexing/scripts/scheduled_indexing.js --action create --file questions.md --name "品牌名-每日收录" --platforms doubao --schedule-type daily --hours 9 --dry-run
 
 # 创建后立即执行一次
 node geo-indexing/scripts/scheduled_indexing.js --action run-now --id 123 --dry-run
