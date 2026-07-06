@@ -171,7 +171,7 @@ node geo-article/scripts/upload_article.js --file "文章.md" --dry-run
 node geo-article/scripts/upload_article.js --file "文章.md" --cover-url "https://...png"
 
 # 本地问题导入 GEO 平台
-node geo-indexing/scripts/import_questions.js --target indexing-custom --file "questions.md" --brand "品牌名" --dry-run
+node geo-indexing/scripts/scheduled_indexing.js --action create --file "questions.md" --name "品牌名-每日收录" --platforms deepseek,doubao,qwen,kimi --schedule-type daily --times-per-day 1 --dry-run
 node geo-indexing/scripts/import_questions.js --target product-topic --file "deep_questions.md" --tags "深层用户问题,手动导入" --dry-run
 
 # 技能自进化

@@ -86,11 +86,11 @@ metadata:
 ---
 
 ### ④ geo-indexing — 收录检测
-> 检测AI搜索排名、管理收录任务、批量导入关键词
+> 使用 Scheduled Indexing 检测 AI 搜索排名、创建/管理定时收录计划、查询 answers/matrix、publishedUrl 命中检测
 
-**API接口**：`POST/GET/DELETE /v1/ai-indexing-task/custom`、`GET /v1/ai-indexing/custom`
+**API接口**：`POST/GET/PATCH/DELETE /v1/scheduled-indexing`、`POST /v1/scheduled-indexing/{id}/run-now`、`GET /v1/scheduled-indexing/{id}/answers`、`GET /v1/scheduled-indexing/{id}/topic-platform-matrix`
 
-**推荐说法**：`使用 geo-indexing 帮我管理收录检测`
+**推荐说法**：`使用 geo-indexing 帮我创建 Scheduled Indexing 收录计划或查询收录结果`
 
 ---
 

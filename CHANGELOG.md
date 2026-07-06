@@ -13,7 +13,7 @@
 - 新增 `geo-runtime/scripts/api_request.js`，作为跨平台、UTF-8 安全的通用 GEO API 调用工具，替代默认 curl 流程。
 - 新增 `geo-config/scripts/setup_defaults.js`，用于学员首次安装后获取公司/产品列表并写入默认 `companyId/productId`。
 - 新增 `geo-article/scripts/upload_article.js`，支持中文 Markdown UTF-8 检测、疑似乱码拦截、上传后回查。
-- 新增 `geo-indexing/scripts/import_questions.js`，支持本地问题导入自定义 AI 收录任务、产品主题库，以及主题生成任务搜索问题选择插入。
+- 新增 `geo-indexing/scripts/import_questions.js`，旧 `indexing-custom` 提示词已路由到 Scheduled Indexing；产品主题库与主题生成任务选择仍保留。
 - 新增 `geo-content-archive/scripts/project_paths.js`，统一所有 GEO 技能产物的标准输出路径，确保文件在创建时直接落到正确目录。
 
 ### 优化

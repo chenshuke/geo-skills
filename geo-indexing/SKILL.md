@@ -51,7 +51,7 @@ node geo-content-archive/scripts/project_paths.js --artifact indexing-report --p
 | AI 建议竞品 | POST | `/v1/scheduled-indexing/suggest-competitors` |
 | 发布 URL 命中检测 | 本地脚本 | `geo-indexing/scripts/published_url_match.js` 读取 answers.searchedSites |
 
-> 旧自定义收录接口 `/v1/ai-indexing-task/custom/import`、`/v1/ai-indexing-task/custom`、`/v1/ai-indexing/custom` 仅保留为 legacy rollback，不再作为默认查收录链路。
+> 旧自定义收录接口 `/v1/ai-indexing-task/custom/import`、`/v1/ai-indexing-task/custom`、`/v1/ai-indexing/custom` 仅作为内部人工回滚入口保留，学员和 Agent 默认禁止使用；正常查收录必须走 Scheduled Indexing。
 
 ## 推荐脚本
 

@@ -6,7 +6,7 @@
  *  - scheduled-indexing: import local questions to /v1/scheduled-indexing (default)
  *  - product-topic: import local deep user questions to /v1/geo-product-topic
  *  - topic-task-select: select generated questions from /v1/topic-task/{taskId}/select
- *  - legacy-indexing-custom: old custom indexing import (manual rollback only)
+ *  - legacy-indexing-custom: old custom indexing import (internal rollback only; blocked unless --allow-legacy is explicit)
  */
 const fs = require('fs');
 const path = require('path');
@@ -42,6 +42,10 @@ Targets:
   indexing-custom    兼容旧提示词的别名：实际也走 /v1/scheduled-indexing
   product-topic      将本地深层用户问题写入产品主题库：POST /v1/geo-product-topic
   topic-task-select  从平台主题生成任务中选择搜索问题插入：POST /v1/topic-task/{taskId}/select
+
+Legacy guard:
+  legacy-indexing-custom 为内部人工回滚入口，默认阻断；必须显式添加 --allow-legacy 且真实写入仍需 --force。
+  学员查收录、Agent 自动执行、课堂提示词一律不要使用 legacy-indexing-custom。
 
 Input:
   --file <path>          .md/.txt/.csv/.json；自动 UTF-8 读取、去重、过滤空行
@@ -272,6 +276,10 @@ async function main() {
   // Compatibility: old prompts using --target indexing-custom now route to Scheduled Indexing.
   if (target === 'indexing-custom') target = 'scheduled-indexing';
   if (!TARGETS.has(target)) throw new Error(`未知 --target：${target}；可选 ${[...TARGETS].join(', ')}`);
+  const allowLegacy = Boolean(args['allow-legacy'] || args.allowLegacy);
+  if (target === 'legacy-indexing-custom' && !allowLegacy) {
+    throw new Error('legacy-indexing-custom 是旧查收录接口的内部回滚入口，默认禁止使用。学员查收录请使用 scheduled-indexing / scheduled_indexing.js；如内部确需回滚，必须显式添加 --allow-legacy。');
+  }
   const cfg = loadGeoConfig();
   if (!cfg.geo.openKey) throw new Error('未配置 GEO openKey。');
   const companyId = Number(first(args, ['company-id', 'companyId'], cfg.defaults.companyId || 0));

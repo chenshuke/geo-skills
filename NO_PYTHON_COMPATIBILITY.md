@@ -19,7 +19,8 @@ Python 仅作为旧版高级可选
 | 通用 API 调用 | `node geo-runtime/scripts/api_request.js` | 替代 curl，自动带凭证/Referer/UTF-8，写操作需 `--force` |
 | 品牌诊断报告渲染 | `node geo-brand-diagnosis/scripts/render_geo_brand_diagnosis.js` | MD → HTML，PNG 可选 |
 | 中文文章上传 | `node geo-article/scripts/upload_article.js` | UTF-8 检测、疑似乱码拦截、上传后回查 |
-| 问题导入 | `node geo-indexing/scripts/import_questions.js` | 本地问题导入自定义 AI 收录任务或产品主题库 |
+| 收录计划创建 | `node geo-indexing/scripts/scheduled_indexing.js --action create` | 创建 Scheduled Indexing 定时收录计划，不走旧 custom 收录 |
+| 产品主题库导入 | `node geo-indexing/scripts/import_questions.js --target product-topic` | 将本地深层用户问题写入产品主题库 |
 | 文章封面 | `node geo-content-production/scripts/generate_cover.js` | 调 GEO 平台 `/v1/text-to-img`，默认 model=v2，无需 Python/Pillow |
 | AI 图片生成 | `node geo-content-production/scripts/generate_image.js` | 调 GEO 平台 `/v1/text-to-img`，无需 Python，默认 model=v2 |
 | 删除文章 | `node geo-article/scripts/delete_articles.js` | 使用 Node fetch 调 API |
