@@ -144,14 +144,7 @@ toutiao（今日头条）、sohu_news（搜狐号）、bilibili（B站）、zhih
         {
           "platform": "sohu_news",
           "publishAccountIds": [${publishAccountId}],
-          "publishTime": null,
-          "config": {
-            "channels": [],
-            "attribute": "",
-            "requireLogin": false,
-            "infoSource": "0",
-            "sourceLink": ""
-          }
+          "publishTime": null
         }
       ]
     }
@@ -160,12 +153,7 @@ toutiao（今日头条）、sohu_news（搜狐号）、bilibili（B站）、zhih
 }
 ```
 
-> **config 字段说明**：
-> - `channels`：分发渠道（通常留空）
-> - `attribute`：附加属性（通常留空）
-> - `requireLogin`：是否需要登录才能阅读（false=公开）
-> - `infoSource`：信息来源标识（`"0"`=原创，`"1"`=转载）
-> - `sourceLink`：转载来源链接（原创时留空）
+> `platforms[]` 按当前 API 只发送 `platform`、`publishAccountIds`、`publishTime`；不要额外发送旧版 `config` 字段，避免参数不兼容。
 
 ### curl 示例（仅调试；默认优先使用 Node 脚本或 `geo-runtime/scripts/api_request.js`）
 
@@ -182,7 +170,7 @@ curl -s -X POST "${baseUrl}/v1/publication-task" \
     \"name\":\"任务名称\",
     \"aigc\":false,
     \"productId\":${productId},
-    \"articles\":[{\"articleId\":${articleId},\"platforms\":[{\"platform\":\"sohu_news\",\"publishAccountIds\":[${publishAccountId}],\"publishTime\":null,\"config\":{\"channels\":[],\"attribute\":\"\",\"requireLogin\":false,\"infoSource\":\"0\",\"sourceLink\":\"\"}}]}],
+    \"articles\":[{\"articleId\":${articleId},\"platforms\":[{\"platform\":\"sohu_news\",\"publishAccountIds\":[${publishAccountId}],\"publishTime\":null}]}],
     \"companyId\":${companyId}
   }"
 ```

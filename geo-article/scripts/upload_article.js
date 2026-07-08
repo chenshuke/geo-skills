@@ -207,11 +207,11 @@ function summarizeCheck(title, content, uploaded) {
   let coverImageUrl = first(args, ['cover-url', 'coverUrl'], fm.coverImageUrl || fm.cover || '');
   if (!coverImageUrl && (args['auto-cover'] || args.autoCover)) coverImageUrl = await generateCover(args, title);
 
-  // Current GEO article API expects summaries array. Do not send legacy `summary`,
-  // otherwise the platform can return 请求参数错误. Keep summaries even when empty.
+  // Current GEO article API requires both `summaries` and `tags` arrays.
+  // Do not send legacy `summary`, and do not drop empty `tags`, otherwise the platform can return 请求参数错误.
   const payload = { title, productId, companyId, coverImageUrl, content, summaries, tags };
   Object.keys(payload).forEach(k => {
-    if (k === 'summaries') return;
+    if (k === 'summaries' || k === 'tags') return;
     if (payload[k] === '' || payload[k] == null || (Array.isArray(payload[k]) && payload[k].length === 0)) delete payload[k];
   });
 

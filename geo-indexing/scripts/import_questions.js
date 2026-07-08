@@ -85,7 +85,7 @@ scheduled-indexing options:
   --times-per-day <n>    daily 均分预设；课堂建议直接用 --hours 9
   --interval-days <n>    interval 必填
   --run-now              创建成功后立即执行一次
-  --source <1|3>         采集模式：1=本地/设备模式（默认），3=云端模式
+  --source <1|2|3>       采集模式：1=本地/设备模式（默认），3=云端模式；2为平台保留模式
 
 product-topic options:
   --tags <a,b>           默认 深层用户问题,手动导入
@@ -310,7 +310,7 @@ function parsePlatforms(args, fallback = DEFAULT_PLATFORMS.join(',')) {
 }
 function sourceValue(args) {
   const value = Number(first(args, ['source'], 1));
-  if (![1, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）或 3（云端模式）。');
+  if (![1, 2, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）、2（平台保留模式）或 3（云端模式）。');
   return value;
 }
 function buildScheduledIndexingPayload(args, questions, companyId, productId) {
@@ -430,12 +430,12 @@ async function main() {
       matchInfo = { taskFound: Boolean(task), generatedCount: generated.length, matched: ids.length, missing };
     }
     if (!selectedIds.length) throw new Error('需要 --selected-ids，或使用 --match-file 从任务结果精确匹配。');
-    const payload = { selectedIds };
+    const payload = { selectedIds: selectedIds.map(String) };
     if (dryRun) result = makePreview(target, payload, selectedIds, { endpoint: `/v1/topic-task/${taskId}/select`, matchInfo });
     else {
       const selected = await requestJson(`${baseUrl(cfg)}/v1/topic-task/${taskId}/select`, { method: 'POST', headers: buildHeaders(cfg), body: JSON.stringify(payload) });
       const topics = await listProductTopics(cfg, { companyId, productId, limit: 30 }).catch(() => []);
-      result = { target, taskId, selectedIds, selected: selected.data || selected, verification: { recentTopicCount: topics.length, recentTopics: topics.slice(0, 10).map(x => ({ id: x.id, topic: x.topic, source: x.source })) }, matchInfo };
+      result = { target, taskId, selectedIds: payload.selectedIds, selected: selected.data || selected, verification: { recentTopicCount: topics.length, recentTopics: topics.slice(0, 10).map(x => ({ id: x.id, topic: x.topic, source: x.source })) }, matchInfo };
     }
   }
 

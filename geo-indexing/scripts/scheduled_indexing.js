@@ -62,6 +62,7 @@ Actions:
   metrics              折线图数据: GET /v1/scheduled-indexing/{id}/metrics
   answers              大模型回答与引用: GET /v1/scheduled-indexing/{id}/answers
   matrix               问题×平台收录矩阵: GET /v1/scheduled-indexing/{id}/topic-platform-matrix
+  citations            引用分析: GET /v1/scheduled-indexing/{id}/citations
   topic-stats          按 topic 聚合统计: GET /v1/scheduled-indexing/{id}/topic-stats
   suggest-competitors  AI 建议竞品: POST /v1/scheduled-indexing/suggest-competitors
 
@@ -79,7 +80,7 @@ Create input:
   --times-per-cycle <n>      interval 均分预设
   --competitor-brands <a,b>  竞品品牌数组
   --screenshot-platforms <a,b> 截图平台数组(platforms 子集)
-  --source <1|3>             采集模式：1=本地/设备模式（默认），3=云端模式
+  --source <1|2|3>           采集模式：1=本地/设备模式（默认），3=云端模式；2为平台保留模式
   --enabled <true|false>     默认 true
   --run-now                  创建成功后立即执行一次
 
@@ -285,7 +286,7 @@ function platforms(args) {
 }
 function sourceValue(args) {
   const value = Number(first(args, ['source'], 1));
-  if (![1, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）或 3（云端模式）。');
+  if (![1, 2, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）、2（平台保留模式）或 3（云端模式）。');
   return value;
 }
 function createPayload(args, cfg) {
@@ -386,7 +387,7 @@ async function main() {
   } else if (action === 'run-now') {
     if (!id) throw new Error('run-now 需要 --id。');
     result = dryRun ? preview('POST', `/v1/scheduled-indexing/${id}/run-now`, null, cfg) : { action, run: (await request(cfg, 'POST', `/v1/scheduled-indexing/${id}/run-now`)).data };
-  } else if (['runs','metrics','answers','topic-stats'].includes(action)) {
+  } else if (['runs','metrics','answers','citations','topic-stats'].includes(action)) {
     if (!id) throw new Error(`${action} 需要 --id。`);
     const endpoint = action === 'topic-stats' ? 'topic-stats' : action;
     const query = queryCommon(args, cfg);

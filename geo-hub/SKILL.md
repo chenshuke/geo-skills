@@ -70,7 +70,7 @@ metadata:
 ### ② geo-account — 账号与资源
 > 查看企业/产品/个人品牌账号列表、平台套餐、视频等
 
-**API接口**：`GET /v1/geo-company`、`GET /v1/dashboard`、`GET /v1/package`、`GET /v1/video`
+**API接口**：`GET /v1/geo-company`、`GET /v1/geo-product`、`GET /v1/publication-account`、`GET /v1/package`、`GET /v1/package/self`、`GET /v1/video`
 
 **推荐说法**：`使用 geo-account 帮我查询账号或资源`
 

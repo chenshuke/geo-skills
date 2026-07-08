@@ -257,8 +257,7 @@ function buildPublishPlan({ taskName, articleIds, platforms, accounts, accountId
     platforms: Array.from(selectedByPlatform.entries()).map(([platform, account]) => ({
       platform,
       publishAccountIds: [Number(account.id)],
-      publishTime: publishTime || null,
-      config: { channels: [], attribute: '', requireLogin: false, infoSource: '0', sourceLink: '' }
+      publishTime: publishTime || null
     }))
   }));
   const payload = { name: taskName, aigc: false, productId: Number(productId), articles, companyId: Number(companyId) };

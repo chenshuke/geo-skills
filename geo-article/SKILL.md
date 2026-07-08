@@ -103,7 +103,7 @@ node geo-article/scripts/upload_article.js --file "文章.md" --auto-cover
 }
 ```
 
-> **字段兼容性重点**：当前 GEO 文章创建接口需要 `summaries` 数组，不要发送旧字段 `summary`。`upload_article.js` 会把 `--summary` 或 frontmatter `summary` 自动转换为 `summaries: [摘要]`；即使没有摘要也保留 `summaries: []`，避免平台返回“请求参数错误”。
+> **字段兼容性重点**：当前 GEO 文章创建接口需要 `summaries` 数组和 `tags` 数组，不要发送旧字段 `summary`。`upload_article.js` 会把 `--summary` 或 frontmatter `summary` 自动转换为 `summaries: [摘要]`；即使没有摘要或标签，也会保留 `summaries: []`、`tags: []`，避免平台返回“请求参数错误”。
 
 ### 推荐上传命令（UTF-8 安全）
 
@@ -144,7 +144,7 @@ curl -X POST "${baseUrl}/v1/article" \
 ### 注意事项
 
 - 标题建议 10-50 字，内容不少于 500 字，摘要建议 50-200 字；payload 字段必须是 `summaries` 数组
-- 标签建议不超过 5 个
+- `tags` 是当前 API 必填数组；没有标签也必须传 `tags: []`，标签建议不超过 5 个
 - 支持从 .md 文件读取内容（首个 H1 标题作为文章标题）
 
 ---

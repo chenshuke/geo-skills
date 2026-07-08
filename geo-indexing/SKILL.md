@@ -46,6 +46,7 @@ node geo-content-archive/scripts/project_paths.js --artifact indexing-report --p
 | 趋势指标 / 折线图数据 | GET | `/v1/scheduled-indexing/{id}/metrics` |
 | AI 完整回答与引用来源 | GET | `/v1/scheduled-indexing/{id}/answers` |
 | 问题×平台收录矩阵 | GET | `/v1/scheduled-indexing/{id}/topic-platform-matrix` |
+| 引用分析（渠道引用 + 内容引用） | GET | `/v1/scheduled-indexing/{id}/citations` |
 | topic 聚合统计 | GET | `/v1/scheduled-indexing/{id}/topic-stats` |
 | topic 统计 Excel 导出 | GET | `/v1/scheduled-indexing/{id}/topic-stats/export` |
 | AI 建议竞品 | POST | `/v1/scheduled-indexing/suggest-competitors` |
@@ -58,7 +59,7 @@ node geo-content-archive/scripts/project_paths.js --artifact indexing-report --p
 学员创建收录计划时，Agent 必须优先使用保守参数，避免把平台接口错误暴露给新手：
 
 1. **不要默认 `--platforms all`**：`all` 会包含账号未开通或已禁用的平台，容易报“所选平台已被禁用”。课堂默认用 `--platforms doubao`，多平台必须由用户或账号资源确认后再加。
-2. **`source` 只能是 `1` 或 `3`**：默认 `1` 本地/设备模式；云端模式才传 `--source 3`。
+2. **`source` 合法值是 `1/2/3`**：课堂默认 `1` 本地/设备模式；云端模式传 `--source 3`；`2` 是平台保留模式，学员不要默认使用。
 3. **`scheduleConfig` 必须完整**：
    - `once`：一次性计划；
    - `daily`：建议 `--hours 9`；
@@ -127,6 +128,9 @@ node geo-indexing/scripts/scheduled_indexing.js --action matrix --id 123 --limit
 
 # AI 完整回答与引用来源；支持 platform/topicId/runId/taskId/startDate/endDate
 node geo-indexing/scripts/scheduled_indexing.js --action answers --id 123 --platform deepseek --limit 50
+
+# 引用分析
+node geo-indexing/scripts/scheduled_indexing.js --action citations --id 123 --limit 100
 
 # topic 聚合统计
 node geo-indexing/scripts/scheduled_indexing.js --action topic-stats --id 123 --limit 100
@@ -217,7 +221,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 |---|---|
 | `platforms` | AI 平台数组。课堂默认建议只用 `doubao`；`all` 只有在账号已开通全部平台时才能用，否则会报“所选平台已被禁用” |
 | `screenshotPlatforms` | 截图平台数组，必须是 `platforms` 子集 |
-| `source` | 采集模式：`1` 本地/设备模式（默认），`3` 云端模式 |
+| `source` | 采集模式：`1` 本地/设备模式（默认），`3` 云端模式；API 也保留 `2`，课堂不默认使用 |
 | `competitorBrands` | 竞品品牌数组，仅用于 `(竞)` 标记 |
 
 `scheduleConfig` 支持：
@@ -233,7 +237,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 ## 本地模式与云端模式
 
 - 默认使用本地/设备模式：`source: 1`。脚本在创建计划时会显式写入 `source=1`，用户不需要额外传参。
-- 如需云端模式，创建或更新计划时传 `--source 3`。
+- 如需云端模式，创建或更新计划时传 `--source 3`。API 文档还保留 `source=2`，但课堂/学员默认不要使用。
 - 两种模式都走同一套 Scheduled Indexing 查询接口；区别只在创建/更新计划时的 `source` 字段。
 
 ## 查询字段重点
