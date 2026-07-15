@@ -261,7 +261,8 @@ function scheduleConfig(args) {
   }
 
   if (cfg.type === 'once') {
-    if (!Array.isArray(cfg.hours)) cfg.hours = [];
+    // The API rejects once schedules when an empty hours array is present.
+    delete cfg.hours;
   } else if (cfg.type === 'daily') {
     if (!Array.isArray(cfg.hours) && cfg.timesPerDay === undefined) cfg.hours = [9];
   } else if (cfg.type === 'weekly') {

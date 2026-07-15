@@ -61,7 +61,7 @@ node geo-content-archive/scripts/project_paths.js --artifact indexing-report --p
 1. **不要默认 `--platforms all`**：`all` 会包含账号未开通或已禁用的平台，容易报“所选平台已被禁用”。课堂默认用 `--platforms doubao`，多平台必须由用户或账号资源确认后再加。
 2. **`source` 合法值是 `1/2/3`**：课堂默认 `1` 本地/设备模式；云端模式传 `--source 3`；`2` 是平台保留模式，学员不要默认使用。
 3. **`scheduleConfig` 必须完整**：
-   - `once`：一次性计划；
+   - `once`：一次性计划，payload 只传 `{"type":"once"}`，不得附带空的 `hours: []`；
    - `daily`：建议 `--hours 9`；
    - `weekly`：必须传 `--weekdays`，例如 `--weekdays 1,3,5`；
    - `interval`：必须传 `--interval-days`。
@@ -228,7 +228,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 
 | type | 常用字段 |
 |---|---|
-| `once` | 一次性计划 |
+| `once` | 一次性计划；只传 `type`，不要传 `hours`（包括空数组） |
 | `daily` | 推荐 `hours: [9]`；也兼容 `timesPerDay` |
 | `weekly` | 必须有 `weekdays`，再配 `hours` 或 `timesPerActiveDay` |
 | `interval` | 必须有 `intervalDays`，再配 `hours` 或 `timesPerCycle` |
