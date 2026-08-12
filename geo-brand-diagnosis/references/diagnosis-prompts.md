@@ -1,8 +1,27 @@
 # GEO 品牌 AI 诊断优化提示词
 
+## Prompt -1：GEO 平台任务选择与数据导出（默认入口）
+
+品牌诊断默认不从“生成问题”开始。先读取当前 GEO 配置并列出 Scheduled Indexing 上榜检测任务：
+
+```bash
+node geo-brand-diagnosis/scripts/platform_diagnosis_data.js --action list --limit 30
+```
+
+把最近、已完成、与当前 productId 匹配的任务展示给用户选择。用户选择后执行：
+
+```bash
+node geo-brand-diagnosis/scripts/platform_diagnosis_data.js \
+  --action export \
+  --schedule-id <任务ID> \
+  --json-out 原始数据/platform_diagnosis_<任务ID>.json
+```
+
+直接使用导出的实际问题、AI 平台、完整回答、回答编号、竞品、searchedSites 来源标题和 URL 生成报告。只有平台无可用任务或用户明确要求创建新问题时，才进入 Prompt 0。
+
 # Prompt 0：无 AI 回复时生成品牌 AI 诊断问题
 
-当用户只提供品牌资料/知识库、尚未提供豆包/DeepSeek/元宝/通义等 AI 平台回复时，先使用本 Prompt 生成测试问题，不要直接输出诊断结论。
+仅当 GEO 平台没有可用检测任务、用户没有平台权限，或用户明确要求新建测试问题时使用。不要因为用户没有手工粘贴 AI 回答就直接使用本 Prompt；应先查平台任务。
 
 ```text
 你是一名资深 GEO 品牌诊断顾问。
