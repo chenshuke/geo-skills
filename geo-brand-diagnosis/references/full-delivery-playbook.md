@@ -1,6 +1,8 @@
-# 品牌 AI 诊断完整交付 Playbook
+# 品牌 AI 诊断完整审计交付 Playbook
 
-用于把 GEO 平台 Scheduled Indexing 上榜检测任务整理成企业可直接阅读、可复核、可复测的诊断方案。默认直接读取用户选择的现有任务，不要求用户重新生成问题或人工粘贴 AI 回答。
+本文件只在用户明确要求原始回答、全部信源、Excel、PDF、PPT、技术编号或正式审计附件时读取。普通品牌诊断默认使用 `reader-first-html-report.md`，只交付面向企业负责人的 HTML，不执行本 Playbook 的 Excel/PPT 要求。
+
+用于把 GEO 平台 Scheduled Indexing 上榜检测任务整理成可复核、可复测的完整审计材料。直接读取用户选择的现有任务，不要求用户重新生成问题或人工粘贴 AI 回答。
 
 ## 1. 交付目标
 

@@ -46,6 +46,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 | **⑧a geo-content-production** | 关键词规划、标题创作、图片生成、封面生成 |
 | **⑧b geo-content-audit** | 一致性审核、媒体就绪审核、AI检测、覆盖度检查、内容优化、合规榜单 |
 | **⑧c geo-content-to-publish-pipeline** | 内容到发布总控：封面 OSS、文章上传、审核通过、账号查询、发布 dry-run、确认清单 |
+| **⑧d geo-brand-action-plan** | 品牌落地方案：以原始监测数据为底座，输出用户问题、AI目标判断、证据、内容、平台、复测 |
 | **⑨ geo-analysis** | 证据链分析、平台逆向、飞书同步、项目仪表盘 |
 | **⑩ geo-source-assets** | 引用源资产库：从 searchedSites 沉淀我方/竞品/行业/媒体信源和补强建议 |
 | **⑪ geo-content-archive** | 内容归档，按日期/AI平台/发布平台自动分类 |
@@ -115,14 +116,15 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 第1步：使用 geo-brand 创建品牌
 第2步：使用 geo-knowledge 搭建知识库（建立标准目录结构）
 第2.5步：使用 geo-keyword-pool 建立关键词池、分级并输出下一步动作
-第3步：使用 geo-content-production 完成标题、图片与内容创作
-第4步：使用 geo-content-audit 审核、覆盖度检查与优化
-第5步：使用 geo-content-to-publish-pipeline 完成封面 OSS、文章上传、审核通过、账号查询和发布 dry-run
-第6步：用户确认后创建发布任务，并用 GET/list 回查确认
-第7步：使用 geo-content-archive 完成文件归位整理
-第8步：使用 geo-indexing 导入深层用户问题、检测收录排名
-第9步：使用 geo-source-assets 沉淀引用源资产库和信源补强动作
-第10步：使用 geo-analysis 完成证据链分析与策略优化
+第3步：使用 geo-brand-action-plan 把诊断问题转成落地执行方案
+第4步：使用 geo-content-production 完成标题、图片与内容创作
+第5步：使用 geo-content-audit 审核、覆盖度检查与优化
+第6步：使用 geo-content-to-publish-pipeline 完成封面 OSS、文章上传、审核通过、账号查询和发布 dry-run
+第7步：用户确认后创建发布任务，并用 GET/list 回查确认
+第8步：使用 geo-content-archive 完成文件归位整理
+第9步：使用 geo-indexing 导入深层用户问题、检测收录排名
+第10步：使用 geo-source-assets 沉淀引用源资产库和信源补强动作
+第11步：使用 geo-analysis 完成证据链分析与策略优化
 异常处理：任何环节失败时使用 geo-troubleshooter 输出新手可执行的处理清单
 持续进化：重复出现的新问题由助教/内部团队使用 geo-skill-evolution 沉淀为技能改进方案和回归测试
 ```

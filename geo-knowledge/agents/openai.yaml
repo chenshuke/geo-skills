@@ -1,4 +1,4 @@
 interface:
   display_name: "04 GEO知识库搭建"
-  short_description: "整理项目资料，搭建可用于内容生产的本地知识库。"
-  default_prompt: "使用 geo-knowledge 帮我整理资料并搭建 GEO 知识库。"
+  short_description: "整理完整知识库，提炼核心优势与可信证据。"
+  default_prompt: "使用 $geo-knowledge 帮我整理企业、产品或个人资料，建立完整事实知识库，再提炼核心优势与可信证据，输出信息补充清单和待补强证据清单。"

@@ -1,4 +1,4 @@
 interface:
   display_name: "00 GEO品牌AI诊断"
-  short_description: "选择GEO上榜检测任务，读取回答和信源并生成品牌诊断。"
-  default_prompt: "使用 $geo-brand-diagnosis 列出我的 GEO 上榜检测任务，让我选择后生成证据化品牌诊断。"
+  short_description: "分析AI是否认识和推荐品牌，生成通俗易懂的HTML诊断报告。"
+  default_prompt: "使用 $geo-brand-diagnosis 读取已有 GEO 检测任务，分析 AI 是否清楚认识、准确描述并主动推荐我的品牌，解释不推荐原因和主要竞品，生成面向企业负责人、通俗易懂的 HTML 报告。"

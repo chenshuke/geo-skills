@@ -58,7 +58,7 @@ description: "GEO 课程/新手统一入口，支持三种模式：快速闭环�
 
 1. `geo-runtime`：检查技能安装和运行环境。
 2. `geo-config` + `geo-account`：写入 openKey，配置默认公司/产品，确认账号资源。
-3. `geo-knowledge`：初始化项目文件夹并整理知识库；资料不足则输出补资料清单。
+3. `geo-knowledge`：初始化项目文件夹，整理完整事实知识库，提炼核心优势与可信证据；分别输出信息补充清单和待补强证据清单。
 4. `geo-content-production`：生成少量关键词方案、标题方案和内容。
 5. `geo-content-audit`：做发布前质量检查。
 6. `geo-content-to-publish-pipeline`：上传文章、封面/图片 OSS、生成发布确认清单。
@@ -84,16 +84,17 @@ description: "GEO 课程/新手统一入口，支持三种模式：快速闭环�
 
 ### 默认执行顺序
 
-1. `geo-knowledge`：整理项目资料和证据包，输出缺口。
+1. `geo-knowledge`：整理项目资料和完整事实知识库，提炼核心优势与可信证据，输出信息缺口和证据缺口。
 2. `geo-keyword-pool`：筛选/导入 20 个优质问题，建立 P0/P1/P2/P3 和状态机。
 3. `geo-indexing`：对 20 个问题做 AI 基线查询，拿 answers/matrix。
 4. `geo-source-assets` + `geo-analysis`：分析 AI 回复、竞品、searchedSites 和引用源。
-5. `geo-content-production`：为 20 个问题生成创作任务方案：标题、内容类型、发布平台偏好。
-6. `geo-knowledge` + `geo-source-assets`：补强证据包、内容资产和可控信源。
-7. `geo-content-production` + `geo-content-audit`：批量创作内容、配图、审核。
-8. `geo-content-to-publish-pipeline` + `geo-publish`：发布到多平台并记录 articleId/publishedUrl/状态。
-9. `geo-indexing`：复测 publishedUrl 精确命中和弱命中。
-10. `geo-analysis` + `geo-keyword-pool`：构建 20 问题资产地图，更新状态，输出持续优化计划。
+5. `geo-brand-action-plan`：把 20 个问题的基线结果转成用户问题、AI目标、证据、内容、平台和复测计划。
+6. `geo-content-production`：按落地方案生成标题、内容类型、发布平台偏好和正文资产。
+7. `geo-knowledge` + `geo-source-assets`：先补强企业主张所需的事实证据，再补强 AI 可检索、可引用的内容源和渠道。
+8. `geo-content-production` + `geo-content-audit`：批量创作内容、配图、审核。
+9. `geo-content-to-publish-pipeline` + `geo-publish`：发布到多平台并记录 articleId/publishedUrl/状态。
+10. `geo-indexing`：复测 publishedUrl 精确命中和弱命中。
+11. `geo-analysis` + `geo-keyword-pool`：构建 20 问题资产地图，更新状态，输出持续优化计划。
 
 ### 产物要求
 
@@ -114,7 +115,7 @@ description: "GEO 课程/新手统一入口，支持三种模式：快速闭环�
 
 ### 默认执行顺序
 
-1. `geo-knowledge`：持续补充新资料、新案例、新证据、新 FAQ。
+1. `geo-knowledge`：持续补充新资料、新案例、新 FAQ，并更新优势证据等级、适用问题、使用边界和待补强项。
 2. `geo-keyword-pool`：持续维护关键词池状态，输出下一批 P0/P1。
 3. `geo-indexing`：查询最新收录结果和 AI 回复变化。
 4. `geo-source-assets` + `geo-analysis`：分析最新引用源、竞品和内容缺口。

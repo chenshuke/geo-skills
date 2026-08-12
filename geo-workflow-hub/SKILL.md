@@ -2,7 +2,6 @@
 name: geo-workflow-hub
 description: "GEO 运营工作流总入口技能。Use when the user says 我想做 GEO 但不知道步骤、从 0 到 1 做项目、我是新学员、从0跑一个GEO项目、一步一步带我做GEO、私教班、快速跑通GEO闭环、大师班、20个问题上榜、持续运营飞轮、品牌搭建、资料整理、关键词池、关键词状态机、先优化哪个关键词、每个关键词推进到哪一步、写文章、审核优化、归档分析、完整运营流程、线下课练习流程、引用源资产库、信源资产、AI引用来源沉淀、故障排查、失败原因、下一步怎么处理、技能自进化、把客户问题沉淀成技能. For platform API actions like upload/indexing/publish/config, route to geo-hub or concrete API skill."
 license: MIT
-compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
   version: "3.6.0"
@@ -36,7 +35,7 @@ metadata:
 `geo-workflow-hub` 是**GEO运营工作流**的统一入口，覆盖全流程：
 
 ```
-品牌创建 → 知识库搭建 → 关键词池/状态机 → 标题创作 → 内容创作 → 内容审核 → 上传发布预览 → 内容归档 → 收录监测 → 引用源资产沉淀
+品牌创建 → 完整事实知识库 → 核心优势与可信证据库 → 关键词池/状态机 → 标题创作 → 内容创作 → 内容审核 → 上传发布预览 → 内容归档 → 收录监测 → 引用源资产沉淀
 ```
 
 ---
@@ -72,12 +71,12 @@ metadata:
 
 ---
 
-### ⑦ geo-knowledge — 知识库管理
-> 创建知识库结构、整理散乱资料、生成补充清单
+### ⑦ geo-knowledge — 知识库与优势证据管理
+> 创建知识库结构、整理散乱资料、提炼核心优势与可信证据、生成信息和证据补充清单
 
-**适用场景**：新项目启动、资料整理、内容体系搭建
+**适用场景**：新项目启动、资料整理、优势证据提炼、内容事实底座搭建
 
-**推荐说法**：`使用 geo-knowledge 帮我搭建知识库`
+**推荐说法**：`使用 geo-knowledge 帮我整理完整知识库，并提炼核心优势与可信证据`
 
 ---
 
@@ -100,6 +99,15 @@ metadata:
 | **⑧a geo-content-production** | 关键词规划、标题创作、图片生成、封面生成 | `使用 geo-content-production ...` |
 | **⑧b geo-content-audit** | 一致性审核、媒体就绪审核、AI检测、覆盖度检查、内容优化、合规榜单 | `使用 geo-content-audit ...` |
 | **⑧c geo-content-to-publish-pipeline** | 封面 OSS、文章上传、文章审核、账号查询、发布 dry-run、确认清单 | `使用 geo-content-to-publish-pipeline ...` |
+
+### ⑧d geo-brand-action-plan — 品牌 GEO 落地方案
+> 把品牌 AI 诊断和上榜监测结果转成“用户问题 → AI目标判断 → 证据 → 内容 → 发布平台 → 复测指标”的可执行方案。
+
+**数据原则**：以 GEO 上榜监测原始回答为最终事实来源，品牌诊断报告只用于问题排序和病根摘要；方案生成前必须回到原始回答逐题核对。
+
+**适用场景**：诊断完成后不知道先解决什么、要创作什么、发布到哪里、何时判断有效。
+
+**推荐说法**：`使用 geo-brand-action-plan，基于诊断结果制定品牌GEO落地方案`
 
 ---
 
@@ -165,12 +173,13 @@ metadata:
 |--------|---------|
 | "我是新学员" / "从0跑一个GEO项目" / "私教班快速闭环" / "大师班20个问题上榜" / "持续运营飞轮" | 00A geo-student-workflow |
 | "创建品牌" / "企业入驻" | ⑥ geo-brand |
-| "搭建知识库" / "整理资料" | ⑦ geo-knowledge |
+| "搭建知识库" / "整理资料" / "提炼企业优势" / "强背书" / "可信证据" / "证据缺口" | ⑦ geo-knowledge |
 | "关键词池" / "状态机" / "先优化哪个关键词" / "推进到哪一步" | ⑦a geo-keyword-pool |
 | "规划关键词" / "生成标题" / "写内容" | ⑧a geo-content-production |
 | "审核" / "覆盖度" / "优化内容" | ⑧b geo-content-audit |
 | "归档内容" / "整理创作文件" | ⑩ geo-content-archive |
 | "一条龙发布" / "上传并发布预览" / "从标题到发布" | ⑧c geo-content-to-publish-pipeline |
+| "品牌落地方案" / "诊断后怎么做" / "GEO执行方案" / "内容发布计划" / "复测方案" | ⑧d geo-brand-action-plan |
 | "证据链" / "逆向分析" / "仪表盘" | ⑨ geo-analysis |
 | "引用源资产库" / "信源资产" / "searchedSites" / "补强建议" | ⑪ geo-source-assets |
 | "失败" / "报错" / "排查" / "下一步怎么办" / "人工处理" | ⑫ geo-troubleshooter |
@@ -190,7 +199,7 @@ metadata:
 
 ```text
 第1步：使用 geo-brand 创建品牌
-第2步：使用 geo-knowledge 搭建知识库
+第2步：使用 geo-knowledge 搭建完整知识库，提炼核心优势与可信证据，并生成两类补充清单
 第2.5步：使用 geo-keyword-pool 建立关键词池、分级和下一步动作
 第3步：使用 geo-content-production 完成标题和内容创作
 第4步：使用 geo-content-audit 审核、覆盖度检查和优化

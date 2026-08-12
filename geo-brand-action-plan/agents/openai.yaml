@@ -1,0 +1,4 @@
+interface:
+  display_name: "GEO品牌落地方案"
+  short_description: "把AI诊断转成问题、证据、内容、发布和复测计划。"
+  default_prompt: "使用 $geo-brand-action-plan，基于品牌 AI 诊断和上榜监测结果，制定 GEO 品牌落地方案：用户问题、AI目标判断、已有/缺失证据、内容标题与形式、发布平台、执行顺序和复测指标。"

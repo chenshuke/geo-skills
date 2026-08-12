@@ -13,6 +13,8 @@ description: "GEO 引用源资产库技能。Use when the user says 引用源资
 - 默认从 Scheduled Indexing 的 `answers` 结果导入：`GET /v1/scheduled-indexing/{id}/answers`。
 - Base URL 不在回复、日志、dry-run 或报告中展示；可以展示 Referer、脱敏 openKey、接口路径。
 - 输出统一归位到 `07_监测分析/引用源资产库/`。
+- 本技能与 `geo-knowledge` 的证据库分工明确：核心优势与可信证据库回答“企业能证明什么”，引用源资产库回答“AI 实际检索和引用什么”。不得因为某网页被 AI 引用，就自动把网页内容升级为企业强证据。
+- 如果项目存在 `02_知识库/证据库/核心优势与可信证据库_*.md`，在生成补强建议时关联证据编号、适用问题和待补强主张；优先推动高价值证据形成可检索的品牌自有页或第三方公开页。
 
 ## 推荐脚本
 
@@ -104,6 +106,8 @@ node geo-source-assets/scripts/source_assets.js \
 - 泛行业源高频出现：在同类主题做我方专业解释页或榜单页。
 - 媒体源有效：优先复用该媒体/同类媒体继续分发。
 - 无关源过多：回到 `geo-keyword-pool` 或关键词方案校准搜索意图。
+- A/B 级高价值证据没有公开可检索页面：优先转成结构化案例页、事实页或合作方公开记录。
+- 某项优势只有 C/D 级证据：先回到 `geo-knowledge` 补证，不直接通过大量发布放大弱主张。
 
 ## 与其他技能配合
 
@@ -111,6 +115,8 @@ node geo-source-assets/scripts/source_assets.js \
 geo-indexing 生成 answers / matrix
   ↓
 geo-source-assets 沉淀引用源资产库和补强动作
+  ↓
+geo-knowledge 对照核心优势证据库，区分“补企业证据”与“补公开信源”
   ↓
 geo-content-production / geo-content-to-publish-pipeline 执行补强内容
   ↓
