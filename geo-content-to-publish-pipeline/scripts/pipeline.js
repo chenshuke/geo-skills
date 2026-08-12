@@ -472,10 +472,17 @@ async function createPublishTask(state) {
   if (!payload.articles?.length) throw new Error('发布 payload 中没有文章。');
   const missingAccount = payload.articles.some(a => !a.platforms?.length || a.platforms.some(p => !p.publishAccountIds?.length));
   if (missingAccount) throw new Error('发布 payload 缺少账号，请先确认平台账号。');
+  const articleIds = payload.articles.map(a => Number(a.articleId));
+  const articleRows = await listArticles(state.cfg, { companyId: state.companyId, productId: state.productId, limit: 100 });
+  const matchedArticles = articleRows.filter(a => articleIds.includes(Number(a.id)));
+  const missingArticles = articleIds.filter(id => !matchedArticles.some(a => Number(a.id) === id));
+  if (missingArticles.length) throw new Error(`发布前回查未找到文章 ID：${missingArticles.join(', ')}。请确认 companyId/productId 与文章所属项目一致。`);
+  const unapproved = matchedArticles.filter(a => Number(a.status) !== 1).map(a => Number(a.id));
+  if (unapproved.length) throw new Error(`以下文章尚未审核通过，禁止创建发布任务：${unapproved.join(', ')}。`);
+  state.approvedArticleIds = articleIds;
   const created = await requestJson(state.cfg, '/v1/publication-task', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: JSON.stringify(payload) });
   const taskId = Number(created?.data?.taskId || created?.data?.id || created?.taskId || created?.id || 0);
   const rows = await listTasks(state.cfg, { companyId: state.companyId, productId: state.productId, limit: 100 });
-  const articleIds = payload.articles.map(a => Number(a.articleId));
   const found = rows.find(t => (taskId && Number(t.id || t.taskId) === taskId) || String(t.name || '') === String(payload.name));
   if (!found) throw new Error('发布任务创建后回查未找到任务，已停止。');
   const serialized = JSON.stringify(found);
