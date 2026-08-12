@@ -21,6 +21,10 @@ metadata:
 
 → 详见 `../geo-content-production/SKILL.md`
 
+AI答案卡 / 抖音图文 / 问题导向的分页答案内容
+
+→ 详见 `../geo-ai-answer-card/SKILL.md`
+
 ## 内容审核
 
 一致性审核 / 媒体就绪审核 / AI检测 / 覆盖度检查 / Gap分析 / 合规榜单 / 内容优化

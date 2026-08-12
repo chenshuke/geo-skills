@@ -16,6 +16,8 @@ metadata:
 > 本模块涵盖内容生产全流程：**关键词规划 / 标题创作 / 图文转短视频文案 / 图片生成**
 > 对应的审核/覆盖分析/优化模块见 `../geo-content-audit/SKILL.md`
 
+需要围绕一个真实用户问题制作 6-8 页抖音答案型图文时，使用 `../geo-ai-answer-card/SKILL.md`；本模块提供其所需的关键词、图片和封面能力。
+
 **外部依赖**：`geo-image-generation` 使用 GEO 平台 openKey/referer，与其他 GEO 技能共用配置。
 
 ---

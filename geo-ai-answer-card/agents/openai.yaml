@@ -1,0 +1,4 @@
+interface:
+  display_name: "GEO AI答案卡"
+  short_description: "按真实用户问题创作抖音答案型图文。"
+  default_prompt: "使用 $geo-ai-answer-card 根据企业资料和一个用户问题创作抖音 AI答案卡。"
