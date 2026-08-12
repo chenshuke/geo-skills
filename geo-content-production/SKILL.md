@@ -2,7 +2,6 @@
 name: geo-content-production
 description: "GEO 内容生产和图片生成技能。Use when the user says 规划关键词、生成标题、写 GEO 文章、写公众号文章、写榜单文章、生成封面、生成配图、生图、文生图、短视频脚本、把资料写成文章、根据知识库创作内容. Do not use for final audit or platform upload; use geo-content-audit or geo-article."
 license: MIT
-compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
   version: "3.2.3"

@@ -2,7 +2,6 @@
 name: geo-brand
 description: "GEO 品牌定位和品牌内容创建技能。Use when the user says 创建品牌定位、写公司介绍、产品介绍、个人品牌介绍、品牌故事、获客文章框架、品牌基础资料、从标题和知识库生成品牌内容、客户品牌包装. Do not upload to platform; use geo-article."
 license: MIT
-compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
   version: "3.3.0"

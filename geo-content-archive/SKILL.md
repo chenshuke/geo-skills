@@ -2,7 +2,6 @@
 name: geo-content-archive
 description: "GEO 项目文件整理和归档技能。Use when the user says 整理项目文件、归档文章、迁移文件、按项目/日期/平台分类、清理目录、检查目录结构、把草稿/审核/发布记录放到标准位置、治理 Obsidian/本地 GEO 项目文件. Do not write or upload content."
 license: MIT
-compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
   version: "3.3.0"
@@ -61,7 +60,7 @@ node scripts/project_paths.js --project-dir "项目_品牌GEO" --artifact articl
 项目_{品牌名}GEO/
 ├── 00_项目概览/              ← 项目入口：概览、仪表盘、品牌定位、汇报
 ├── 01_项目资料/              ← 客户原始资料（只读参考）
-├── 02_知识库/                ← 结构化知识库
+├── 02_知识库/                ← 结构化事实知识库、优势证据库与补充清单
 ├── 03_规划方案/              ← 关键词方案、标题方案、映射表、跟踪表
 ├── 04_内容创作/              ← 文章/封面/配图/合规榜单/多平台分发
 ├── 05_质量审核/              ← 一致性/媒体/AI检测/覆盖度/缺口分析
@@ -137,6 +136,9 @@ node scripts/project_paths.js --project-dir "项目_品牌GEO" --artifact articl
 | 标题方案(MD) | geo-content-production | `03_规划方案/标题方案/` | 文件名含"标题" |
 | 标题方案(其他) | geo-content-production | `03_规划方案/标题方案/` | 文件名含"标题" |
 | 原创文章 | geo-brand, geo-content-production | `04_内容创作/{日期批次}/articles/` | .md 文件，非跟踪表/知识库 |
+| 核心优势与可信证据库 | geo-knowledge | `02_知识库/证据库/` | `核心优势与可信证据库_*.md` |
+| 待补强证据清单 | geo-knowledge | `02_知识库/证据库/` | 不与基础信息补充清单混放 |
+| 信息补充清单 | geo-knowledge | `02_知识库/补充清单/` | 基础资料缺口，不是证据强度清单 |
 | 覆盖度优化版 | geo-content-audit | `04_内容创作/{日期批次}/optimized/` | 文件名含"优化版" |
 | 封面图片 | geo-content-production | `04_内容创作/{日期批次}/covers/` | cover_*.png |
 | cover_mapping.json | geo-content-production | `04_内容创作/{日期批次}/covers/` | 文件名匹配 |

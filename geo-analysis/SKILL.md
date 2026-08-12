@@ -2,7 +2,6 @@
 name: geo-analysis
 description: "GEO 收录结果分析和可视化报告技能。Use when the user says 分析收录结果、分析 AI 引用来源、证据链分析、平台引用偏好、品牌相关性、竞品/引用风险、PDCA 仪表盘、生成 HTML 报告、分析 DeepSeek/豆包/Kimi/ChatGPT/nami/grok/perp/poe 回答数据. For long-lived citation source asset library / searchedSites ledger / 信源补强台账, use geo-source-assets. Do not create/upload articles; use geo-content-production or geo-article."
 license: MIT
-compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
   suite: geo-skills
   version: "3.3.0"
@@ -17,6 +16,8 @@ metadata:
 
 
 > **和 geo-source-assets 的分工**：`geo-analysis` 负责证据链、平台偏好和报告分析；如果用户要把 `searchedSites` 长期沉淀成“引用源资产库”、判断我方/竞品/行业/媒体信源及补强动作，请路由到 `geo-source-assets`。
+
+> **和 geo-knowledge 证据库的分工**：`geo-knowledge` 的核心优势与可信证据库回答“企业能够证明什么”；本技能的证据链分析回答“AI 实际引用哪些来源、这些来源如何影响回答”。分析发现新的品牌事实或优势线索时，只能作为待核验线索回流 `geo-knowledge`，不能因 AI 引用次数高就升级为 A/B 级企业证据。
 
 本技能集整合六个分析工具，覆盖 GEO 项目从数据采集、平台逆向、引用审核、证据链评分、项目仪表盘监控到可视化导出的完整闭环。核心能力包括：**证据链分析**从收录检测结果提取引用来源分布规律并生成发布策略矩阵；**平台逆向分析**逐平台全量读取引用链接深度理解来源特征，积累可迭代的知识库；**引用品牌审核**自动访问引用页面判断是否与目标品牌相关；**方案同步**将拓展词和标题方案批量上传飞书多维表格；**项目仪表盘**生成 Obsidian 原生 DataviewJS 仪表盘实现多项目全链路闭环监控与 PDCA 排名追踪。
 

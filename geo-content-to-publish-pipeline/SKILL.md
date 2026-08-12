@@ -18,8 +18,8 @@ description: "GEO 内容到发布总控流水线技能。Use when the user says 
 ## 推荐流程
 
 1. 若用户只给 openKey：先用 `../geo-config/scripts/configure_openkey.js` 自动识别平台并配置默认 companyId/productId。
-2. 用 `geo-content-production` 读取知识库、关键词方案、标题方案，生成 Top N 文章草稿。
-3. 用 `geo-content-audit` 审核文章；未达标先优化，不要上传。
+2. 用 `geo-content-production` 读取完整事实知识库、核心优势与可信证据库、关键词方案和标题方案，生成 Top N 文章草稿。
+3. 用 `geo-content-audit` 审核文章；必须同时通过事实一致性和优势证据核验。引用 D/X 级证据、超出使用边界或把待补强主张写成事实时，不得上传。
 4. 用本技能脚本统一处理封面、上传、审核、账号查询和发布预览：
 
 ```bash
@@ -87,6 +87,7 @@ node geo-content-to-publish-pipeline/scripts/pipeline.js \
 ## 输入建议
 
 - `--knowledge-dir`：项目知识库目录，供计划报告引用。
+- `--knowledge-dir` 下如存在 `证据库/核心优势与可信证据库_*.md` 与 `待补强证据清单_*.md`，必须纳入生产和审核；没有证据库时，优势/推荐/对比类内容先暂停并路由到 `geo-knowledge` 提炼证据。
 - `--keyword-plan`：关键词方案 Markdown。
 - `--title-plan`：标题方案 Markdown；脚本会提取 Top N 标题/问题。
 - `--article-dir` 或 `--articles`：已通过审核的 Markdown 文章。

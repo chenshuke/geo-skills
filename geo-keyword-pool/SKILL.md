@@ -13,6 +13,7 @@ description: "GEO 关键词池和状态机技能。Use when the user says 关键
 - 默认输出到 `03_规划方案/关键词池/`。
 - 每个关键词必须有：优先级、状态、下一步动作、证据、更新时间。
 - 状态推进要可解释：不能只改状态，必须记录依据。
+- 如果项目存在核心优势与可信证据库，关键词还必须关联 `可用证据编号`、`证据状态` 和 `证据缺口`。证据充分的问题优先进入内容生产；高价值但证据不足的问题先进入 `source_gap` 或由 `geo-knowledge` 补证，不能为了抢 P0 直接创作强结论。
 
 ## 推荐脚本
 
@@ -63,10 +64,10 @@ node geo-keyword-pool/scripts/keyword_pool.js \
 |---|---|---|
 | `planned` | 已进入关键词池，但未做基线检测 | 先创建/加入收录检测计划 |
 | `baseline_done` | 已有基线收录结果 | 判断是否需要内容 |
-| `need_content` | 缺内容或我方证据不足 | 用 `geo-content-production` 生成内容 |
+| `need_content` | 已有可用证据但缺对应内容 | 用 `geo-content-production` 生成内容 |
 | `published` | 内容已发布或已有 publishedUrl | 用 `geo-indexing` 复测 URL 命中 |
 | `postpublish_monitoring` | 发布后监测期 | 持续 run-now/answers/matrix 观察 |
-| `source_gap` | AI 有引用源，但不是我方资产 | 用 `geo-source-assets` 补信源 |
+| `source_gap` | 企业事实证据不足，或 AI 引用源不是我方可控资产 | 先判断缺的是企业证据还是公开信源：前者用 `geo-knowledge`，后者用 `geo-source-assets` |
 | `stable` | 我方稳定被提及/引用 | 维护更新，防回退 |
 | `regression` | 曾稳定但下降/被竞品替代 | 重新分析和补强 |
 | `blocked` | 缺资料、缺账号、平台异常或需人工处理 | 交给 `geo-troubleshooter` |
