@@ -1,0 +1,5 @@
+interface:
+  display_name: "抖音图文转口播视频"
+  short_description: "用 Node.js 将图文卡片合成为逐卡口播视频。"
+  default_prompt: "使用 $douyin-image-narrated-video 把这组图文卡片生成抖音逐卡口播视频。"
+

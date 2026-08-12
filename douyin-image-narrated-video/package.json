@@ -1,0 +1,15 @@
+{
+  "name": "douyin-image-narrated-video-runtime",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "engines": {"node": ">=18.17.0"},
+  "scripts": {
+    "doctor": "node scripts/doctor.mjs"
+  },
+  "dependencies": {
+    "edge-tts-universal": "1.4.0",
+    "ffmpeg-static": "5.2.0",
+    "ffprobe-static": "3.1.0"
+  }
+}
