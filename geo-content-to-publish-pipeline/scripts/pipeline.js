@@ -49,6 +49,7 @@ Options:
   --articles <a.md,b.md>        Explicit Markdown article files
   --count <n>                   Number of candidates/articles to process; default 3
   --platforms <a,b>             Preferred publish platforms: sohu_news,wechat,zhihu,...
+  --cover-url <url>             Reuse an existing public cover URL for articles without one
   --publish-time <time>         Optional publish time: YYYY-MM-DD HH:MM:SS
   --generate-cover              Generate cover through GEO text-to-img using --oss-mode local
   --approve                     After upload, approve articles through /v1/article/status
@@ -103,6 +104,17 @@ function extractTitleFromMarkdown(file) {
   if (h1) return h1[1].trim();
   return path.basename(file, path.extname(file));
 }
+function extractFrontmatter(file) {
+  const text = readText(file);
+  const match = text.match(/^---\n([\s\S]*?)\n---\n/);
+  if (!match) return {};
+  const fields = {};
+  for (const line of match[1].split(/\r?\n/)) {
+    const m = line.match(/^([A-Za-z0-9_-]+):\s*(.*?)\s*$/);
+    if (m) fields[m[1]] = m[2].replace(/^['"]|['"]$/g, '').trim();
+  }
+  return fields;
+}
 function discoverArticles(args, projectDir, count) {
   const explicit = splitList(first(args, ['articles','files'], '')).map(p => path.resolve(p));
   let files = explicit.filter(existsFile);
@@ -128,7 +140,12 @@ function discoverArticles(args, projectDir, count) {
       files = found.sort((a,b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
     }
   }
-  return files.slice(0, count).map((file, index) => ({ index: index + 1, file, title: extractTitleFromMarkdown(file) }));
+  return files.slice(0, count).map((file, index) => {
+    const fm = extractFrontmatter(file);
+    const candidateCover = fm.coverImageUrl || fm.coverUrl || fm.cover || '';
+    const coverUrl = /^https?:\/\//i.test(candidateCover) ? candidateCover : '';
+    return { index: index + 1, file, title: extractTitleFromMarkdown(file), ...(coverUrl ? { coverUrl, coverSource: 'markdown-frontmatter' } : {}) };
+  });
 }
 function extractCandidatesFromFile(file, kind, limit) {
   if (!existsFile(file)) return [];
@@ -273,6 +290,9 @@ function renderPlanMd(state) {
   lines.push(`- openKey：${state.config?.openKeyMasked || '(empty)'}`);
   lines.push(`- companyId/productId：${state.companyId || 0} / ${state.productId || 0}`);
   lines.push(`- 模式：${state.execute ? 'execute（发布仍需确认）' : 'dry-run'}`);
+  if (state.stageTimings && Object.keys(state.stageTimings).length) {
+    lines.push(`- 阶段耗时：${Object.entries(state.stageTimings).map(([name, t]) => `${name} ${t.elapsedSeconds}s`).join('；')}`);
+  }
   lines.push('');
   if (state.candidates?.length) {
     lines.push(`## Top ${state.candidates.length} 选题/问题`);
@@ -377,6 +397,17 @@ function recordFailure(state, stage, err, retryCommand) {
   state.failures.push({ stage, reason, retryCommand, at: new Date().toISOString() });
   state.lastFailedStage = stage;
 }
+async function runTimedStage(state, name, fn) {
+  const started = Date.now();
+  console.error(`[pipeline] ${name} 开始`);
+  try { return await fn(); }
+  finally {
+    const elapsedMs = Date.now() - started;
+    state.stageTimings = state.stageTimings || {};
+    state.stageTimings[name] = { elapsedMs, elapsedSeconds: Math.round(elapsedMs / 100) / 10 };
+    console.error(`[pipeline] ${name} 完成：${state.stageTimings[name].elapsedSeconds}s`);
+  }
+}
 async function runCoverStage(state, args) {
   if (!args['generate-cover'] && !args.generateCover) return;
   const script = path.join(SUITE_DIR, 'geo-content-production', 'scripts', 'generate_cover.js');
@@ -472,17 +503,10 @@ async function createPublishTask(state) {
   if (!payload.articles?.length) throw new Error('发布 payload 中没有文章。');
   const missingAccount = payload.articles.some(a => !a.platforms?.length || a.platforms.some(p => !p.publishAccountIds?.length));
   if (missingAccount) throw new Error('发布 payload 缺少账号，请先确认平台账号。');
-  const articleIds = payload.articles.map(a => Number(a.articleId));
-  const articleRows = await listArticles(state.cfg, { companyId: state.companyId, productId: state.productId, limit: 100 });
-  const matchedArticles = articleRows.filter(a => articleIds.includes(Number(a.id)));
-  const missingArticles = articleIds.filter(id => !matchedArticles.some(a => Number(a.id) === id));
-  if (missingArticles.length) throw new Error(`发布前回查未找到文章 ID：${missingArticles.join(', ')}。请确认 companyId/productId 与文章所属项目一致。`);
-  const unapproved = matchedArticles.filter(a => Number(a.status) !== 1).map(a => Number(a.id));
-  if (unapproved.length) throw new Error(`以下文章尚未审核通过，禁止创建发布任务：${unapproved.join(', ')}。`);
-  state.approvedArticleIds = articleIds;
   const created = await requestJson(state.cfg, '/v1/publication-task', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: JSON.stringify(payload) });
   const taskId = Number(created?.data?.taskId || created?.data?.id || created?.taskId || created?.id || 0);
   const rows = await listTasks(state.cfg, { companyId: state.companyId, productId: state.productId, limit: 100 });
+  const articleIds = payload.articles.map(a => Number(a.articleId));
   const found = rows.find(t => (taskId && Number(t.id || t.taskId) === taskId) || String(t.name || '') === String(payload.name));
   if (!found) throw new Error('发布任务创建后回查未找到任务，已停止。');
   const serialized = JSON.stringify(found);
@@ -546,6 +570,7 @@ async function main() {
     publishPlan: previous?.publishPlan || null,
     publishCreated: previous?.publishCreated || null,
     failures: previous?.failures || [],
+    stageTimings: previous?.stageTimings || {},
     assets: previous?.assets || [],
     approve: Boolean(args.approve || previous?.approve),
     lastFailedStage: null,
@@ -562,33 +587,35 @@ async function main() {
     const knownByFile = new Map((state.articles || []).filter(a => a.file).map(a => [path.resolve(a.file), a]));
     state.articles = discovered.map((a, i) => ({ ...(knownByFile.get(path.resolve(a.file)) || {}), ...a, index: i + 1 }));
   }
+  const explicitCoverUrl = first(args, ['cover-url', 'coverUrl'], '');
+  if (explicitCoverUrl) for (const article of state.articles) if (!article.coverUrl) article.coverUrl = explicitCoverUrl;
 
   const retryBase = commandFor(`${PIPELINE_NAME}/scripts/pipeline.js`, ['--project-dir', projectDir, '--state', path.join(runDir, 'pipeline-state.json'), '--execute']);
 
-  try { await runCoverStage(state, args); }
+  try { await runTimedStage(state, 'cover', () => runCoverStage(state, args)); }
   catch (e) { recordFailure(state, 'cover', e, `${retryBase} --generate-cover`); }
   finally { writeReports(stripRuntimeStateForSave(state)); }
 
   if (!state.lastFailedStage) {
-    try { await runUploadStage(state, args); }
+    try { await runTimedStage(state, 'upload', () => runUploadStage(state, args)); }
     catch (e) { recordFailure(state, 'upload', e, `${retryBase}`); }
     finally { writeReports(stripRuntimeStateForSave(state)); }
   }
 
   if (!state.lastFailedStage) {
-    try { await runApproveStage(state); }
+    try { await runTimedStage(state, 'approve', () => runApproveStage(state)); }
     catch (e) { recordFailure(state, 'approve', e, `${retryBase} --approve`); }
     finally { writeReports(stripRuntimeStateForSave(state)); }
   }
 
   if (!state.lastFailedStage) {
-    try { await runAccountsAndPublishPlan(state, args); }
+    try { await runTimedStage(state, 'accounts/publish-dry-run', () => runAccountsAndPublishPlan(state, args)); }
     catch (e) { recordFailure(state, 'accounts/publish-dry-run', e, `${retryBase} --platforms ${platforms.join(',')}`); }
     finally { writeReports(stripRuntimeStateForSave(state)); }
   }
 
   if (!state.lastFailedStage && createPublish) {
-    try { await createPublishTask(state); }
+    try { await runTimedStage(state, 'publish-create', () => createPublishTask(state)); }
     catch (e) { recordFailure(state, 'publish-create', e, commandFor(`${PIPELINE_NAME}/scripts/pipeline.js`, ['--project-dir', projectDir, '--state', path.join(runDir, 'pipeline-state.json'), '--create-publish-task', '--confirm'])); }
     finally { writeReports(stripRuntimeStateForSave(state)); }
   }

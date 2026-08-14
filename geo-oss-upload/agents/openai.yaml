@@ -1,0 +1,4 @@
+interface:
+  display_name: "GEO OSS Upload"
+  short_description: "Upload local images to GEO OSS and return URLs."
+  default_prompt: "Upload these local images to GEO OSS and replace Markdown image references with OSS URLs."
