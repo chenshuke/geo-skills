@@ -1,4 +1,4 @@
 interface:
   display_name: "10 GEO引用源资产库"
-  short_description: "从searchedSites沉淀我方、竞品、行业和媒体信源资产，并输出补强建议。"
-  default_prompt: "使用 geo-source-assets，从收录 answers 结果生成引用源资产库和信源补强建议。"
+  short_description: "选择单个或多个监测任务，按任务和AI平台生成独立信源报告。"
+  default_prompt: "使用 geo-source-assets，列出可用监测任务供我选择，并为选中的单个或多个任务分别生成信源报告。"
