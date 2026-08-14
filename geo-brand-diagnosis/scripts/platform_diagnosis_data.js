@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Read-only GEO platform data source for brand diagnosis.
+ * Read-only GEO platform data source for brand recognition and product recommendation diagnosis.
  * Lists Scheduled Indexing plans and exports selected answers + searchedSites.
  */
 const fs = require('fs');
@@ -79,6 +79,35 @@ function normalizeAnswer(row) {
     sources: sites.map((site, index) => normalizeSource(site, Number(row.id || 0), Number(row.topicId || 0), String(row.platform || ''), index)),
   };
 }
+function normalizeMode(value) {
+  const mode = String(value || 'auto').toLowerCase();
+  if (['brand', 'brand-recognition', 'recognition'].includes(mode)) return 'brand_recognition';
+  if (['product', 'product-recommendation', 'recommendation', 'acquisition'].includes(mode)) return 'product_recommendation';
+  if (['mixed', 'combined'].includes(mode)) return 'mixed';
+  return 'auto';
+}
+function inferQuestionMode(answer) {
+  const question = String(answer.question || '').trim();
+  const targetWords = (answer.target_words || []).map(String).map(word => word.trim()).filter(word => word.length >= 2);
+  if (targetWords.some(word => question.toLowerCase().includes(word.toLowerCase()))) return 'brand_recognition';
+  if (/(推荐|哪家好|哪家靠谱|怎么选|如何选|选择什么|选什么|用什么|什么.+好|适合什么|性价比|效果好|排行榜|排名|对比)/.test(question)) return 'product_recommendation';
+  return 'unknown';
+}
+function diagnosisModeSummary(answers, requestedMode) {
+  if (requestedMode !== 'auto') return { requested: requestedMode, inferred: requestedMode, question_modes: {} };
+  const byQuestion = new Map();
+  for (const answer of answers) {
+    const key = answer.topic_id || answer.question;
+    if (!byQuestion.has(key)) byQuestion.set(key, inferQuestionMode(answer));
+  }
+  const counts = { brand_recognition: 0, product_recommendation: 0, unknown: 0 };
+  for (const value of byQuestion.values()) counts[value] = (counts[value] || 0) + 1;
+  let inferred = 'unknown';
+  if (counts.brand_recognition && counts.product_recommendation) inferred = 'mixed';
+  else if (counts.brand_recognition) inferred = 'brand_recognition';
+  else if (counts.product_recommendation) inferred = 'product_recommendation';
+  return { requested: 'auto', inferred, question_modes: counts };
+}
 async function listPlans(cfg, args) {
   const limit = Math.min(100, Math.max(1, Number(first(args, ['limit'], 30)) || 30));
   const companyId = Number(first(args, ['company-id', 'companyId'], cfg.defaults.companyId));
@@ -114,27 +143,35 @@ async function exportPlan(cfg, args) {
   const detailData = detailBody?.data || detailBody;
   const plan = detailData?.schedule || detailData;
   const runs = rowsOf(await request(cfg, `/v1/scheduled-indexing/${scheduleId}/runs`, { limit: 100 }));
+  const allRuns = Boolean(args['all-runs'] || args.allRuns);
   let runId = Number(first(args, ['run-id', 'runId'], 0));
-  if (!runId) runId = Number((runs.find(finishedRun) || runs[0] || {}).id || 0);
+  if (!allRuns && !runId) runId = Number((runs.find(finishedRun) || runs[0] || {}).id || 0);
   const limit = Math.min(1000, Math.max(1, Number(first(args, ['limit'], 500)) || 500));
   const answersRaw = rowsOf(await request(cfg, `/v1/scheduled-indexing/${scheduleId}/answers`, { limit, runId: runId || undefined }));
   const answers = answersRaw.map(normalizeAnswer);
-  const selected = runId ? answers.filter(row => !row.run_id || row.run_id === runId) : answers;
+  const selected = !allRuns && runId ? answers.filter(row => !row.run_id || row.run_id === runId) : answers;
   const sources = selected.flatMap(row => row.sources);
   const uniqueQuestions = [...new Map(selected.map(row => [row.topic_id || row.question, { topic_id: row.topic_id, question: row.question }])).values()];
   const platforms = [...new Set(selected.map(row => row.ai_platform).filter(Boolean))];
   const sourceUrls = [...new Set(sources.map(row => row.url).filter(Boolean))];
+  const requestedMode = normalizeMode(first(args, ['diagnosis-mode', 'diagnosisMode', 'mode'], 'auto'));
+  const mode = diagnosisModeSummary(selected, requestedMode);
+  const includedRunIds = [...new Set(selected.map(row => row.run_id).filter(Boolean))];
+  const finishedAnswerCount = selected.filter(row => row.finished).length;
+  const readiness = !selected.length ? 'no_answers' : finishedAnswerCount === selected.length ? 'ready_for_diagnosis' : 'incomplete_answers';
   return {
-    schema: 'geo-brand-diagnosis-platform-data/v1',
-    status: selected.length ? 'ready_for_diagnosis' : 'no_answers',
+    schema: 'geo-dual-diagnosis-platform-data/v2',
+    status: readiness,
     source: 'GEO Scheduled Indexing',
-    schedule: { schedule_id: scheduleId, name: plan?.name || '', company_id: Number(plan?.companyId || 0), product_id: Number(plan?.productId || 0), configured_platforms: plan?.platforms || [], question_count: uniqueQuestions.length, selected_run_id: runId || null },
-    summary: { answer_count: selected.length, finished_answer_count: selected.filter(row => row.finished).length, platform_count: platforms.length, platforms, source_record_count: sources.length, unique_source_url_count: sourceUrls.length },
+    diagnosis_mode: mode,
+    schedule: { schedule_id: scheduleId, name: plan?.name || '', company_id: Number(plan?.companyId || 0), product_id: Number(plan?.productId || 0), configured_platforms: plan?.platforms || [], question_count: uniqueQuestions.length, selected_run_id: allRuns ? null : (runId || null), included_run_ids: includedRunIds, all_runs: allRuns },
+    summary: { answer_count: selected.length, finished_answer_count: finishedAnswerCount, incomplete_answer_count: selected.length - finishedAnswerCount, run_count: includedRunIds.length, platform_count: platforms.length, platforms, source_record_count: sources.length, unique_source_url_count: sourceUrls.length },
     questions: uniqueQuestions,
     answers: selected,
     sources,
     limitations: [
-      'GEO 平台答案与 searchedSites 可用于提及、推荐、竞品和信源诊断。',
+      'GEO 平台答案与 searchedSites 可用于品牌认知、产品推荐、竞品和信源诊断。',
+      '产品推荐状态、推荐理由和推荐强度需要阅读回答语义判断，不能仅依赖 brand_indexed 或关键词。',
       '判断回答事实是否准确仍需品牌知识库或可核验品牌资料作为基准。',
       'searchedSites 表示 AI 检索/引用过的来源，不等于来源支持回答中的全部主张。'
     ]
