@@ -57,6 +57,7 @@ Options:
   --dry-run                     Preview only; default when --execute is not set
   --create-publish-task         Create real publication task from state/current inputs; requires --confirm
   --confirm                     Required with --create-publish-task
+  --verify-publish-task         Optional non-blocking GET check immediately after creation
   --account-ids <ids>           Explicit publication account ids, comma-separated
   --article-ids <ids>           Existing article ids, comma-separated
   --state <file>                Load previous pipeline-state.json for publish creation or resume
@@ -497,7 +498,8 @@ async function runAccountsAndPublishPlan(state, args) {
     autoSelect: true,
   });
 }
-async function createPublishTask(state) {
+async function createPublishTask(state, args = {}) {
+  if (state.publishCreated?.taskId || state.publishCreated?.acceptedAt) return;
   if (!state.publishPlan?.payload) throw new Error('缺少 publishPlan.payload，请先运行发布 dry-run。');
   const payload = state.publishPlan.payload;
   if (!payload.articles?.length) throw new Error('发布 payload 中没有文章。');
@@ -505,16 +507,22 @@ async function createPublishTask(state) {
   if (missingAccount) throw new Error('发布 payload 缺少账号，请先确认平台账号。');
   const created = await requestJson(state.cfg, '/v1/publication-task', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: JSON.stringify(payload) });
   const taskId = Number(created?.data?.taskId || created?.data?.id || created?.taskId || created?.id || 0);
-  const rows = await listTasks(state.cfg, { companyId: state.companyId, productId: state.productId, limit: 100 });
-  const articleIds = payload.articles.map(a => Number(a.articleId));
-  const found = rows.find(t => (taskId && Number(t.id || t.taskId) === taskId) || String(t.name || '') === String(payload.name));
-  if (!found) throw new Error('发布任务创建后回查未找到任务，已停止。');
-  const serialized = JSON.stringify(found);
-  for (const id of articleIds) {
-    if (!serialized.includes(String(id))) throw new Error(`发布任务回查疑似未包含文章 ID ${id}，请人工核验。`);
+  state.publishCreated = {
+    taskId: taskId || null,
+    acceptedAt: new Date().toISOString(),
+    status: 'accepted_pending_async_processing',
+    created: created.data || created,
+    verification: 'pending',
+  };
+  // The platform processes publication asynchronously. An immediate list call can
+  // legitimately miss the new task, so verification is opt-in and never blocks creation.
+  if (args['verify-publish-task'] || args.verifyPublishTask) {
+    const rows = await listTasks(state.cfg, { companyId: state.companyId, productId: state.productId, limit: 100 });
+    const found = rows.find(t => (taskId && Number(t.id || t.taskId) === taskId) || String(t.name || '') === String(payload.name));
+    state.publishCreated.verification = found ? 'found' : 'not_visible_yet';
+    if (found) state.publishCreated.verifiedTask = found;
   }
-  state.publishCreated = { taskId: taskId || found.id || found.taskId || null, created: created.data || created, verifiedTask: found };
-  state.assets.push({ stage: 'publish-create', id: state.publishCreated.taskId || '(verified)' });
+  state.assets.push({ stage: 'publish-create', id: state.publishCreated.taskId || '(accepted)' });
 }
 function stripRuntimeStateForSave(state) {
   const copy = { ...state };
@@ -615,7 +623,7 @@ async function main() {
   }
 
   if (!state.lastFailedStage && createPublish) {
-    try { await runTimedStage(state, 'publish-create', () => createPublishTask(state)); }
+    try { await runTimedStage(state, 'publish-create', () => createPublishTask(state, args)); }
     catch (e) { recordFailure(state, 'publish-create', e, commandFor(`${PIPELINE_NAME}/scripts/pipeline.js`, ['--project-dir', projectDir, '--state', path.join(runDir, 'pipeline-state.json'), '--create-publish-task', '--confirm'])); }
     finally { writeReports(stripRuntimeStateForSave(state)); }
   }

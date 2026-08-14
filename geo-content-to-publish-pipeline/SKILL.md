@@ -98,7 +98,9 @@ node geo-content-to-publish-pipeline/scripts/pipeline.js \
   --confirm
 ```
 
-脚本会创建发布任务后立即 GET 回查，确认任务真实存在；若回查不一致，停止并记录异常。
+脚本创建发布任务后，以平台 POST 已接受作为本阶段完成，立即保存任务 ID 和 `accepted_pending_async_processing` 状态，不再等待异步发布结果。这样不会因为平台审核或分发延迟而卡住。需要时可额外传 `--verify-publish-task` 做一次非阻塞查询；正式发布链接和失败原因应由后续 `geo-publish` 的发布状态回查流程处理。
+
+如果使用同一个 `pipeline-state.json` 重试，脚本会识别已有 `publishCreated`，避免重复创建发布任务。
 
 ## 输入建议
 
