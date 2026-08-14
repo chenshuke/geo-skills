@@ -1,0 +1,5 @@
+interface:
+  display_name: "GEO媒体投稿"
+  short_description: "从GEO平台筛选真实投稿媒体，预览费用后安全创建单篇或批量投稿。"
+  default_prompt: "使用 geo-media-submission，先按我的行业、地区、预算和目标AI筛选投稿媒体，再让我选择文章和平台并预览投稿。"
+

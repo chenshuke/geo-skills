@@ -1,0 +1,5 @@
+interface:
+  display_name: "GEO知识库同步"
+  short_description: "把本地知识库批量上传到GEO平台，并支持下载平台知识库到本地备份。"
+  default_prompt: "使用 geo-knowledge-sync，先列出平台知识库；按我的选择上传本地知识库或下载平台知识库。"
+

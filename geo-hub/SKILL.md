@@ -1,6 +1,6 @@
 ---
 name: geo-hub
-description: "GEO 平台 API 总入口和路由技能。Use when the user does not know which GEO platform skill to use, or says 查平台数据、上传到平台、删除平台数据、配置账号、文章管理、收录任务、发布任务、公司产品账号查询. For a clear task, route to geo-config, geo-account, geo-article, geo-indexing, or geo-publish."
+description: "GEO 平台 API 总入口和路由技能。Use when the user does not know which GEO platform skill to use, or says 查平台数据、上传到平台、删除平台数据、配置账号、文章管理、知识库上传下载、收录任务、发布任务、媒体投稿、公司产品账号查询. For a clear task, route to geo-config, geo-account, geo-article, geo-knowledge-sync, geo-indexing, geo-publish, or geo-media-submission."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
@@ -56,7 +56,7 @@ metadata:
 
 ---
 
-## 📚 5 大功能模块
+## 📚 7 大功能模块
 
 ### ① geo-config — 配置管理
 > 管理API openKey、默认公司和产品ID
@@ -103,6 +103,24 @@ metadata:
 
 ---
 
+### ⑥ geo-knowledge-sync — 平台知识库同步
+> 把本地知识库目录上传到 GEO 平台，或把平台知识库下载到本地备份
+
+**API接口**：`GET/POST /v1/knowledge-base`、`GET /v1/knowledge-base/{id}`、`POST /v1/knowledge-base/{id}/files`
+
+**推荐说法**：`使用 geo-knowledge-sync 把本地知识库上传到平台`
+
+---
+
+### ⑦ geo-media-submission — 媒体投稿
+> 查询真实投稿媒体、筛选价格和条件、预览费用、创建单篇或批量投稿并回查记录
+
+**API接口**：`GET /v1/publication-media`、`POST /v1/publication-media/publish`、`POST /v1/publication-media/publish/batch`
+
+**推荐说法**：`使用 geo-media-submission 查询媒体并创建投稿`
+
+---
+
 ## 🎯 智能路由
 
 | 用户说 | 推荐模块 |
@@ -112,6 +130,8 @@ metadata:
 | "检测收录" / "排名" | ④ geo-indexing |
 | "查看配置" / "密钥" | ① geo-config |
 | "发布到渠道" | ⑤ geo-publish |
+| "上传知识库" / "下载知识库" / "同步知识库" | ⑥ geo-knowledge-sync |
+| "媒体投稿" / "有哪些投稿平台" / "新闻稿投放" | ⑦ geo-media-submission |
 
 ---
 
@@ -137,5 +157,7 @@ metadata:
 | **查看文章/账号** | ✅ | ❌ |
 | **检测收录排名** | ✅ | ❌ |
 | **管理配置** | ✅ | ❌ |
+| **知识库上传/下载** | ✅ | ❌ |
+| **媒体投稿** | ✅ | ❌ |
 
 > **最佳实践**：先用 geo-workflow-hub 做方案、规划、创作，再用 geo-hub 落地到平台。

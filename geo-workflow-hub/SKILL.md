@@ -78,6 +78,8 @@ metadata:
 
 **推荐说法**：`使用 geo-knowledge 帮我整理完整知识库，并提炼核心优势与可信证据`
 
+平台同步边界：本地资料整理完成后，如需上传到 GEO 平台或从平台下载备份，转交 `geo-knowledge-sync`；本技能不直接调用平台知识库写接口。
+
 ---
 
 ### ⑦a geo-keyword-pool — 关键词池 / 状态机
@@ -174,6 +176,8 @@ metadata:
 | "我是新学员" / "从0跑一个GEO项目" / "私教班快速闭环" / "大师班20个问题上榜" / "持续运营飞轮" | 00A geo-student-workflow |
 | "创建品牌" / "企业入驻" | ⑥ geo-brand |
 | "搭建知识库" / "整理资料" / "提炼企业优势" / "强背书" / "可信证据" / "证据缺口" | ⑦ geo-knowledge |
+| "上传知识库" / "下载知识库" / "同步平台知识库" | geo-knowledge-sync（平台API） |
+| "媒体投稿" / "投稿平台" / "新闻稿投放" | geo-media-submission（平台API） |
 | "关键词池" / "状态机" / "先优化哪个关键词" / "推进到哪一步" | ⑦a geo-keyword-pool |
 | "规划关键词" / "生成标题" / "写内容" | ⑧a geo-content-production |
 | "审核" / "覆盖度" / "优化内容" | ⑧b geo-content-audit |

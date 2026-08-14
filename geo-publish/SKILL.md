@@ -1,6 +1,6 @@
 ---
 name: geo-publish
-description: "GEO 发布任务和分发管理技能。Use when the user says 发布文章、分发到公众号/知乎/搜狐/头条/CSDN/小红书/抖音/B站、创建发布任务、定时发布、删除发布任务、查看发布状态、发布状态回查、articleId 转 publishedUrl、发布失败/人工处理识别、投稿记录、媒体发布平台、发布统计. Do not draft/upload articles; use geo-content-production or geo-article first."
+description: "GEO 发布任务和自有账号分发管理技能。Use when the user says 发布文章、分发到公众号/知乎/搜狐/头条/CSDN/小红书/抖音/B站、创建发布任务、定时发布、删除发布任务、查看发布状态、发布状态回查、articleId 转 publishedUrl、发布失败/人工处理识别、发布统计. 付费媒体库查询和新闻稿投稿使用 geo-media-submission；do not draft/upload articles."
 license: MIT
 compatibility: Works with Claude Code, Codex, and other Agent Skills-compatible clients when all sibling geo-* skill folders are installed together.
 metadata:
@@ -16,6 +16,8 @@ metadata:
 > **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
 
 本模块管理 GEO 平台的发布任务，支持将已审核通过的文章发布到多个平台账号（今日头条、搜狐号、B站、知乎、CSDN、微信公众号、小红书、抖音），支持定时发布和批量发布。
+
+本技能管理已经绑定的自有发布账号。查询付费媒体库、比较价格、选择新闻媒体并创建投稿订单，使用 `geo-media-submission`，不要混用两套接口。
 
 ---
 

@@ -51,9 +51,11 @@ skills/
 ├── geo-article/
 ├── geo-indexing/
 ├── geo-publish/
+├── geo-media-submission/
 ├── geo-brand/
 ├── geo-brand-diagnosis/        # 可选
 ├── geo-knowledge/
+├── geo-knowledge-sync/
 ├── geo-keyword-pool/
 ├── geo-content/
 ├── geo-content-production/

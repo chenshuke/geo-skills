@@ -7,7 +7,7 @@
 
 ## 1. 总体结构
 
-GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务技能** 组织。所有 `geo-*` 文件夹应作为同级技能安装。
+GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 19 个业务技能** 组织。所有 `geo-*` 文件夹应作为同级技能安装。
 
 ### 0. `geo-runtime` — 运行时与诊断
 - 技能完整性检查、凭证读取、依赖诊断、API 连通性检查
@@ -25,7 +25,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 
 ## 2. 功能模块
 
-### geo-hub 侧（5 个模块）
+### geo-hub 侧（7 个模块）
 
 | 模块 | 用途 |
 |------|------|
@@ -34,6 +34,8 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 | **③ geo-article** | 文章上传/创建/查看/审核/删除、图片上传、批量创作 |
 | **④ geo-indexing** | 收录检测、任务管理、批量导入、发布状态 |
 | **⑤ geo-publish** | 创建发布任务，多渠道分发 |
+| **⑤a geo-media-submission** | 查询投稿媒体、筛选价格和条件、创建单篇/批量媒体投稿并回查 |
+| **⑤b geo-knowledge-sync** | 本地知识库与 GEO 平台知识库双向上传、下载和备份 |
 
 ### geo-workflow-hub 侧（6 个模块 + 3 个内容子模块）
 
@@ -67,12 +69,14 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 02 geo-account 账号资源检查
 03 geo-brand 品牌定位（03A geo-brand-diagnosis 品牌AI诊断）
 04 geo-knowledge 知识库搭建
+04B geo-knowledge-sync 平台知识库上传/下载
 04A geo-keyword-pool 关键词池/状态机
 05A geo-content-production 内容生产
 05B geo-content-audit 内容审核优化
 06 geo-article 文章素材管理
 07 geo-content-to-publish-pipeline 内容到发布流水线
 08 geo-publish 发布与状态回查
+08A geo-media-submission 媒体投稿
 09 geo-indexing 收录检测
 10 geo-source-assets 引用源资产库
 11 geo-analysis 数据分析复盘
@@ -115,12 +119,14 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 17 个业务
 
 第1步：使用 geo-brand 创建品牌
 第2步：使用 geo-knowledge 搭建知识库（建立标准目录结构）
+第2.1步：需要同步平台时，使用 geo-knowledge-sync 上传本地知识库或下载平台备份
 第2.5步：使用 geo-keyword-pool 建立关键词池、分级并输出下一步动作
 第3步：使用 geo-brand-action-plan 把诊断问题转成落地执行方案
 第4步：使用 geo-content-production 完成标题、图片与内容创作
 第5步：使用 geo-content-audit 审核、覆盖度检查与优化
 第6步：使用 geo-content-to-publish-pipeline 完成封面 OSS、文章上传、审核通过、账号查询和发布 dry-run
 第7步：用户确认后创建发布任务，并用 GET/list 回查确认
+媒体投稿：需要付费媒体投放时，使用 geo-media-submission 查询平台、预览费用并在确认后投稿
 第8步：使用 geo-content-archive 完成文件归位整理
 第9步：使用 geo-indexing 导入深层用户问题、检测收录排名
 第10步：使用 geo-source-assets 沉淀引用源资产库和信源补强动作
