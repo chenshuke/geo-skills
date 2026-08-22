@@ -1,141 +1,104 @@
-# GEO Skills Suite v3.6
+# GEO Skills
 
-> 面向 Claude Code、Codex 与其他 Agent Skills 兼容客户端的 GEO（Generative Engine Optimization）运营技能套件。
-> 设计目标：**直接安装所有 `geo-*` 技能文件夹即可使用**，不依赖安装器，不绑定单一 AI 工具。
+面向 Claude Code、Codex 以及其他 Agent Skills 客户端的 GEO（Generative Engine Optimization，生成式引擎优化）运营技能包。
 
-## 默认执行协议
+这套技能把 GEO 工作拆成可以直接调用的模块：品牌定位、知识库、问题规划、内容创作、发布、AI 收录监测、引用来源分析、品牌诊断和下一轮优化。
 
-- 学员默认只需要 **Node.js 18+**；Python/pip/Pillow/baseopensdk 均不是核心必需。
-- 涉及上传、删除、发布、批量导入时，优先使用 Node 脚本的 `--dry-run`，真实执行后必须 GET/list 回查。
-- 中文文章上传统一使用 `geo-article/scripts/upload_article.js`，避免 `curl -d` 或 PowerShell 单行 JSON 导致乱码。
-- 图片和封面统一走 GEO 平台 `/v1/text-to-img`，默认 `model=v2`，不再使用本地 SVG 封面 fallback。
+## 你可以用它做什么
 
-详见：`GEO-SKILLS-EXECUTION-PROTOCOL.md`；常用命令见：`QUICK_COMMANDS.md`；学员顺序见：`GEO-STUDENT-WORKFLOW.md`。
+- 让 AI 了解并准确描述你的品牌、公司或产品
+- 找出 AI 为什么不推荐你、推荐了哪些竞品
+- 根据真实监测回答和引用来源制定 GEO 内容方案
+- 生成文章、封面、AI 答案卡和抖音图文
+- 上传文章、图片和知识库到 GEO 平台
+- 创建发布任务并查询发布状态
+- 提交 AI 上榜监测，读取完整回答和引用 URL
+- 对比优化前后的监测结果，判断内容是否有效
+- 生成品牌诊断、引用源、证据链和复盘报告
 
-## 兼容性
+## 环境要求
 
-- ✅ Claude Code skills
-- ✅ Codex skills
-- ✅ 兼容 Agent Skills 目录结构的其他客户端
-- ✅ 复制安装或软链接安装
-- ✅ 多客户端共享同一份用户级凭证
+- Node.js 18 或更高版本
+- Claude Code、Codex 或其他兼容 Agent Skills 的客户端
+- GEO 平台账号和 openKey
+- 不要求安装 Python、pip、Pillow 或其他 Python 依赖
 
-> 不要把整包作为单个技能安装。请将所有 `geo-*` 文件夹作为同级技能安装。
+图片上传、文章上传、知识库同步和 GEO API 操作均优先使用 Node.js 脚本完成。
 
-## 快速安装
+## 安装
 
-将本仓库中所有 `geo-*` 文件夹复制或软链接到你的工具技能目录。
-
-### macOS / Linux：安装到 Codex
+### 安装到 Codex
 
 ```bash
+git clone https://github.com/chenshuke/geo-skills.git
+cd geo-skills
 mkdir -p ~/.codex/skills
 cp -R geo-* ~/.codex/skills/
 ```
 
-### macOS / Linux：安装到 Claude Code
+### 安装到 Claude Code
 
 ```bash
 mkdir -p ~/.claude/skills
 cp -R geo-* ~/.claude/skills/
 ```
 
-### Windows PowerShell：安装到 Codex
-
-```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex\skills" | Out-Null
-Get-ChildItem -Directory -Filter "geo-*" | ForEach-Object {
-  Copy-Item $_.FullName -Destination "$env:USERPROFILE\.codex\skills" -Recurse -Force
-}
-```
-
-### Windows PowerShell：安装到 Claude Code
-
-```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude\skills" | Out-Null
-Get-ChildItem -Directory -Filter "geo-*" | ForEach-Object {
-  Copy-Item $_.FullName -Destination "$env:USERPROFILE\.claude\skills" -Recurse -Force
-}
-```
-
-### 开发者软链接模式
-
-如果你希望仓库更新后两个工具自动同步，可以使用软链接。
-
-macOS / Linux：
+如果你会持续修改技能，建议使用软链接。这样更新仓库后，客户端会直接使用最新文件：
 
 ```bash
+mkdir -p ~/.codex/skills ~/.claude/skills
 for d in geo-*; do
-  [ -d "$d" ] && ln -sfn "$(pwd)/$d" ~/.codex/skills/"$d"
-  [ -d "$d" ] && ln -sfn "$(pwd)/$d" ~/.claude/skills/"$d"
+  [ -d "$d" ] || continue
+  ln -sfn "$(pwd)/$d" ~/.codex/skills/"$d"
+  ln -sfn "$(pwd)/$d" ~/.claude/skills/"$d"
 done
 ```
 
-Windows PowerShell（需允许创建符号链接；不确定时优先用复制安装）：
+Windows 用户可以把所有 `geo-*` 文件夹复制到：
 
-```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex\skills", "$env:USERPROFILE\.claude\skills" | Out-Null
-Get-ChildItem -Directory -Filter "geo-*" | ForEach-Object {
-  New-Item -ItemType SymbolicLink -Force -Path "$env:USERPROFILE\.codex\skills\$($_.Name)" -Target $_.FullName | Out-Null
-  New-Item -ItemType SymbolicLink -Force -Path "$env:USERPROFILE\.claude\skills\$($_.Name)" -Target $_.FullName | Out-Null
-}
+```text
+%USERPROFILE%\.codex\skills\
+%USERPROFILE%\.claude\skills\
 ```
 
-## 安装后检查
+## 第一次使用
 
-对 Claude Code 或 Codex 说：
+安装后，直接对 AI 说：
 
-> 使用 geo-runtime 检查我的 GEO Skills 是否安装成功。
+```text
+使用 geo-runtime 检查我的 GEO Skills 是否安装成功。
+```
 
-如果当前环境支持 shell，也可以直接运行：
+然后初始化平台配置：
 
-macOS / Linux：
+```text
+使用 geo-config 帮我初始化 GEO 平台配置。
+```
+
+也可以直接运行检查脚本：
 
 ```bash
 node ~/.codex/skills/geo-runtime/scripts/doctor.js
-# 或
-node ~/.claude/skills/geo-runtime/scripts/doctor.js
-```
-
-Windows PowerShell：
-
-```powershell
-node "$env:USERPROFILE\.codex\skills\geo-runtime\scripts\doctor.js"
-# 或
-node "$env:USERPROFILE\.claude\skills\geo-runtime\scripts\doctor.js"
-```
-
-首次创建用户级配置模板：
-
-macOS / Linux：
-
-```bash
 node ~/.codex/skills/geo-runtime/scripts/doctor.js --init-config
 ```
 
-Windows PowerShell：
+## 配置 GEO 平台
 
-```powershell
-node "$env:USERPROFILE\.codex\skills\geo-runtime\scripts\doctor.js" --init-config
-```
-
-## 配置凭证
-
-真实 openKey 不放在技能仓库内。统一使用用户级配置：
+配置文件放在用户目录，不要放进 Git 仓库：
 
 ```text
 macOS / Linux: ~/.geo-skills/credentials/geo-config.json
-Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
+Windows:       %USERPROFILE%\.geo-skills\credentials\geo-config.json
 ```
 
-模板：
+配置格式：
 
 ```json
 {
   "geo": {
-    "baseUrl": "<内部接口地址>",
+    "baseUrl": "<GEO平台接口地址>",
     "openKey": "your-openKey-here",
-    "referer": "https://geo.bihuoai.com/"
+    "referer": "<GEO平台Referer>"
   },
   "defaults": {
     "companyId": 0,
@@ -144,146 +107,198 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 }
 ```
 
-你可以让 AI 执行：
+`companyId` 和 `productId` 不确定时，不要猜。让 `geo-config` 读取公司和产品列表，再选择正确的项目。
 
-> 使用 geo-config 帮我初始化 GEO 平台 openKey 配置。
+## 三个总入口
 
-
-## 学员工作流序号
-
-技术技能名和文件夹名保持不变；为了方便课堂理解，学员版在展示名称和文档中使用 00A + 00-12 的主线顺序，90/91 为横向能力。
-
-| 序号 | 技能 | 学员理解 |
-|---:|---|---|
-| 00 | `geo-runtime` | 环境诊断 |
-| 00A | `geo-student-workflow` | 课程一键入口（三模式） |
-| 01 | `geo-config` | 平台初始化 |
-| 02 | `geo-account` | 账号资源检查 |
-| 03 | `geo-brand` | 品牌定位 |
-| 04 | `geo-knowledge` | 知识库搭建 |
-| 04A | `geo-keyword-pool` | 关键词池/状态机 |
-| 05A | `geo-content-production` | 内容生产 |
-| 05B | `geo-content-audit` | 内容审核优化 |
-| 06 | `geo-article` | 文章素材管理 |
-| 07 | `geo-content-to-publish-pipeline` | 内容到发布流水线 |
-| 08 | `geo-publish` | 发布与状态回查 |
-| 09 | `geo-indexing` | 收录检测 |
-| 10 | `geo-source-assets` | 引用源资产库 |
-| 11 | `geo-analysis` | 数据分析复盘 |
-| 12 | `geo-content-archive` | 项目归档整理 |
-| 90 | `geo-troubleshooter` | 故障排查 |
-| 91 | `geo-skill-evolution` | 技能自进化（内部/助教） |
-
-完整说明见：`GEO-STUDENT-WORKFLOW.md`。
-
-## 技能结构
-
-### 支撑技能
-
-| 技能 | 用途 |
-|------|------|
-| `geo-runtime` | 共享运行时、凭证读取、安装/依赖/配置诊断 |
-
-### API 操作入口
-
-| 技能 | 用途 |
-|------|------|
-| `geo-hub` | GEO 平台 API 路由入口 |
-| `geo-config` | openKey、baseUrl、referer、默认 companyId/productId 配置 |
-| `geo-account` | 账号、公司、产品、套餐、视频、看板等资源查询 |
-| `geo-article` | 文章与素材上传、创建、查询、审核、删除 |
-| `geo-indexing` | 收录任务导入、查询、删除、批量管理、结果查询、publishedUrl 命中回查 |
-| `geo-publish` | 发布任务创建、校验、删除、发布状态回查、articleId → publishedUrl |
-
-### 运营工作流入口
-
-| 技能 | 用途 |
-|------|------|
-| `geo-workflow-hub` | GEO 运营流程路由入口 |
-| `geo-student-workflow` | 课程一句话入口：私教班快速闭环、大师班20问题上榜、持续运营飞轮 |
-| `geo-brand` | 企业/产品/个人品牌内容创建 |
-| `geo-knowledge` | 知识库创建、资料整理、补充清单 |
-| `geo-keyword-pool` | 关键词池、P0-P3优先级、状态机和下一步动作 |
-| `geo-content` | 内容生产/审核路由入口 |
-| `geo-content-production` | 关键词、标题、文章、封面、图片生产 |
-| `geo-content-audit` | 一致性审核、媒体就绪、AI 检测、覆盖/Gap/优化 |
-| `geo-content-to-publish-pipeline` | 内容到发布总控：封面 OSS、文章上传、审核、账号查询、发布 dry-run 和确认清单 |
-| `geo-content-archive` | GEO 项目文件归档、迁移、结构校验 |
-| `geo-analysis` | 证据链、平台逆向、引用审核、PDCA 仪表盘、飞书同步 |
-| `geo-source-assets` | 从 searchedSites 沉淀引用源资产库、来源分类和信源补强建议 |
-| `geo-troubleshooter` | 新手友好故障排查：问题、原因、证据、下一步、人工确认 |
-| `geo-skill-evolution` | 内部/助教技能自进化：把客户/行业/学员新问题沉淀为改进方案、回归测试和发布验收 |
-
-## 工作流概览
-
-```mermaid
-graph LR
-    Z[geo-student-workflow: 三模式课程入口] --> A[geo-workflow-hub: brand] --> B[geo-workflow-hub: knowledge]
-    B --> K[geo-keyword-pool]
-    K --> C[geo-content-production]
-    C --> D[geo-content-audit]
-    D --> P[geo-content-to-publish-pipeline]
-    P --> E[geo-content-archive]
-    E --> F[geo-hub / geo-article]
-    F --> G[geo-indexing]
-    G --> S[geo-source-assets]
-    S --> H[geo-analysis]
-    H --> T[geo-troubleshooter]
-    T --> X[geo-skill-evolution]
-```
-
-## 依赖
-
-必需：
-
-```bash
-无需安装 Python；优先使用 node geo-runtime/scripts/doctor.js
-```
-
-可选：
-
-```bash
-node geo-content-production/scripts/generate_cover.js  # GEO 平台封面生成，默认 model=v2
-优先使用 lark-cli / lark-base skill 同步飞书，无需 baseopensdk
-```
-
-更多说明见 `geo-runtime/references/requirements.md`。
-
-## 安全规则
-
-- 真实 openKey 只放在 `~/.geo-skills/credentials/geo-config.json`。
-- 删除、发布、批量导入、覆盖配置等操作必须先预览并获得用户明确确认。
-- 写入/删除类 GEO API 操作后必须回查确认。
-- 日志和回复中不要输出完整密钥，只能脱敏展示。
-
-### 公开技能包脱敏规则
-
-公开技能包不得包含真实客户名称、客户案例、客户项目路径或客户品牌别名；示例统一使用 `示例品牌A / 示例品牌B / 示例品牌C`、`竞品A / 竞品B` 等占位。
-
-## 学员推荐用法
-
-安装完成后，学员优先直接说：
-
-> 我是新学员，帮我选择合适模式并跑一个 GEO 项目。
-
-也可按场景说：
-
-> 我是私教班学员，帮我快速跑通 GEO 闭环。
-> 我是大师班学员，帮我围绕 20 个问题做上榜实战。
-> 帮我进入 GEO 持续运营飞轮。
-
-也可以向 Claude Code 或 Codex 提问：
+不确定该调用哪个技能时，直接使用：
 
 ```text
-使用 geo-runtime 检查我的 GEO Skills 是否安装成功。
-使用 geo-config 帮我初始化 GEO 平台 openKey 配置。
-帮我为 XX 品牌规划 GEO 关键词。
-帮我写一篇 GEO 文章并生成封面。
-帮我审核这篇文章是否适合发布。
-帮我上传这篇文章到 GEO 平台。
-使用 geo-content-to-publish-pipeline 帮我生成发布确认清单。
-帮我查询这批关键词的收录结果。
+使用 geo-hub 帮我完成 GEO 平台查询、上传或发布操作。
+使用 geo-workflow-hub 帮我安排 GEO 品牌、内容和分析流程。
+使用 geo-student-workflow 从零带我完成一个 GEO 项目。
 ```
+
+简单记忆：
+
+| 你想做的事 | 入口 |
+|---|---|
+| 查、传、删、配 | `geo-hub` |
+| 建、规、写、审、优 | `geo-workflow-hub` |
+| 不知道从哪一步开始 | `geo-student-workflow` |
+
+## GEO 完整工作流
+
+```text
+品牌定位
+  → 知识库和证据整理
+  → 用户问题/关键词规划
+  → 内容创作与审核
+  → 上传和发布
+  → AI 上榜监测
+  → 引用来源与效果分析
+  → 诊断病根
+  → 下一轮内容优化和复测
+```
+
+发布后不要只看“文章已上传”。应提交新的上榜监测，再对比优化前后的同一问题、同一 AI 平台和相近测试条件。
+
+## 技能地图
+
+### 运行和平台操作
+
+| 技能 | 用途 |
+|---|---|
+| `geo-runtime` | 环境、Node.js、配置和凭证检查 |
+| `geo-config` | 初始化 openKey、接口配置、公司和产品选择 |
+| `geo-hub` | GEO 平台 API 总入口和路由 |
+| `geo-account` | 查询公司、产品、账号、套餐、配额和资源 |
+| `geo-article` | 上传、查询、审核和删除文章/素材 |
+| `geo-oss-upload` | 将本地图片上传为 GEO OSS URL，支持 Markdown 替换；Node.js 实现 |
+| `geo-knowledge-sync` | 本地知识库与 GEO 平台知识库双向上传/下载 |
+| `geo-publish` | 创建发布任务、查询发布状态和获取 publishedUrl |
+| `geo-indexing` | 创建和查询 Scheduled Indexing 上榜监测任务 |
+
+### 品牌和内容
+
+| 技能 | 用途 |
+|---|---|
+| `geo-brand` | 企业、产品和个人品牌定位及基础介绍 |
+| `geo-knowledge` | 整理企业资料，提炼优势、证据和资料缺口 |
+| `geo-keyword-pool` | 管理问题、关键词和 P0-P3 优先级 |
+| `geo-content-production` | 规划标题、写文章、生成封面和配图 |
+| `geo-content-audit` | 审核事实、证据、覆盖度、合规和发布质量 |
+| `geo-ai-answer-card` | 创作 AI 答案卡、抖音图文和答案型内容 |
+| `geo-content-to-publish-pipeline` | 从已有文章到封面、上传、审核、账号和发布预览的一条龙流程 |
+| `geo-media-submission` | 查询媒体投稿平台，选择媒体并提交投稿 |
+| `geo-content` | 内容工作流路由入口 |
+
+### 分析和改进
+
+| 技能 | 用途 |
+|---|---|
+| `geo-brand-diagnosis` | 判断 AI 是否认识品牌、如何描述品牌、为什么推荐或不推荐、竞品为何占位 |
+| `geo-brand-action-plan` | 根据监测回答、竞品、引用来源和知识库制定 GEO 落地方案 |
+| `geo-analysis` | 分析 AI 回答、收录效果、证据链、平台偏好、竞品和优化前后变化 |
+| `geo-source-assets` | 从一个或多个监测任务提取真实 searchedSites 和引用 URL |
+| `geo-troubleshooter` | 排查配置、接口、上传、发布和收录问题 |
+| `geo-content-archive` | 按项目、日期和阶段整理 GEO 文件 |
+| `geo-skill-evolution` | 内部团队沉淀行业经验、问题和技能改进 |
+
+## 最常用的提问方式
+
+### 做品牌诊断
+
+```text
+请调用品牌诊断技能，读取 GEO 平台已有监测任务，判断 AI 是否清晰认识我的品牌、为什么不推荐、竞品有哪些，并找出最重要的病根。
+```
+
+### 制定落地方案
+
+```text
+请调用 GEO 落地方案技能，基于刚刚的品牌诊断、AI 回答、竞品、引用来源和知识库，告诉我：
+1. 优先解决哪个用户问题；
+2. 希望 AI 形成什么判断；
+3. 已有和缺少哪些知识证据；
+4. 应创作哪些文章、视频或答案卡；
+5. 每个内容应发布到哪些真实可引用的平台；
+6. 何时用什么指标复测。
+```
+
+### 创建上榜监测
+
+```text
+请调用 GEO 收录监测技能，只提交我刚刚最终确认的这个问题，使用豆包，创建一次性监测任务。先给我 dry-run 预览，等我确认后再创建。
+```
+
+### 分析优化前后效果
+
+```text
+请调用 GEO 分析技能，列出可选的上榜监测任务，让我选择优化前和优化后的两次任务。保持相同问题和 AI 平台，对比品牌提及、明确推荐、优先推荐、竞品占位、我方 URL 精确引用和引用来源变化，判断本次内容发布是否有效，找出仍未解决的病根，并给出下一步内容、平台和复测建议。
+```
+
+### 提取真实引用来源
+
+```text
+请调用 GEO 引用源资产技能，让我选择一个或多个上榜监测任务，分别提取每个问题、每个 AI 平台实际引用的来源标题和 URL，并按平台给出信源补强建议。
+```
+
+### 内容到发布
+
+```text
+请用 geo-content-to-publish-pipeline 处理这篇已经有文章和封面的内容。不要重新生成封面，先上传和审核，生成发布预览，等我确认后再创建发布任务。
+```
+
+## 重要行为说明
+
+### 发布任务是异步的
+
+创建发布任务成功，只代表 GEO 平台已经接受任务，不代表文章已经审核完成或已经拿到发布链接。
+
+流水线会保存任务 ID 并结束，不会因为平台暂时还没有返回链接而卡住。发布链接和失败原因需要后续通过 `geo-publish` 查询。
+
+### 监测前后必须保持可比
+
+比较优化效果时，尽量保持：
+
+- 同一个用户问题
+- 同一个 AI 平台
+- 相近的监测时间和执行条件
+- 清楚区分一次回答和多次稳定结果
+
+不同问题或不同平台的结果不能直接当作优化前后对比。
+
+### 引用来源不等于品牌事实
+
+`searchedSites` 只能说明 AI 检索或引用过哪些网页，不代表网页支持回答中的全部事实。企业优势仍要回到知识库、官网或可核验证据核对。
+
+## 安全和操作规则
+
+- 不要把真实 openKey 提交到 GitHub。
+- 上传、删除、发布、批量导入等写操作先执行 `--dry-run`，得到用户确认后再执行。
+- 不要在回复、日志或报告中输出完整 openKey 或内部 Base URL。
+- 文章和图片优先使用 Node.js 脚本，不要求学员安装 Python。
+- 发布任务创建后不要重复运行完整流水线，优先复用原来的 `pipeline-state.json`。
+- 任何报告都应区分事实、推断和待验证信息，不要编造企业数据。
+
+## 常见问题
+
+### 找不到技能
+
+确认客户端读取的是 `~/.codex/skills` 或 `~/.claude/skills`，并检查目录下是否存在对应的 `geo-*` 文件夹。然后运行：
+
+```bash
+node ~/.codex/skills/geo-runtime/scripts/doctor.js
+```
+
+### 不知道该调用哪个技能
+
+直接说：
+
+```text
+使用 geo-hub 或 geo-workflow-hub 判断这件事应该调用哪个 GEO 技能。
+```
+
+### 文章发布后没有链接
+
+这是正常的异步过程。先记录发布任务 ID，稍后使用：
+
+```text
+请调用 geo-publish 查询刚才发布任务的状态、publishedUrl 和失败原因。
+```
+
+### 想知道发布到哪里 AI 才会引用
+
+不要使用官网、公众号、知乎等通用清单。先调用 `geo-source-assets` 提取具体监测任务的真实引用来源，再按 AI 平台分别制定发布渠道。
+
+## 进一步阅读
+
+- `GEO-STUDENT-WORKFLOW.md`：适合新学员的完整课程顺序
+- `GEO-SKILLS-EXECUTION-PROTOCOL.md`：技能执行和安全边界
+- `QUICK_COMMANDS.md`：Node.js 常用命令
+- `NO_PYTHON_COMPATIBILITY.md`：不依赖 Python 的运行说明
+- `FAQ.md`：常见问题
+- 每个 `geo-*/SKILL.md`：该技能的详细规则和脚本说明
 
 ## 许可证
 
