@@ -24,6 +24,28 @@ metadata:
 - 写入后必须 GET 回查确认，不只相信 POST/PATCH/DELETE 返回值。
 - 默认优先使用 Node 脚本；`curl` 只作为低级调试，不作为中文正文或批量写操作默认方案。
 
+## 单问题课堂指令规则
+
+当用户说“把上述优化的问题提交监测”“查一下刚刚优化的问题”或表达同等含义时：
+
+- 只提交用户刚刚最终确认的 **1 个问题**；
+- 不得从更早的上下文收集其他问题，不得扩写、改写或自动补充问题；
+- dry-run 预览必须明确显示 `问题数：1` 和该问题原文，用户确认后才能创建任务；
+- 课堂默认参数为：`platforms: ["doubao"]`、`source: 3`、`scheduleConfig: {"type":"once"}`，并且只运行一次。
+
+推荐调用方式：
+
+```bash
+node geo-indexing/scripts/scheduled_indexing.js \
+  --action create \
+  --question "用户刚刚最终确认的原问题" \
+  --platforms doubao \
+  --schedule-type once \
+  --source 3 \
+  --run-now \
+  --dry-run
+```
+
 ## 输出归位硬规则
 
 问题导入、收录计划、收录矩阵、AI 回答引用报告必须写入 `07_监测分析/收录监测/`。写文件前可用：
@@ -59,14 +81,14 @@ node geo-content-archive/scripts/project_paths.js --artifact indexing-report --p
 学员创建收录计划时，Agent 必须优先使用保守参数，避免把平台接口错误暴露给新手：
 
 1. **不要默认 `--platforms all`**：`all` 会包含账号未开通或已禁用的平台，容易报“所选平台已被禁用”。课堂默认用 `--platforms doubao`，多平台必须由用户或账号资源确认后再加。
-2. **`source` 合法值是 `1/2/3`**：课堂默认 `1` 本地/设备模式；云端模式传 `--source 3`；`2` 是平台保留模式，学员不要默认使用。
+2. **`source` 合法值是 `1/2/3`**：课堂默认 `3` 云端模式；如确需本地/设备模式，显式传 `--source 1`；`2` 是平台保留模式，学员不要使用。
 3. **`scheduleConfig` 必须完整**：
    - `once`：一次性计划，payload 只传 `{"type":"once"}`，不得附带空的 `hours: []`；
    - `daily`：建议 `--hours 9`；
    - `weekly`：必须传 `--weekdays`，例如 `--weekdays 1,3,5`；
    - `interval`：必须传 `--interval-days`。
 4. **`screenshotPlatforms` 必须是 `platforms` 子集**，不能单独传未选择的平台。
-5. 创建前先 dry-run，看 payload 里是否是 `/v1/scheduled-indexing`、`platforms: ["doubao"]`、`source: 1`、`scheduleConfig` 合法。
+5. 创建前先 dry-run，看 payload 里是否是 `/v1/scheduled-indexing`、`platforms: ["doubao"]`、`source: 3`、`scheduleConfig` 合法。
 
 ## 推荐脚本
 
@@ -210,7 +232,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
   "topics": ["2026年GEO优化服务商怎么选？", "AI搜索为什么推荐不到我的品牌？"],
   "platforms": ["doubao"],
   "scheduleConfig": { "type": "daily", "hours": [9] },
-  "source": 1,
+  "source": 3,
   "enabled": true
 }
 ```
@@ -221,7 +243,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 |---|---|
 | `platforms` | AI 平台数组。课堂默认建议只用 `doubao`；`all` 只有在账号已开通全部平台时才能用，否则会报“所选平台已被禁用” |
 | `screenshotPlatforms` | 截图平台数组，必须是 `platforms` 子集 |
-| `source` | 采集模式：`1` 本地/设备模式（默认），`3` 云端模式；API 也保留 `2`，课堂不默认使用 |
+| `source` | 采集模式：`3` 云端模式（默认），`1` 本地/设备模式；API 也保留 `2`，课堂不使用 |
 | `competitorBrands` | 竞品品牌数组，仅用于 `(竞)` 标记 |
 
 `scheduleConfig` 支持：
@@ -236,8 +258,8 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 
 ## 本地模式与云端模式
 
-- 默认使用本地/设备模式：`source: 1`。脚本在创建计划时会显式写入 `source=1`，用户不需要额外传参。
-- 如需云端模式，创建或更新计划时传 `--source 3`。API 文档还保留 `source=2`，但课堂/学员默认不要使用。
+- 默认使用云端模式：`source: 3`。脚本在创建计划时会显式写入 `source=3`，用户不需要额外传参。
+- 如需本地/设备模式，创建或更新计划时显式传 `--source 1`。API 文档还保留 `source=2`，课堂/学员不要使用。
 - 两种模式都走同一套 Scheduled Indexing 查询接口；区别只在创建/更新计划时的 `source` 字段。
 
 ## 查询字段重点

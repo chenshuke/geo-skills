@@ -80,7 +80,7 @@ Create input:
   --times-per-cycle <n>      interval 均分预设
   --competitor-brands <a,b>  竞品品牌数组
   --screenshot-platforms <a,b> 截图平台数组(platforms 子集)
-  --source <1|2|3>           采集模式：1=本地/设备模式（默认），3=云端模式；2为平台保留模式
+  --source <1|2|3>           采集模式：3=云端模式（默认），1=本地/设备模式；2为平台保留模式
   --enabled <true|false>     默认 true
   --run-now                  创建成功后立即执行一次
 
@@ -286,7 +286,7 @@ function platforms(args) {
   return out;
 }
 function sourceValue(args) {
-  const value = Number(first(args, ['source'], 1));
+  const value = Number(first(args, ['source'], 3));
   if (![1, 2, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）、2（平台保留模式）或 3（云端模式）。');
   return value;
 }

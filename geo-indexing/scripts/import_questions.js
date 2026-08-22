@@ -85,7 +85,7 @@ scheduled-indexing options:
   --times-per-day <n>    daily 均分预设；课堂建议直接用 --hours 9
   --interval-days <n>    interval 必填
   --run-now              创建成功后立即执行一次
-  --source <1|2|3>       采集模式：1=本地/设备模式（默认），3=云端模式；2为平台保留模式
+  --source <1|2|3>       采集模式：3=云端模式（默认），1=本地/设备模式；2为平台保留模式
 
 product-topic options:
   --tags <a,b>           默认 深层用户问题,手动导入
@@ -310,7 +310,7 @@ function parsePlatforms(args, fallback = DEFAULT_PLATFORMS.join(',')) {
   return out;
 }
 function sourceValue(args) {
-  const value = Number(first(args, ['source'], 1));
+  const value = Number(first(args, ['source'], 3));
   if (![1, 2, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）、2（平台保留模式）或 3（云端模式）。');
   return value;
 }
