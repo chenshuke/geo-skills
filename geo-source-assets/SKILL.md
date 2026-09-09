@@ -10,8 +10,8 @@ description: "GEO 引用源资产库技能。支持选择单个或多个 Schedul
 ## 核心原则
 
 - 本技能不写文章、不发布文章、不创建收录任务；它只治理引用源资产。
-- 默认从 Scheduled Indexing 的 `answers` 结果导入：`GET /v1/scheduled-indexing/{id}/answers`。
-- Base URL 不在回复、日志、dry-run 或报告中展示；可以展示 Referer、脱敏 openKey、接口路径。
+- 默认从 Scheduled Indexing 的 `scheduledIndexing.answers` 结果导入。
+- 认证由 Best GEO CLI 管理；不展示或读取认证材料或内部服务地址。
 - 输出统一归位到 `07_监测分析/引用源资产库/`。
 - 一个监测任务生成一套独立信源报告；多个任务不得直接混入同一资产明细表。
 - 同一 URL 在不同 AI 平台分别统计。豆包引用过，不代表千问、元宝或其他平台也会引用。

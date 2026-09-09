@@ -9,28 +9,37 @@ metadata:
   category: router
 ---
 
-> **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
+> **外部依赖**: Best GEO CLI（需先完成 `best-geo auth login`；不需要在技能中另配认证材料）
 
-# GEO平台API统一操作入口 (GEO Hub)
+# GEO平台统一操作入口 (GEO Hub)
 
 > **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。
 
 > **版本**：v3.0 | **更新日期**：2026-05-08
-> **定位**：GEO平台API数据操作的中央控制台
+> **定位**：通过 Best GEO CLI 操作 GEO 平台数据的中央控制台
+
+## 执行后端
+
+本技能及其子技能不得直接读取旧凭证或请求历史 HTTP 接口。平台操作统一调用：
+
+```bash
+best-geo call <capability> --input '<json>'
+```
+
+写操作统一使用 `best-geo plan` → 用户确认 → `best-geo apply`。只有 Best GEO CLI 适配层可以接触认证状态。
+
+> **强制规则**：本文只使用 CLI capability，不提供任何直接 HTTP 调用示例。
 
 ## 通用安全规则
 
-## Base URL 输出规则
+## 认证与安全
 
-- Base URL 属于内部接口配置：脚本可以读取、测试和写入配置文件，但默认回复、日志、dry-run、JSON 预览中不得展示具体 Base URL。
-- 用户侧可以展示 Referer、脱敏 openKey、companyId/productId、接口路径（如 `/v1/geo-company`），但不要展示接口域名。
-- 用户只提供 openKey 时，先调用 `geo-config/scripts/configure_openkey.js` 自动识别平台接口与 Referer。
-
-- 真实 openKey 只能读取自 `~/.geo-skills/credentials/geo-config.json` 或环境变量，回复和日志中必须脱敏展示。
+- 认证只由 `best-geo auth login/status` 管理；技能层不得读取、保存或展示认证材料或内部服务地址。
+- 用户只需要完成 CLI 授权并选择默认 companyId/productId。
 - 删除、发布、批量导入、覆盖配置等操作必须先展示预览，并等待用户明确确认。
 - 支持 dry-run / preview 时优先使用 dry-run / preview。
-- 写入或删除 GEO API 数据后，必须通过对应 GET/list 接口回查确认，不只相信 POST/DELETE 返回值。
-- 有专用 Node 脚本时优先使用脚本；没有专用脚本时使用 `geo-runtime/scripts/api_request.js`，`curl` 只作为低级调试，不作为中文正文或批量写操作默认方案。
+- 写入或删除平台数据后，必须通过对应 list/get capability 回查确认，不只相信写入返回值。
+- 有专用 Node 脚本时优先使用脚本；没有专用脚本时使用 `geo-runtime/scripts/best_geo.js` 的 capability 调用。
 
 ---
 
@@ -59,7 +68,7 @@ metadata:
 ## 📚 7 大功能模块
 
 ### ① geo-config — 配置管理
-> 管理API openKey、默认公司和产品ID
+> 管理 CLI 授权、默认公司和产品ID
 
 **适用场景**：首次配置、密钥失效、切换公司/产品
 
@@ -68,9 +77,9 @@ metadata:
 ---
 
 ### ② geo-account — 账号与资源
-> 查看企业/产品/个人品牌账号列表、平台套餐、视频等
+> 查看企业、项目、发布账号、图片和视频素材
 
-**API接口**：`GET /v1/geo-company`、`GET /v1/geo-product`、`GET /v1/publication-account`、`GET /v1/package`、`GET /v1/package/self`、`GET /v1/video`
+**CLI capability**：`companies.*`、`products.*`、`publicationAccounts.list`、`images.list/get`、`videos.list/get`
 
 **推荐说法**：`使用 geo-account 帮我查询账号或资源`
 
@@ -79,7 +88,7 @@ metadata:
 ### ③ geo-article — 文章与素材
 > 文章全生命周期：上传、创建、查看、审核、删除、批量创作
 
-**API接口**：`POST/GET/DELETE /v1/article`、`POST /v1/oss/pre`
+**CLI capability**：`articles.*`、`images.*`、`videos.*`
 
 **推荐说法**：`使用 geo-article 帮我上传或管理文章`
 
@@ -88,7 +97,7 @@ metadata:
 ### ④ geo-indexing — 收录检测
 > 使用 Scheduled Indexing 检测 AI 搜索排名、创建/管理定时收录计划、查询 answers/matrix、publishedUrl 命中检测
 
-**API接口**：`POST/GET/PATCH/DELETE /v1/scheduled-indexing`、`POST /v1/scheduled-indexing/{id}/run-now`、`GET /v1/scheduled-indexing/{id}/answers`、`GET /v1/scheduled-indexing/{id}/topic-platform-matrix`
+**CLI capability**：`scheduledIndexing.*`、`indexing.suggestCompetitors`
 
 **推荐说法**：`使用 geo-indexing 帮我创建 Scheduled Indexing 收录计划或查询收录结果`
 
@@ -97,7 +106,7 @@ metadata:
 ### ⑤ geo-publish — 发布管理
 > 创建发布任务，分发到知乎/搜狐/CSDN等渠道
 
-**API接口**：`POST /v1/publication-task`
+**CLI capability**：`publicationTasks.*`、`publicationRecords.list`
 
 **推荐说法**：`使用 geo-publish 帮我创建或管理发布任务`
 
@@ -106,7 +115,7 @@ metadata:
 ### ⑥ geo-knowledge-sync — 平台知识库同步
 > 把本地知识库目录上传到 GEO 平台，或把平台知识库下载到本地备份
 
-**API接口**：`GET/POST /v1/knowledge-base`、`GET /v1/knowledge-base/{id}`、`POST /v1/knowledge-base/{id}/files`
+**CLI capability**：`knowledge.*`
 
 **推荐说法**：`使用 geo-knowledge-sync 把本地知识库上传到平台`
 
@@ -115,7 +124,7 @@ metadata:
 ### ⑦ geo-media-submission — 媒体投稿
 > 查询真实投稿媒体、筛选价格和条件、预览费用、创建单篇或批量投稿并回查记录
 
-**API接口**：`GET /v1/publication-media`、`POST /v1/publication-media/publish`、`POST /v1/publication-media/publish/batch`
+**CLI capability**：`mediaPlatforms.*`、`mediaPublications.*`
 
 **推荐说法**：`使用 geo-media-submission 查询媒体并创建投稿`
 
@@ -126,7 +135,7 @@ metadata:
 | 用户说 | 推荐模块 |
 |--------|---------|
 | "上传文章" / "发布" | ③ geo-article |
-| "查看账号" / "套餐" | ② geo-account |
+| "查看账号" / "查看素材" | ② geo-account |
 | "检测收录" / "排名" | ④ geo-indexing |
 | "查看配置" / "密钥" | ① geo-config |
 | "发布到渠道" | ⑤ geo-publish |
@@ -139,9 +148,9 @@ metadata:
 
 每次调用 geo-hub 时，自动执行：
 
-1. 读取 `~/.geo-skills/credentials/geo-config.json` 获取 openKey
-2. 检查 `defaults.companyId` 和 `defaults.productId`，若为 0 则引导选择
-3. 后续操作自动携带 companyId 和 productId
+1. 执行 `best-geo auth status` 检查 CLI 授权
+2. 通过 `companies.list` 和 `products.list` 获取可用范围；需要时引导用户选择
+3. 后续操作通过 CLI schema 传递 companyId/productId
 
 ---
 

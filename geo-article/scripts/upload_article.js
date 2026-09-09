@@ -9,7 +9,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const cp = require('child_process');
-const { loadGeoConfig, headers: geoHeaders } = require('../../geo-runtime/scripts/credentials.js');
+const { call, plan, apply } = require('../../geo-runtime/scripts/best_geo.js');
 
 function parseArgs(argv) {
   const out = {};
@@ -42,7 +42,7 @@ Options:
   --summaries <a,b>           Optional summaries array, comma-separated; overrides --summary
   --tags <a,b,c>              Tags, comma-separated
   --cover-url <url>           coverImageUrl
-  --auto-cover                Generate cover through GEO /v1/text-to-img and use ossUrls[0]
+  --auto-cover                Generate cover through Best GEO CLI textToImages and use returned URL
   --product-id <id>           Defaults to config defaults.productId
   --company-id <id>           Defaults to config defaults.companyId
   --dry-run                   Validate and print payload; do not upload
@@ -116,25 +116,12 @@ function suspiciousMojibake(text) {
   return hits;
 }
 function countCjk(text) { return (text.match(/[\u3400-\u9fff]/g) || []).length; }
-function buildHeaders(cfg) {
-  return { ...geoHeaders(cfg), 'Content-Type': 'application/json; charset=utf-8', 'Accept': 'application/json' };
-}
-async function requestJson(url, options) {
-  const res = await fetch(url, options);
-  const text = await res.text();
-  let body; try { body = JSON.parse(text); } catch { body = text; }
-  if (!res.ok || (body && typeof body === 'object' && body.statusCode !== undefined && body.statusCode !== 0)) {
-    const msg = body && typeof body === 'object' ? (body.message || JSON.stringify(body)) : String(body).slice(0, 500);
-    const err = new Error(`GEO API failed: HTTP ${res.status} ${res.statusText}; ${msg}`);
-    err.response = body;
-    throw err;
-  }
-  return body;
-}
 async function generateCover(args, title) {
   const script = path.resolve(__dirname, '../../geo-content-production/scripts/generate_cover.js');
   const tmp = path.join(os.tmpdir(), `geo-cover-${Date.now()}-${Math.random().toString(16).slice(2)}.json`);
   const coverArgs = [script, '--title', title, '--json-out', tmp];
+  const productId = first(args, ['product-id','productId']); if (productId) coverArgs.push('--product-id', String(productId));
+  coverArgs.push('--force');
   const brand = first(args, ['brand', 'product', 'company']); if (brand) coverArgs.push('--brand', String(brand));
   const keywords = first(args, ['keywords', 'tags']); if (keywords) coverArgs.push('--keywords', String(keywords));
   const res = cp.spawnSync(process.execPath, coverArgs, { stdio: 'inherit' });
@@ -145,16 +132,15 @@ async function generateCover(args, title) {
   if (!url) throw new Error('自动封面生成完成但没有返回图片 URL');
   return url;
 }
-async function getArticle(base, h, id) {
+async function getArticle(_base, _h, id) {
   if (!id) return null;
   try {
-    const j = await requestJson(`${base}/v1/article/${id}`, { headers: h });
+    const j = await call('articles.get', { id });
     return j.data || j;
   } catch { return null; }
 }
-async function listRecent(base, h, { productId, companyId }) {
-  const qs = new URLSearchParams({ page: '1', limit: '10', productId: String(productId), companyId: String(companyId) });
-  const j = await requestJson(`${base}/v1/article?${qs}`, { headers: h });
+async function listRecent(_base, _h, { productId, companyId }) {
+  const j = await call('articles.list', { page: 1, limit: 10, productId, companyId });
   const d = j.data || j;
   return Array.isArray(d?.data) ? d.data : Array.isArray(d?.list) ? d.list : Array.isArray(d) ? d : [];
 }
@@ -173,11 +159,8 @@ function summarizeCheck(title, content, uploaded) {
 (async () => {
   const args = parseArgs(process.argv);
   if (args.help || args.h) { usage(); return; }
-  const cfg = loadGeoConfig();
-  const base = cfg.geo.baseUrl.replace(/\/$/, '');
-  const companyId = Number(first(args, ['company-id', 'companyId'], cfg.defaults.companyId || 0));
-  const productId = Number(first(args, ['product-id', 'productId'], cfg.defaults.productId || 0));
-  if (!cfg.geo.openKey) throw new Error('未配置 GEO openKey。');
+  const companyId = Number(first(args, ['company-id', 'companyId'], 0));
+  const productId = Number(first(args, ['product-id', 'productId'], 0));
   if (!companyId || !productId) throw new Error('缺少 companyId/productId，请先配置 defaults 或传 --company-id/--product-id。');
 
   let raw = '';
@@ -217,16 +200,18 @@ function summarizeCheck(title, content, uploaded) {
 
   const localCheck = { title, bytes: Buffer.byteLength(JSON.stringify(payload), 'utf8'), cjkCount: countCjk(`${title}\n${content}`), suspicious };
   if (args['dry-run'] || args.dryRun) {
-    console.log(JSON.stringify({ dryRun: true, endpoint: '/v1/article', localCheck, payloadPreview: { ...payload, content: content.slice(0, 500) + (content.length > 500 ? '...' : '') } }, null, 2));
+    console.log(JSON.stringify({ dryRun: true, capability: 'articles.create', localCheck, payloadPreview: { ...payload, content: content.slice(0, 500) + (content.length > 500 ? '...' : '') } }, null, 2));
     return;
   }
 
-  const h = buildHeaders(cfg);
-  const created = await requestJson(`${base}/v1/article`, { method: 'POST', headers: h, body: JSON.stringify(payload) });
-  const id = created?.data?.id || created?.id;
-  let uploaded = await getArticle(base, h, id);
+  const p = await plan('articles.create', payload);
+  const planId = p?.data?.planId || p?.planId;
+  if (!planId) throw new Error('CLI 未返回 planId；文章未创建。');
+  const created = await apply(planId);
+  const id = created?.data?.id || created?.data?.articleId || created?.id || created?.articleId;
+  let uploaded = await getArticle('', {}, id);
   if (!uploaded) {
-    const rows = await listRecent(base, h, { productId, companyId });
+    const rows = await listRecent('', {}, { productId, companyId });
     uploaded = rows.find(x => x.id === id) || rows.find(x => x.title === title) || null;
   }
   const verification = summarizeCheck(title, content, uploaded);

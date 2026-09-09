@@ -9,15 +9,15 @@ description: "GEO 内容到发布总控流水线技能。Use when the user says 
 
 ## 安全边界
 
-- 不要在回复、日志或 Markdown 报告里展示 Base URL；可以展示 Referer、脱敏 openKey、companyId/productId 和接口路径。
+- 认证统一由 Best GEO CLI 管理；不要读取或要求平台认证材料或内部服务地址。
 - 真实发布任务创建前必须先输出确认清单，并等待用户明确确认。
-- 图片/封面默认用 `--oss-mode local`：先下载 provider 图片，再走 `/v1/oss/pre` 本地文件上传并验证 URL，避免长签名图片 URL 转存返回 `null`。
+- 图片/封面统一使用 Best GEO CLI 的 `textToImages.*`；需要素材库 URL 时使用 `images.create`，不再走旧 OSS 预签名接口。
 - 文章上传必须使用 `geo-article/scripts/upload_article.js`，该脚本会发送 `summaries: []` 或 `summaries: [摘要]`，不要再手写旧字段 `summary`。
 - 任何上传、审核、发布写操作失败时，记录失败阶段、原因、可重试命令和已完成资产。
 
 ## 推荐流程
 
-1. 若用户只给 openKey：先用 `../geo-config/scripts/configure_openkey.js` 自动识别平台并配置默认 companyId/productId。
+1. 先确认 `best-geo auth status`，再读取或选择默认 companyId/productId。
 2. 用 `geo-content-production` 读取知识库、关键词方案、标题方案，生成 Top N 文章草稿。
 3. 用 `geo-content-audit` 审核文章；未达标先优化，不要上传。
 4. 用本技能脚本统一处理封面、上传、审核、账号查询和发布预览：
@@ -56,7 +56,7 @@ node geo-content-to-publish-pipeline/scripts/pipeline.js \
 - `pipeline-plan.md`：选题、文章、封面、上传、账号与发布计划
 - `confirmation-checklist.md`：正式发布前给用户确认的清单
 - `retry-commands.md`：失败阶段的重试命令
-- `publish-payload.json`：发布任务请求体预览（不含 Base URL / openKey）
+- `publish-payload.json`：发布任务请求体预览（不含任何旧凭证）
 
 ## 脚本能力
 

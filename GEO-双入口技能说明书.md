@@ -10,7 +10,7 @@
 GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 19 个业务技能** 组织。所有 `geo-*` 文件夹应作为同级技能安装。
 
 ### 0. `geo-runtime` — 运行时与诊断
-- 技能完整性检查、凭证读取、依赖诊断、API 连通性检查
+- 技能完整性检查、Best GEO CLI 授权诊断、依赖检查
 
 ### A. `geo-hub` — 平台操作入口
 - 账号查询、文章上传、收录检测、发布管理、配置管理
@@ -29,8 +29,8 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 19 个业务
 
 | 模块 | 用途 |
 |------|------|
-| **① geo-config** | 平台认证、openKey 配置、默认公司/产品选择 |
-| **② geo-account** | 查看账号列表、Dashboard、套餐、视频 |
+| **① geo-config** | Best GEO CLI 授权、默认公司/产品选择 |
+| **② geo-account** | 查看公司、项目、账号和图片/视频素材 |
 | **③ geo-article** | 文章上传/创建/查看/审核/删除、图片上传、批量创作 |
 | **④ geo-indexing** | 收录检测、任务管理、批量导入、发布状态 |
 | **⑤ geo-publish** | 创建发布任务，多渠道分发 |
@@ -47,7 +47,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 19 个业务
 | **⑧ geo-content** | 内容总入口（已拆分为 production + audit 两个子模块） |
 | **⑧a geo-content-production** | 关键词规划、标题创作、图片生成、封面生成 |
 | **⑧b geo-content-audit** | 一致性审核、媒体就绪审核、AI检测、覆盖度检查、内容优化、合规榜单 |
-| **⑧c geo-content-to-publish-pipeline** | 内容到发布总控：封面 OSS、文章上传、审核通过、账号查询、发布 dry-run、确认清单 |
+| **⑧c geo-content-to-publish-pipeline** | 内容到发布总控：封面素材、文章上传、审核通过、账号查询、发布 dry-run、确认清单 |
 | **⑧d geo-brand-action-plan** | 品牌落地方案：以原始监测数据为底座，输出用户问题、AI目标判断、证据、内容、平台、复测 |
 | **⑨ geo-analysis** | 证据链分析、平台逆向、飞书同步、项目仪表盘 |
 | **⑩ geo-source-assets** | 引用源资产库：从 searchedSites 沉淀我方/竞品/行业/媒体信源和补强建议 |
@@ -104,9 +104,9 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 19 个业务
 
 - **运行时**：默认 Node.js 18+，Python 仅为旧脚本兼容，不作为学员必需依赖。
 - **写操作**：上传/删除/发布/批量导入必须先 dry-run/preview，真实执行后必须 GET/list 回查。
-- **API 调用**：有专用 Node 脚本优先用专用脚本；没有专用脚本时用 `geo-runtime/scripts/api_request.js`；`curl` 仅作为低级调试。
+- **平台调用**：有专用 Node 脚本优先用专用脚本；没有专用脚本时用 `geo-runtime/scripts/best_geo.js` 调用 CLI capability。
 - **中文上传**：文章统一用 `geo-article/scripts/upload_article.js`，避免 `curl -d`、PowerShell 单行 JSON 和手写转义。
-- **图片封面**：统一走 GEO `/v1/text-to-img`，默认 `model=v2`，不使用本地 SVG fallback。
+- **图片封面**：统一走 CLI `textToImages.*`，需要素材库记录时使用 `images.create`，不使用本地 SVG fallback。
 
 详见：`GEO-SKILLS-EXECUTION-PROTOCOL.md`；固定命令卡片见：`QUICK_COMMANDS.md`。
 
@@ -150,7 +150,7 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 19 个业务
 | `CHANGELOG.md` | 版本变更日志 |
 | `LICENSE` | MIT 开源许可证 |
 | `NO_PYTHON_COMPATIBILITY.md` | 无 Python 默认运行说明 |
-| `geo-runtime/scripts/credentials.js` | 无 Python 统一凭证管理模块 |
+| `geo-runtime/scripts/best_geo.js` | Best GEO CLI capability 桥接模块 |
 
 ---
 
@@ -158,10 +158,10 @@ GEO 技能体系以 **1 个运行时支撑技能 + 3 个总入口 + 19 个业务
 
 | 依赖 | 必要性 | 用途 |
 |------|--------|------|
-| GEO 平台 openKey | ✅ 必需 | API 认证（config/account/article/indexing/publish） |
+| Best GEO CLI 授权 | ✅ 必需 | GEO 平台认证和能力调用 |
 | Node.js 18+ | ✅ 必需 | 无 Python 默认脚本运行环境 |
 | Python / requests / python-dotenv | ⬜ 旧版可选 | 仅维护旧 Python 兼容脚本时使用，学员默认不需要 |
 | baseopensdk | ⬜ 可选 | 飞书多维表格同步 |
-| GEO 平台文生图额度 | ✅ 按需 | 使用 `/v1/text-to-img` 生图，默认 model=v2 |
+| CLI 文生图能力 | ✅ 按需 | 使用 `textToImages.*` 生图，默认 model=v2 |
 | puppeteer-core | ⬜ 可选 | HTML → PDF/PNG 转换 |
 | Obsidian + Dataview | ⬜ 可选 | 项目仪表盘可视化 |

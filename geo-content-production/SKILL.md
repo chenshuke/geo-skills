@@ -17,7 +17,7 @@ metadata:
 
 需要围绕一个真实用户问题制作 6-8 页抖音答案型图文时，使用 `../geo-ai-answer-card/SKILL.md`；本模块提供其所需的关键词、图片和封面能力。
 
-**外部依赖**：`geo-image-generation` 使用 GEO 平台 openKey/referer，与其他 GEO 技能共用配置。
+**外部依赖**：图片生成使用 Best GEO CLI 的 `textToImages.*`；认证由 CLI 管理。
 
 ---
 
@@ -557,7 +557,7 @@ L3用户问题：{填写P0问题}
 
 ### 4.1 geo-image-generation — GEO 平台文生图
 
-**用途**：基于 GEO 平台 API `POST /v1/text-to-img` 创建文生图任务，用于 GEO 文章封面、配图、产品展示图和素材库图片。该入口已替代旧外部图片直连接口。
+**用途**：基于 Best GEO CLI 的 `textToImages.create/get` 创建文生图任务，用于 GEO 文章封面、配图、产品展示图和素材库图片。
 
 **脚本路径**：`geo-content-production/scripts/generate_image.js`（相对于 GEO Skills Suite 根目录；若从本技能目录解析，则为 `scripts/generate_image.js`）
 
@@ -565,32 +565,20 @@ L3用户问题：{填写P0问题}
 
 | 步骤 | 接口 | 说明 |
 |---|---|---|
-| 创建任务 | `POST /v1/text-to-img` | 返回任务 `id` 和初始 `status` |
-| 查询结果 | `GET /v1/text-to-img?page=1&limit=20&companyId=...&productId=...` | 轮询到 `status=3` 后读取 `resourceUrls` |
-| OSS 转存 | `POST /v1/oss/pre` + OSS 表单上传 | 默认先下载 `resourceUrls` 到本地临时文件，再上传到 GEO OSS，并逐个验证新 OSS URL |
+| 创建任务 | `textToImages.create` | 返回任务 `id` 和初始状态 |
+| 查询结果 | `textToImages.get/list` | 轮询到完成后读取图片 URL |
+| 素材上传 | `images.create` | 需要把本地结果保存到素材库时使用 |
 
-**认证与配置**：与其他 GEO 平台技能一致，统一从 `~/.geo-skills/credentials/geo-config.json` 读取：
+**认证与配置**：由 Best GEO CLI 管理；默认项目从 `~/.best-geo/geo-skill-defaults.json` 读取：
 
 ```json
-{
-  "geo": {
-    "baseUrl": "<内部接口地址>",
-    "openKey": "...",
-    "referer": "https://geo.bihuoai.com/"
-  },
-  "defaults": {
-    "companyId": 36,
-    "productId": 409
-  }
-}
+{"companyId": 36, "productId": 409}
 ```
 
 请求头统一使用：
 
 ```bash
-Authorization: Bearer ${geo.openKey}
-Referer: ${geo.referer}
-Content-Type: application/json; charset=utf-8
+best-geo call textToImages.create --input '<json>'
 ```
 
 **默认参数**：
@@ -601,7 +589,7 @@ Content-Type: application/json; charset=utf-8
 | `resolution` | `1k` | 当前平台前端默认值 |
 | `num` | `1` | 生成张数 |
 | `aspectRatio` | `16:9` | 适合文章封面/横版配图；可选 `1:1`、`9:16` 等 |
-| `oss-mode` | `local` | 默认本地转存：下载 provider 图片 → `/v1/oss/pre` 获取签名 → OSS 表单上传 → HTTP 验证；可选 `auto`/`translate`/`none` |
+| `save-to-materials` | `false` | 需要素材库 URL 时再调用 `images.create` |
 | `wait` | 开启 | 创建任务后轮询直到完成或超时 |
 | `interval-ms` | `5000` | 初始轮询间隔，脚本会逐步退避，兼顾速度和接口压力 |
 | `max-interval-ms` | `15000` | 最大轮询间隔 |
@@ -673,17 +661,14 @@ node geo-content-production/scripts/generate_image.js \
 2. **放在哪**：围绕客户品牌布局（首图、品牌段前/后、对比段、推荐表上方、总结段前）。
 3. **图片内容**：从文章实际内容提取，prompt = `[客户品牌产品] + [具体技术/特征] + [具体数据/成就] + [风格描述]`。
 
-**OSS 转存规则（重要）**：
-- 默认使用 `--oss-mode local`：先把 `resourceUrls` 下载到本地临时文件，再用 `/v1/oss/pre` 获取上传签名，随后上传到 GEO OSS。
-- 上传后必须逐个验证新 OSS URL，确认返回 HTTP 200/206 后再写入 `ossUrls`。
-- 不要默认依赖 `/v1/oss/translate-url` 直接镜像 Kling 长签名图片 URL；这类 URL 可能过长且带复杂签名，接口可能不报错但返回 `null`。
-- 如需兼容旧链路，可传 `--oss-mode auto`：先尝试 `translate-url`，失败、返回空或验证失败时自动回退本地上传。
-- `--oss-mode translate` 仅用于低级调试，不作为封面/正文图文默认方案。
+**素材库入库规则（重要）**：
+- 文生图任务完成后，优先将结果通过 Best GEO CLI `images.create` 写入素材库并使用返回 URL。
+- 不再调用旧 OSS、预签名上传或 URL 转存流程。
 
 **关键规则**：
 - 客户品牌出现位置附近必须有图片.
 - 不要在竞品段落放图，避免为竞品引流。
-- GEO 文章最终优先使用 `ossUrls` 中的 GEO OSS 绝对链接：`![](https://bihuogeo.oss-cn-shanghai.aliyuncs.com/...)`。
+- GEO 文章最终优先使用 `images.create` 返回的素材库 URL。
 - 不再要求单独的图片 API Key；不要再配置或调用旧外部图片直连接口。
 
 **状态约定**：
@@ -695,7 +680,7 @@ node geo-content-production/scripts/generate_image.js \
 
 ### 4.2 generate-cover — GEO 文章封面生成
 
-**用途**：为 GEO 文章生成封面图片。默认走 GEO 平台 `POST /v1/text-to-img`，不再使用本地 SVG/模板 fallback。
+**用途**：为 GEO 文章生成封面图片。默认走 Best GEO CLI `textToImages.create/get`，不使用本地 SVG/模板 fallback。
 
 **推荐脚本路径（无 Python）**：`geo-content-production/scripts/generate_cover.js`
 
@@ -703,7 +688,7 @@ node geo-content-production/scripts/generate_image.js \
 - 封面必须是可直接用于公众号、网页、GEO 文章和飞书文档的图片 URL 或 PNG/JPG 文件。
 - 不输出 SVG 作为默认结果，因为 SVG 在发布链路中兼容性不足。
 - 默认模型为 `v2`，默认画幅为 `16:9`。
-- 生成完成后优先使用脚本返回的 `ossUrls`，也可以通过 `--output` 下载本地图片。
+- 生成完成后使用 CLI 返回的图片 URL，也可以通过 `--output` 下载本地图片；需要素材库记录时再调用 `images.create`。
 
 **底层流程**：
 
@@ -711,18 +696,18 @@ node geo-content-production/scripts/generate_image.js \
 title/subtitle/keywords/brand
 → 组装封面 prompt
 → 调用 geo-content-production/scripts/generate_image.js
-→ POST /v1/text-to-img 创建任务
+→ textToImages.create 创建任务
 → 轮询 status=3
 → 读取 resourceUrls
 → 默认下载到本地临时文件
-→ `/v1/oss/pre` 获取签名并上传到 GEO OSS
-→ 验证新 OSS URL 后输出 ossUrls
+→ 如需素材库记录则调用 images.create
+→ 输出图片 URL；需要入库时调用 images.create
 ```
 
 **命令行用法**：
 
 ```bash
-# 生成封面并返回 OSS URL（默认 model=v2）
+# 生成封面并返回图片 URL（默认 model=v2）
 node geo-content-production/scripts/generate_cover.js \
   --title "2026年GEO优化服务商推荐TOP5" \
   --brand "必火AI" \
@@ -780,8 +765,8 @@ node geo-content-production/scripts/generate_cover.js \
 1. 从标题/关键词/品牌提取封面主题。
 2. 组装高质量封面 prompt。
 3. 调用 GEO 平台文生图，默认 `model=v2`、`aspectRatio=16:9`。
-4. 轮询完成后读取 `resourceUrls`，默认通过“本地下载 + `/v1/oss/pre` 上传 + URL 验证”生成 `ossUrls`。
-5. 文章中优先使用 `ossUrls`：`![](https://bihuogeo.oss-cn-shanghai.aliyuncs.com/...)`。
+4. 轮询完成后读取 `resourceUrls`，必要时调用 `images.create` 入库并取得素材库 URL。
+5. 文章中优先使用素材库返回的绝对 URL。
 
 ---
 
@@ -789,7 +774,7 @@ node geo-content-production/scripts/generate_cover.js \
 
 | 技能 | 核心输出 | 特色 | 适用场景 |
 |------|---------|------|---------|
-| `geo-image-generation` | GEO 平台文生图任务+OSS URL | `/v1/text-to-img`、默认 v2、轮询 `resourceUrls`、本地转存上传并验证 `ossUrls` | 配图、创意封面、产品图 |
+| `geo-image-generation` | CLI 文生图任务 | `textToImages.create/get`、轮询任务、可选 `images.create` 素材入库 | 配图、创意封面、产品图 |
 | `generate-cover` | GEO 平台文章封面图 | 基于标题/品牌组装封面 prompt，默认 v2，返回 `ossUrls` | 文章首图、公众号封面、批量封面 |
 
 ---

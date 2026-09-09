@@ -87,8 +87,8 @@ Obsidian 中的 GEO 项目管理可视化界面，展示收录率、上榜率、
 
 ## 技术术语
 
-### openKey
-GEO 平台的 API 认证密钥，用于调用平台的所有 API 接口。可在 GEO 管理平台（geo.bihuoai.com）的密钥管理中创建和管理。
+### Best GEO CLI 授权
+GEO Skills 使用 `best-geo auth login/status` 管理登录态。技能层不读取或要求用户配置认证材料。
 
 ### OSS
-阿里云对象存储（Object Storage Service），用于存储文章中的图片资源。上传图片时需通过 OSS 预签名 URL 进行。
+历史上的对象存储术语。当前图片和视频直接通过 CLI 的 `images.create` / `videos.create` 写入素材库并返回 URL，不再使用 OSS 预签名流程。

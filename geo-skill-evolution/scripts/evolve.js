@@ -53,10 +53,9 @@ Options:
 }
 function redact(text) {
   return String(text || '')
-    .replace(/Bearer\s+[A-Za-z0-9._-]{12,}/g, 'Bearer ****')
-    .replace(/openKey["'\s:=]+[A-Za-z0-9._-]{12,}/gi, 'openKey: ****')
+    .replace(/(?:bearer|token|secret|credential)["'\s:=]+[A-Za-z0-9._-]{12,}/gi, 'credential: ****')
     .replace(/https?:\/\/[^\s)"']*oss-cn-[^\s)"']*aliyuncs\.com\/[^\s)"']+/gi, '<OSS_IMAGE_URL>')
-    .replace(/https?:\/\/[^\s)"']*\/v1\//g, '[BaseURL]/v1/')
+    .replace(/https?:\/\/[^\s)"']+/g, '[url-redacted]')
     .replace(/https?:\/\/(nbgeo\.aimusiclj\.com|geo\.zqsdai\.com)[^\s)"']*/gi, '<INTERNAL_GEO_URL>')
     .replace(/\/Users\/[^\s)"']+/g, '<LOCAL_PATH>')
     .replace(/\/home\/ubuntu\/[^\s)"']+/g, '<SERVER_PATH>')
@@ -83,10 +82,10 @@ function classify(ctx) {
   const hay = `${symptom}\n${evidenceText}`;
   const out = { type: 'workflow-pattern', targetSkills: [], severity: ctx.severity || '' };
 
-  // 分类优先级：先看用户描述的主问题，再看证据。避免 evidence 中的 Authorization/openKey 噪声覆盖真实业务问题。
+  // 分类优先级：先看用户描述的主问题，再看证据。避免认证噪声覆盖真实业务问题。
   const publicationMisjudge = ['发布','publication','publishedurl','publishurl','posturl','platformurl','发布url','图片 url','图片URL','oss','url 误判','url误判','把图片','published url'];
-  const authInSymptom = ['openkey','referer','companyid','productid','配置','认证','鉴权','401','403','unauthorized','forbidden'];
-  const authPrimaryEvidence = /(^|\n).{0,80}(401|403|unauthorized|forbidden|鉴权失败|认证失败|invalid\s*openkey).{0,120}/i.test(evidenceText);
+  const authInSymptom = ['token','密钥','companyid','productid','配置','认证','鉴权','401','403','unauthorized','forbidden'];
+  const authPrimaryEvidence = /(^|\n).{0,80}(401|403|unauthorized|forbidden|鉴权失败|认证失败|invalid\s*(token|credential)).{0,120}/i.test(evidenceText);
 
   if (includesAny(symptom, publicationMisjudge)) {
     out.type = 'script-fix';
@@ -112,7 +111,7 @@ function classify(ctx) {
   } else out.targetSkills = ['geo-workflow-hub','geo-troubleshooter'];
   if (ctx.targetSkill) out.targetSkills = [ctx.targetSkill];
   if (!out.severity) {
-    if (includesAny(hay, ['误判','错误结论','泄露','base url','发布url','publishedurl','p0']) || includesAny(symptom, ['openkey'])) out.severity = 'P0';
+    if (includesAny(hay, ['误判','错误结论','泄露','服务地址','发布url','publishedurl','p0']) || includesAny(symptom, ['token','密钥'])) out.severity = 'P0';
     else if (includesAny(hay, ['失败','不兼容','人工处理','p1'])) out.severity = 'P1';
     else if (includesAny(hay, ['优化','增强','行业差异','p2'])) out.severity = 'P2';
     else out.severity = 'P3';
@@ -167,7 +166,7 @@ function regressionTests(ctx, cls) {
   if (cls.targetSkills.includes('geo-indexing')) tests.push('node geo-indexing/scripts/published_url_match.js --publication-json publication_status.json --answers-json answers.json --project-dir /tmp/geo-evolution-test');
   if (cls.targetSkills.includes('geo-troubleshooter')) tests.push('node geo-troubleshooter/scripts/troubleshoot.js --symptom "样例问题" --project-dir /tmp/geo-evolution-test');
   if (cls.targetSkills.includes('geo-source-assets')) tests.push('node geo-source-assets/scripts/source_assets.js --action import --answers-json answers.json --project-dir /tmp/geo-evolution-test --owned-brands 示例品牌A');
-  tests.push('rg -n "/Users/|/home\\/ubuntu|Bearer\\s+[A-Za-z0-9._-]{12,}|openKey[:=]\\s*[A-Za-z0-9._-]{12,}|真实客户|客户A|客户项目|nbgeo|aimusiclj|bihuogeo\\.oss" geo-* || true');
+  tests.push('rg -n "/Users/|/home\\/ubuntu|(?:bearer|token|secret|credential)[:=]\\s*[A-Za-z0-9._-]{12,}|真实客户|客户A|客户项目" geo-* || true');
   return [...new Set(tests)];
 }
 function csvEscape(v) { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
@@ -188,7 +187,7 @@ function renderMd(record) {
   if (record.suggestedFiles?.length) lines.push('## 建议修改文件', '', ...record.suggestedFiles.map(x => `- ${x}`), '');
   if (record.suggestedTestFiles?.length) lines.push('## 建议新增/更新测试', '', ...record.suggestedTestFiles.map(x => `- ${x}`), '');
   lines.push('## 回归测试怎么做', '', ...record.regressionTests.map(x => `- \`${x}\``), '');
-  lines.push('## 发布前验收', '', '- dry-run 发布脚本安全扫描通过', '- 不暴露 Base URL、真实 openKey、真实客户名', '- 对应 P0/P1 样例测试通过', '- 更新 QUICK_COMMANDS / 执行协议 / doctor（如需要）', '');
+  lines.push('## 发布前验收', '', '- dry-run 发布脚本安全扫描通过', '- 不暴露内部服务地址、真实认证材料、真实客户名', '- 对应 P0/P1 样例测试通过', '- 更新 QUICK_COMMANDS / 执行协议 / doctor（如需要）', '');
   lines.push('## 是否需要人工确认', '', record.severity === 'P0' ? '需要：P0 修复方案和验收结果应由负责人确认后再发布给学员。' : '视情况：涉及真实客户案例、竞品话术或写操作时需要确认。', '');
   if (record.evidence.length) {
     lines.push('## 证据文件', '');

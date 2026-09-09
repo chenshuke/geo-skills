@@ -1,4 +1,4 @@
 interface:
-  display_name: "GEO OSS Upload"
-  short_description: "Upload local images to GEO OSS and return URLs."
-  default_prompt: "Upload these local images to GEO OSS and replace Markdown image references with OSS URLs."
+  display_name: "必火GEO-素材库上传"
+  short_description: "Upload local images or videos to the GEO material library and return URLs."
+  default_prompt: "Upload these local images or videos through Best GEO CLI and return material-library URLs."

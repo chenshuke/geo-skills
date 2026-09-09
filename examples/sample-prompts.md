@@ -4,7 +4,7 @@
 
 ```text
 使用 geo-runtime 检查我的 GEO Skills 是否安装成功。
-使用 geo-config 帮我初始化 GEO 平台 openKey 配置。
+先检查 Best GEO CLI 授权，并设置默认 companyId/productId。
 帮我检查当前 companyId 和 productId 是否已设置。
 ```
 

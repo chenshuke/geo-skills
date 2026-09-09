@@ -20,8 +20,8 @@
 
 - 默认使用 **Node.js 18+**。
 - 学员端不要求 Python、pip、Pillow、requests、baseopensdk。
-- `.py` 文件只作为历史兼容入口，不作为教学/学员默认命令。
-- 凭证统一从 `~/.geo-skills/credentials/geo-config.json` 或环境变量读取。
+- 当前 GEO 执行流程不使用 `.py` 文件。
+- 认证统一由 Best GEO CLI 管理；默认公司/项目从 `~/.best-geo/geo-skill-defaults.json` 读取。
 
 ## 2. 写操作安全顺序
 
@@ -29,7 +29,7 @@
 
 1. 先读取配置并确认 `companyId/productId` 非 0。
 2. 优先运行脚本自带 `--dry-run` / preview。
-3. 向用户展示将要写入/删除的关键对象，不展示真实 openKey。
+3. 向用户展示将要写入/删除的关键对象，不展示 CLI 凭证。
 4. 真实执行必须得到用户明确确认。
 5. 执行后必须用 GET/list 回查验证，不能只相信 POST/DELETE 返回值。
 
@@ -42,7 +42,8 @@
    - 文章上传：`geo-article/scripts/upload_article.js`
    - 文章删除：`geo-article/scripts/delete_articles.js`
    - 首次配置公司/产品：`geo-config/scripts/setup_defaults.js`
-   - Scheduled Indexing 收录检测：`geo-indexing/scripts/scheduled_indexing.js`（产品主题库导入仍用 `geo-indexing/scripts/import_questions.js`）
+   - Scheduled Indexing 收录检测：`geo-indexing/scripts/scheduled_indexing.js`
+   - 搜索问题导入：`geo-indexing/scripts/import_questions.js --target questions`
    - 发布 URL 命中检测：`geo-indexing/scripts/published_url_match.js`
    - 发布状态回查：`geo-publish/scripts/publication_status.js`
    - 发布链路回归测试：`geo-runtime/scripts/regression_publication_chain.js`
@@ -51,8 +52,8 @@
    - 技能自进化：`geo-skill-evolution/scripts/evolve.js`
    - 图片生成：`geo-content-production/scripts/generate_image.js`
    - 封面生成：`geo-content-production/scripts/generate_cover.js`
-2. 没有专用脚本时，用通用 Node API 工具：`geo-runtime/scripts/api_request.js`。
-3. `curl` 只作为低级调试方式，不作为中文正文、Windows PowerShell、批量写操作的默认方案。
+2. 没有专用脚本时，使用 `node geo-runtime/scripts/best_geo.js call <capability> '<json>'`。
+3. 不使用直接 HTTP 调试命令作为业务流程的一部分。
 
 ## 4. 中文内容与编码
 
@@ -69,7 +70,7 @@ node geo-article/scripts/upload_article.js --file "文章.md" --dry-run
 
 ## 5. 图片与封面
 
-- GEO 图片/封面统一走 GEO 平台 `/v1/text-to-img`。
+- GEO 图片/封面统一走 Best GEO CLI `textToImages.*`；需要素材库 URL 时使用 `images.create`。
 - 默认模型：`v2`。
 - 返回优先使用 GEO OSS URL；不要把临时外部供应商 URL 当作最终发布素材。
 - 不再使用本地 SVG 封面 fallback，因为真实发布链路兼容性不足。
@@ -77,7 +78,7 @@ node geo-article/scripts/upload_article.js --file "文章.md" --dry-run
 
 ## 5.1 发布状态与 AI 命中判定
 
-- “发布任务创建成功”不等于“平台已发布”；必须通过 `geo-publish/scripts/publication_status.js` 回查 `/v1/publication` 并拿到真实 publishedUrl。
+- “发布任务创建成功”不等于“平台已发布”；必须通过 `geo-publish/scripts/publication_status.js` 回查 `publicationRecords.list` 并拿到真实 publishedUrl。
 - publishedUrl 只允许来自 `publishedUrl`、`publishUrl`、`postUrl`、`platformUrl`；不得把 OSS 图片、coverImageUrl、userImg、正文图片当作发布页。
 - `publication.article.id` / `articleId` 必须精确绑定，不能把一个发布 URL 套到同一任务下的多个 articleId。
 - “平台已发布”不等于“AI 已看见”；必须用 `geo-indexing/scripts/published_url_match.js` 检查 answers.searchedSites 的精确 URL 命中或弱命中。
@@ -151,11 +152,11 @@ node geo-config/scripts/setup_defaults.js --company-id <公司ID> --product-id <
 node geo-config/scripts/setup_defaults.js --create-company --company-name "公司名" --company-description "公司描述" --dry-run
 node geo-config/scripts/setup_defaults.js --create-product --company-id <公司ID> --product-name "产品名" --keywords "关键词1,关键词2" --target-words "目标词1,目标词2" --product-type 1 --dry-run
 
-# 通用 API GET（替代 curl）
-node geo-runtime/scripts/api_request.js --method GET --path /v1/article --use-defaults --query page=1 --query limit=10
+# 通用 CLI 读取
+node geo-runtime/scripts/best_geo.js call articles.list '{"page":1,"limit":10}'
 
-# 通用 API 写操作预览（真实执行再加 --force）
-node geo-runtime/scripts/api_request.js --method POST --path /v1/example --body-file payload.json --dry-run
+# 通用 CLI 写操作预览
+node geo-runtime/scripts/best_geo.js plan articles.create '{"title":"示例标题"}'
 
 # 图片/封面
 node geo-content-production/scripts/generate_image.js --prompt "图片描述" --dry-run
@@ -172,7 +173,7 @@ node geo-article/scripts/upload_article.js --file "文章.md" --cover-url "https
 
 # 本地问题导入 GEO 平台
 node geo-indexing/scripts/scheduled_indexing.js --action create --file "questions.md" --name "品牌名-每日收录" --platforms doubao --schedule-type daily --hours 9 --dry-run
-node geo-indexing/scripts/import_questions.js --target product-topic --file "deep_questions.md" --tags "深层用户问题,手动导入" --dry-run
+node geo-indexing/scripts/import_questions.js --target questions --product-id <项目ID> --file "deep_questions.md" --tags "深层用户问题,手动导入" --dry-run
 
 # 技能自进化
 node geo-skill-evolution/scripts/evolve.js --symptom "某行业客户发布后 AI 提到了竞品但没有引用我方" --industry "本地生活" --learner-level "新手" --project-dir "项目_示例品牌GEO"

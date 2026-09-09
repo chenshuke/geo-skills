@@ -70,8 +70,8 @@ function inferStatus({ publishedUrl, rawStatus, rawMessage }) {
 }
 function nextAction(row) {
   if (row.status === 'published_url_ready') return '拿 publishedUrl 去 geo-indexing 做 searchedSites 精确命中检测';
-  if (row.status === 'task_mapping_only') return '只有发布任务映射，尚无平台发布记录；继续回查 /v1/publication';
-  if (row.status === 'published_no_url') return '状态像已发布但缺 URL；继续回查 /v1/publication，必要时人工核验平台后台';
+  if (row.status === 'task_mapping_only') return '只有发布任务映射，尚无平台发布记录；继续回查 publicationRecords.list';
+  if (row.status === 'published_no_url') return '状态像已发布但缺 URL；继续回查 publicationRecords.list，必要时人工核验平台后台';
   if (row.status === 'failed') return '查看 failureReason/rawMessage，修复账号/封面/标题/平台规则后重发';
   if (row.status === 'manual_required') return '进入平台账号做人工处理/重新授权/验证码处理后再回查';
   return '等待发布完成，稍后再次运行 publication_status.js 回查';

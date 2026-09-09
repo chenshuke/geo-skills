@@ -1,6 +1,6 @@
 ---
 name: geo-skill-evolution
-description: "GEO 技能自进化和经验沉淀技能，主要给内部团队/助教/交付负责人使用，暂不作为普通学员主入口。Use when the user says 技能自进化、把客户问题沉淀成技能、把行业差异沉淀、学员遇到新问题、复盘这次实操、把失败案例变成规则、更新技能前先做改进方案、生成回归测试、沉淀行业 playbook、不同客户/行业/学员问题不一样怎么办. Produces skill improvement proposals, regression tests, routing updates, safety checks, and GitHub release checklist; does not expose real customer names or Base URL."
+description: "GEO 技能自进化和经验沉淀技能，主要给内部团队/助教/交付负责人使用，暂不作为普通学员主入口。Use when the user says 技能自进化、把客户问题沉淀成技能、把行业差异沉淀、学员遇到新问题、复盘这次实操、把失败案例变成规则、更新技能前先做改进方案、生成回归测试、沉淀行业 playbook、不同客户/行业/学员问题不一样怎么办. Produces skill improvement proposals, regression tests, routing updates, safety checks, and GitHub release checklist; does not expose real customer names or internal service details."
 ---
 
 # GEO 技能自进化
@@ -11,7 +11,7 @@ description: "GEO 技能自进化和经验沉淀技能，主要给内部团队/�
 
 - 本技能优先作为内部复盘/助教工具；普通学员遇到问题优先使用 `geo-troubleshooter`。
 - 默认只做“改进方案 + 回归测试 + 发布清单”，不直接改生产技能；用户明确说“按方案更新技能”时再修改。
-- 公开技能包不得出现真实客户/品牌名称、客户项目路径、真实 openKey、内部 Base URL、OSS 长签名图片 URL。
+- 公开技能包不得出现真实客户/品牌名称、客户项目路径、真实认证材料、内部服务地址、长签名图片 URL。
 - 每个新问题都必须转成可复用资产，而不是只给一次性答复。
 - 优先补脚本和测试，再补说明；能防止学员误操作的规则要写进协议和 quick commands。
 - 改完必须跑回归测试，尤其是曾经踩坑的场景。
@@ -74,7 +74,7 @@ node geo-skill-evolution/scripts/evolve.js \
 | `troubleshooting-rule` | 失败原因需要新手友好诊断 | `geo-troubleshooter` |
 | `workflow-pattern` | 多技能链路需要编排 | `geo-content-to-publish-pipeline` |
 | `industry-playbook` | 行业差异需要方法论沉淀 | `geo-knowledge` / `geo-content-production` / `geo-analysis` |
-| `safety-redaction` | 脱敏、客户名、Base URL、openKey 风险 | 全局协议 / 发布脚本 |
+| `safety-redaction` | 脱敏、客户名、内部服务地址、认证材料风险 | 全局协议 / 发布脚本 |
 | `regression-test` | 历史坑需要固定样例测试 | `geo-runtime doctor` / 对应脚本 |
 
 ## 什么时候必须使用本技能

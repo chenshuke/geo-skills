@@ -57,7 +57,7 @@ Markdown 和原始 JSON 可作为内部中间文件保留，不主动展示任�
 
 优先读取已有 Scheduled Indexing 任务，不要求用户重新生成问题或粘贴回答。
 
-调用 API 前遵守 `../geo-config/SKILL.md`。未配置 openKey、companyId 或 productId 时，先完成配置和选择。
+调用平台数据前遵守 `../geo-config/SKILL.md`。未完成 CLI 授权或未选择 companyId/productId 时，先完成 CLI 检查和默认值选择。
 
 列出最近任务：
 
