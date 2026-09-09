@@ -4,12 +4,13 @@
  *
  * Orchestrates deterministic stages around LLM-created GEO content:
  * plan -> cover -> upload -> article approval -> account query -> publish dry-run -> optional publish create.
- * It never prints Base URL or openKey. Real publication requires --create-publish-task --confirm.
+ * Authentication is owned by Best GEO CLI. Real publication requires --create-publish-task --confirm.
  */
 const fs = require('fs');
 const path = require('path');
 const cp = require('child_process');
-const { loadGeoConfig, headers: geoHeaders, mask } = require('../../geo-runtime/scripts/credentials.js');
+const { call, plan, apply } = require('../../geo-runtime/scripts/best_geo.js');
+const mask = () => '';
 
 const SUITE_DIR = path.resolve(__dirname, '../..');
 const PIPELINE_NAME = 'geo-content-to-publish-pipeline';
@@ -51,8 +52,8 @@ Options:
   --platforms <a,b>             Preferred publish platforms: sohu_news,wechat,zhihu,...
   --cover-url <url>             Reuse an existing public cover URL for articles without one
   --publish-time <time>         Optional publish time: YYYY-MM-DD HH:MM:SS
-  --generate-cover              Generate cover through GEO text-to-img using --oss-mode local
-  --approve                     After upload, approve articles through /v1/article/status
+  --generate-cover              Generate cover through Best GEO CLI textToImages
+  --approve                     Approve uploaded articles through articles.setStatus
   --execute                     Allow cover generation/article upload/article approval writes
   --dry-run                     Preview only; default when --execute is not set
   --create-publish-task         Create real publication task from state/current inputs; requires --confirm
@@ -65,7 +66,7 @@ Options:
   --json-out <file>             Save final summary JSON
 
 Safety:
-  - Base URL and real openKey are never printed.
+  - No legacy platform credential or service configuration is read.
   - Publication task creation requires --create-publish-task --confirm.
 `);
 }
@@ -225,23 +226,15 @@ function normalizeRows(body) {
   if (Array.isArray(d?.rows)) return d.rows;
   return [];
 }
-async function requestJson(cfg, apiPath, options = {}) {
-  const base = String(cfg.geo.baseUrl || '').replace(/\/$/, '');
-  const url = `${base}${apiPath.startsWith('/') ? apiPath : `/${apiPath}`}`;
-  const h = { ...geoHeaders(cfg), Accept: 'application/json', ...(options.headers || {}) };
-  if (options.body && !h['Content-Type']) h['Content-Type'] = 'application/json; charset=utf-8';
-  const res = await fetch(url, { method: options.method || 'GET', headers: h, body: options.body });
-  const text = await res.text();
-  let body; try { body = JSON.parse(text); } catch { body = text; }
-  if (!res.ok || (body && typeof body === 'object' && body.statusCode !== undefined && body.statusCode !== 0)) {
-    const msg = body && typeof body === 'object' ? (body.message || body.msg || JSON.stringify(body).slice(0, 500)) : String(body).slice(0, 500);
-    throw new Error(`GEO API ${options.method || 'GET'} ${apiPath} failed: HTTP ${res.status}; ${msg}`);
-  }
-  return body;
+async function requestCapability(capability, input, { write = false } = {}) {
+  if (!write) return call(capability, input);
+  const p = await plan(capability, input);
+  const id = p?.data?.planId || p?.planId;
+  if (!id) throw Error(`CLI 未返回 ${capability} 的 planId`);
+  return apply(id);
 }
 async function queryAccounts(cfg, companyId, platforms) {
-  const qs = new URLSearchParams({ page: '1', limit: '100', companyId: String(companyId) });
-  const body = await requestJson(cfg, `/v1/publication-account?${qs.toString()}`);
+  const body = await requestCapability('publicationAccounts.list', { page: 1, limit: 100, companyId: Number(companyId) });
   let rows = normalizeRows(body).map(a => {
     const max = Number(a.maxPostOneDay ?? a.maxPostOneDayCount ?? 0);
     const used = Number(a.publishedTodayCount ?? a.todayCount ?? 0);
@@ -251,13 +244,11 @@ async function queryAccounts(cfg, companyId, platforms) {
   return rows;
 }
 async function listArticles(cfg, { companyId, productId, limit = 50 }) {
-  const qs = new URLSearchParams({ page: '1', limit: String(limit), companyId: String(companyId), productId: String(productId) });
-  const body = await requestJson(cfg, `/v1/article?${qs.toString()}`);
+  const body = await requestCapability('articles.list', { page: 1, limit: Number(limit), companyId: Number(companyId), productId: Number(productId) });
   return normalizeRows(body);
 }
 async function listTasks(cfg, { companyId, productId, limit = 50 }) {
-  const qs = new URLSearchParams({ page: '1', limit: String(limit), companyId: String(companyId), productId: String(productId) });
-  const body = await requestJson(cfg, `/v1/publication-task?${qs.toString()}`);
+  const body = await requestCapability('publicationTasks.list', { page: 1, limit: Number(limit), companyId: Number(companyId), productId: Number(productId) });
   return normalizeRows(body);
 }
 function buildPublishPlan({ taskName, articleIds, platforms, accounts, accountIds, publishTime, productId, companyId, autoSelect = true }) {
@@ -278,7 +269,7 @@ function buildPublishPlan({ taskName, articleIds, platforms, accounts, accountId
       publishTime: publishTime || null
     }))
   }));
-  const payload = { name: taskName, aigc: false, productId: Number(productId), articles, companyId: Number(companyId) };
+  const payload = { name: taskName, aigc: false, productId: Number(productId), items: articles };
   return { payload, selectedAccounts: Array.from(selectedByPlatform.values()), missingPlatforms, autoSelect };
 }
 function renderPlanMd(state) {
@@ -287,8 +278,7 @@ function renderPlanMd(state) {
   lines.push(`# GEO 内容到发布流水线计划`);
   lines.push('');
   lines.push(`- 运行时间：${state.createdAt}`);
-  lines.push(`- Referer：${state.config?.referer || '(未配置)'}`);
-  lines.push(`- openKey：${state.config?.openKeyMasked || '(empty)'}`);
+  lines.push(`- 认证：Best GEO CLI（本地授权）`);
   lines.push(`- companyId/productId：${state.companyId || 0} / ${state.productId || 0}`);
   lines.push(`- 模式：${state.execute ? 'execute（发布仍需确认）' : 'dry-run'}`);
   if (state.stageTimings && Object.keys(state.stageTimings).length) {
@@ -319,7 +309,7 @@ function renderPlanMd(state) {
   if (state.publishPlan) {
     lines.push('## 发布任务 dry-run');
     lines.push(`- 任务名：${state.publishPlan.payload?.name || ''}`);
-    lines.push(`- 文章数：${state.publishPlan.payload?.articles?.length || 0}`);
+    lines.push(`- 文章数：${state.publishPlan.payload?.items?.length || 0}`);
     lines.push(`- 平台：${(state.platforms || []).join(', ') || '(未指定)'}`);
     lines.push(`- 已选择账号：${(state.publishPlan.selectedAccounts || []).map(a => `${a.platform}:${a.id}`).join(', ') || '(待用户选择)'}`);
     if (state.publishPlan.missingPlatforms?.length) lines.push(`- 缺少可用账号的平台：${state.publishPlan.missingPlatforms.join(', ')}`);
@@ -342,7 +332,7 @@ function renderChecklistMd(state) {
   lines.push('');
   lines.push('> 只有用户明确确认后，才能创建真实发布任务。');
   lines.push('');
-  lines.push(`- [ ] 已确认 Referer：${state.config?.referer || '(未配置)'}`);
+  lines.push(`- [ ] 已确认 Best GEO CLI 授权有效`);
   lines.push(`- [ ] 已确认 companyId/productId：${state.companyId || 0} / ${state.productId || 0}`);
   lines.push(`- [ ] 已确认文章数量：${state.articleIds?.length || state.articles?.filter(a => a.articleId).length || 0}`);
   lines.push(`- [ ] 已确认所有文章已审核通过：${state.approvedArticleIds?.length || 0} 篇`);
@@ -417,7 +407,7 @@ async function runCoverStage(state, args) {
     if (article.coverUrl) continue;
     const slug = safeSlug(`${String(article.index).padStart(2,'0')}_${article.title}`, `article_${article.index}`);
     const jsonOut = path.join(coverDir, `${slug}.json`);
-    const coverArgs = ['--title', article.title, '--json-out', jsonOut, '--project-dir', state.projectDir, '--batch', state.batch, '--oss-mode', 'local'];
+    const coverArgs = ['--title', article.title, '--json-out', jsonOut, '--project-dir', state.projectDir, '--batch', state.batch];
     const brand = first(args, ['brand','product','company']); if (brand) coverArgs.push('--brand', String(brand));
     const keywords = first(args, ['keywords','keyword']); if (keywords) coverArgs.push('--keywords', String(keywords));
     const style = first(args, ['style']); if (style) coverArgs.push('--style', String(style));
@@ -466,9 +456,9 @@ async function runApproveStage(state) {
   const ids = Array.from(new Set([...(state.articleIds || []), ...state.articles.map(a => a.articleId).filter(Boolean).map(Number)]));
   if (!ids.length) return;
   const payload = { ids, status: 1 };
-  state.approvePreview = { endpoint: '/v1/article/status', payload };
+  state.approvePreview = { capability: 'articles.setStatus', payload };
   if (!state.execute) return;
-  await requestJson(state.cfg, '/v1/article/status', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: JSON.stringify(payload) });
+  await requestCapability('articles.setStatus', payload, { write: true });
   const rows = await listArticles(state.cfg, { companyId: state.companyId, productId: state.productId, limit: 100 });
   const approved = rows.filter(r => ids.includes(Number(r.id)) && Number(r.status) === 1).map(r => Number(r.id));
   state.approvedArticleIds = approved;
@@ -502,10 +492,10 @@ async function createPublishTask(state, args = {}) {
   if (state.publishCreated?.taskId || state.publishCreated?.acceptedAt) return;
   if (!state.publishPlan?.payload) throw new Error('缺少 publishPlan.payload，请先运行发布 dry-run。');
   const payload = state.publishPlan.payload;
-  if (!payload.articles?.length) throw new Error('发布 payload 中没有文章。');
-  const missingAccount = payload.articles.some(a => !a.platforms?.length || a.platforms.some(p => !p.publishAccountIds?.length));
+  if (!payload.items?.length) throw new Error('发布 payload 中没有文章。');
+  const missingAccount = payload.items.some(a => !a.platforms?.length || a.platforms.some(p => !p.publishAccountIds?.length));
   if (missingAccount) throw new Error('发布 payload 缺少账号，请先确认平台账号。');
-  const created = await requestJson(state.cfg, '/v1/publication-task', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: JSON.stringify(payload) });
+  const created = await requestCapability('publicationTasks.createArticle', payload, { write: true });
   const taskId = Number(created?.data?.taskId || created?.data?.id || created?.taskId || created?.id || 0);
   state.publishCreated = {
     taskId: taskId || null,
@@ -536,9 +526,9 @@ async function main() {
   const projectDir = path.resolve(first(args, ['project-dir','projectDir'], previous?.projectDir || '.'));
   const runDir = previous?.runDir ? path.resolve(previous.runDir) : buildRunDir(args, projectDir);
   ensureDir(runDir);
-  const cfg = loadGeoConfig();
-  const companyId = Number(first(args, ['company-id','companyId'], previous?.companyId || cfg.defaults.companyId || 0));
-  const productId = Number(first(args, ['product-id','productId'], previous?.productId || cfg.defaults.productId || 0));
+  const cfg = { geo:{}, defaults:{} };
+  const companyId = Number(first(args, ['company-id','companyId'], previous?.companyId || 0));
+  const productId = Number(first(args, ['product-id','productId'], previous?.productId || 0));
   const count = Math.max(1, Number(first(args, ['count','n'], previous?.count || 3)) || 3);
   const execute = Boolean(args.execute || args.force) && !(args['dry-run'] || args.dryRun);
   const createPublish = Boolean(args['create-publish-task'] || args.createPublishTask);
@@ -548,8 +538,8 @@ async function main() {
   const publishTime = first(args, ['publish-time','publishTime'], previous?.publishTime || '');
 
   if (createPublish && !confirm) throw new Error('创建真实发布任务必须同时传 --confirm。');
-  if ((execute || createPublish) && (!cfg.geo.openKey || !companyId || !productId)) {
-    throw new Error('缺少 openKey/companyId/productId，请先使用 geo-config 完成初始化。');
+  if ((execute || createPublish) && (!companyId || !productId)) {
+    throw new Error('缺少 companyId/productId，请通过参数或状态文件提供。');
   }
 
   const state = {
@@ -567,7 +557,7 @@ async function main() {
     productId,
     platforms,
     publishTime,
-    config: { openKeyMasked: mask(cfg.geo.openKey), referer: cfg.geo.referer || '', platformConfigured: Boolean(cfg.geo.baseUrl) },
+    config: { auth: 'best-geo', companyId, productId },
     keywordPlan: first(args, ['keyword-plan','keywordPlan'], previous?.keywordPlan || ''),
     titlePlan: first(args, ['title-plan','titlePlan'], previous?.titlePlan || ''),
     knowledgeDir: first(args, ['knowledge-dir','knowledgeDir','kb'], previous?.knowledgeDir || ''),

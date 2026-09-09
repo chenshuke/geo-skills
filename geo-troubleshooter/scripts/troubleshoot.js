@@ -2,7 +2,7 @@
 /**
  * GEO troubleshooting helper.
  * Produces beginner-friendly fixed-format diagnoses from symptoms and evidence files.
- * Never prints Base URL or full openKey.
+ * Never prints internal service details or full authentication material.
  */
 const fs = require('fs');
 const path = require('path');
@@ -86,9 +86,8 @@ function parseCsvLine(line) {
 }
 function redact(s) {
   return String(s || '')
-    .replace(/https?:\/\/[^\s)"']+/g, m => m.includes('/v1/') ? m.replace(/^https?:\/\/[^/]+/, '[BaseURL]') : m)
-    .replace(/Bearer\s+[A-Za-z0-9._-]+/g, 'Bearer ****')
-    .replace(/openKey["'\s:=]+[A-Za-z0-9._-]{12,}/gi, 'openKey: ****')
+    .replace(/https?:\/\/[^\s)"']+/g, '[url-redacted]')
+    .replace(/(?:bearer|token|secret|credential)["'\s:=]+[A-Za-z0-9._-]{12,}/gi, 'credential: ****')
     .slice(0, 800);
 }
 function evidenceLine(label, file, detail = '') {
@@ -135,17 +134,17 @@ function diagnose(args, ev) {
   const issues = [];
   const addIssue = (issue) => { issues.push(issue); return issue; };
 
-  if (hasText(symptomLog, ['openkey','401','unauthorized','认证','鉴权','密钥','token']) || /\"status\"\s*:\s*\"FAIL\"|\"status\"\s*:\s*\"WARN\"/.test(JSON.stringify(ev.json.doctor || {}))) {
-    const i = addIssue(newIssue('openkey_invalid', 'openKey 可能配置错误或已失效'));
-    add(i, 'causes', ['openKey 填错、复制时多了空格，或密钥属于另一个 GEO 平台/Referer。', '当前配置文件没有被实际运行环境读取。']);
+  if (hasText(symptomLog, ['401','unauthorized','认证','鉴权','token']) || /\"status\"\s*:\s*\"FAIL\"|\"status\"\s*:\s*\"WARN\"/.test(JSON.stringify(ev.json.doctor || {}))) {
+    const i = addIssue(newIssue('cli_auth_invalid', 'Best GEO CLI 授权可能失效或不可用'));
+    add(i, 'causes', ['CLI 登录态过期、未登录，或当前账号无对应 capability 权限。', '运行环境没有使用当前用户的 CLI 配置。']);
     add(i, 'evidence', [evidenceLine('doctor JSON', ev.files.doctor), ev.logText && `错误日志：${ev.logText}`]);
-    add(i, 'nextSteps', ['运行 `node geo-runtime/scripts/doctor.js --json` 查看 openKey 是否为空或接口是否 401。', '使用 `geo-config` 重新写入 openKey，并让配置脚本自动识别 Referer。', '重新做一次只读接口检查，不要先做上传/发布写操作。']);
-    i.humanConfirmation = '需要：确认用户提供的 openKey 是否为当前账号/当前平台生成。';
+    add(i, 'nextSteps', ['运行 `best-geo auth status` 和 `node geo-runtime/scripts/doctor.js --json`。', '必要时重新运行 `best-geo auth login`，再重试只读 capability。', '重新做一次只读接口检查，不要先做上传/发布写操作。']);
+    i.humanConfirmation = '需要：确认当前 CLI 登录账号和目标公司/项目是否正确。';
   }
 
   if (hasText(symptomLog, ['companyid','productid','10108','公司产品错误','产品id','公司id','defaults.companyId','defaults.productId']) || /10108/.test(JSON.stringify(ev.json.doctor || {}))) {
     const i = addIssue(newIssue('company_product_mismatch', 'companyId/productId 可能为空、选错或与文章不匹配'));
-    add(i, 'causes', ['默认 companyId/productId 仍为 0。', '文章、产品、发布任务不属于同一个 productId。', '切换 openKey 后沿用了旧公司/产品 ID。']);
+    add(i, 'causes', ['默认 companyId/productId 仍为 0。', '文章、产品、发布任务不属于同一个 productId。', '切换 CLI 登录账号后沿用了旧公司/项目 ID。']);
     add(i, 'evidence', [evidenceLine('doctor JSON', ev.files.doctor), ev.logText && `错误日志：${ev.logText}`]);
     add(i, 'nextSteps', ['运行 `node geo-config/scripts/setup_defaults.js --list` 重新列出公司和产品。', '选择正确 companyId/productId 后写回 defaults。', '重新查询文章详情，确认文章 productId 与发布任务 productId 一致。']);
     i.humanConfirmation = '需要：让用户确认要操作的是哪个公司和产品。';
@@ -154,9 +153,9 @@ function diagnose(args, ev) {
   if (ev.files.upload || hasText(symptomLog, ['文章上传失败','上传文章失败','upload_article','upload-json','article upload','summary','summaries','请求参数错误','封面上传'])) {
     const uploadRows = rowsOf(ev.json.upload);
     const i = addIssue(newIssue('article_upload_failed', '文章上传失败或上传参数不兼容'));
-    add(i, 'causes', ['文章 payload 字段不符合当前接口，例如应使用 `summaries: []`。', '封面 URL 不可访问，或第三方长签名图片没有先转存到 GEO OSS。', 'Markdown 编码不是 UTF-8 或正文为空。']);
+    add(i, 'causes', ['文章 payload 字段不符合当前 capability schema，例如应使用 `summaries: []`。', '封面 URL 不可访问，或素材尚未通过素材库能力上传。', 'Markdown 编码不是 UTF-8 或正文为空。']);
     add(i, 'evidence', [evidenceLine('upload JSON', ev.files.upload, `${uploadRows.length} rows`), ev.logText && `错误日志：${ev.logText}`]);
-    add(i, 'nextSteps', ['使用 `geo-article/scripts/upload_article.js --file 文章.md --dry-run` 先预览 payload。', '封面/正文图先用 GEO OSS 本地文件上传，避免直接使用第三方长签名 URL。', '如果报“请求参数错误”，检查脚本是否已更新为 `summaries: []`。']);
+    add(i, 'nextSteps', ['使用 `geo-article/scripts/upload_article.js --file 文章.md --dry-run` 先预览 payload。', '封面/正文图先用 `images.create` 或 `videos.create` 上传到素材库，避免直接使用第三方长签名 URL。', '如果报“请求参数错误”，检查脚本是否已更新为 `summaries: []`。']);
     i.humanConfirmation = '视情况：如果要真实上传或覆盖文章，需要用户确认。';
   }
 

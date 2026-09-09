@@ -1,6 +1,6 @@
 ---
 name: geo-troubleshooter
-description: "GEO 故障排查和新手友好诊断技能。Use when the user says 排查失败、哪里出问题、为什么不能用、openKey 配错、companyId/productId 错、文章上传失败、发布任务创建成功但没有发布、发布状态人工处理、收录任务没跑完、answers 有数据但 matrix 没数据、searchedSites 有来源但 articleIndexed=false、AI 提到竞品不提我方、AI 推荐我方但引用源不是我方资产、下一步怎么处理、需要人工确认吗. Outputs fixed diagnosis format: 问题是什么/可能原因/证据在哪里/下一步怎么处理/是否需要人工确认."
+description: "GEO 故障排查和新手友好诊断技能。Use when the user says 排查失败、哪里出问题、为什么不能用、认证失败、companyId/productId 错、文章上传失败、发布任务创建成功但没有发布、发布状态人工处理、收录任务没跑完、answers 有数据但 matrix 没数据、searchedSites 有来源但 articleIndexed=false、AI 提到竞品不提我方、AI 推荐我方但引用源不是我方资产、下一步怎么处理、需要人工确认吗. Outputs fixed diagnosis format: 问题是什么/可能原因/证据在哪里/下一步怎么处理/是否需要人工确认."
 ---
 
 # GEO 故障排查
@@ -10,7 +10,7 @@ description: "GEO 故障排查和新手友好诊断技能。Use when the user sa
 ## 核心原则
 
 - 不替代具体业务技能；本技能只做诊断、分流和下一步建议。
-- Base URL 不在回复、日志、报告或 dry-run 中展示；可以展示 Referer、脱敏 openKey、接口路径、文件路径。
+- 不展示内部认证信息；优先检查 `best-geo auth status`、capability 错误和文件路径。
 - 先看证据再下结论：优先读取用户提供的错误日志、JSON 输出、发布状态表、answers/matrix/source-assets 文件。
 - 对新手输出固定格式，不只说“失败了”，必须告诉他下一步做什么。
 
@@ -67,7 +67,7 @@ node geo-troubleshooter/scripts/troubleshoot.js \
 
 | 场景 | 优先证据 | 下一步技能 |
 |---|---|---|
-| openKey 配错 | `geo-runtime/scripts/doctor.js --json`、API 错误 | `geo-config` |
+| CLI 授权失效 | `geo-runtime/scripts/doctor.js --json`、CLI 错误 | `geo-config` |
 | companyId/productId 错 | doctor JSON、API 返回、文章/产品列表 | `geo-config` / `geo-account` |
 | 文章上传失败 | `upload_article.js --json-out`、错误日志 | `geo-article` |
 | 发布任务创建成功但没有发布 | publication status JSON | `geo-publish` |

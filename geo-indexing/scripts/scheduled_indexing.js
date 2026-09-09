@@ -2,12 +2,12 @@
 /**
  * GEO Scheduled Indexing helper (Node/no-Python).
  *
- * Uses /v1/scheduled-indexing as the default AI indexing interface.
- * Never prints Base URL or openKey; previews show API paths only.
+ * Uses Best GEO CLI Scheduled Indexing capabilities as the default AI indexing interface.
+ * Never prints internal authentication data; previews show capability names only.
  */
 const fs = require('fs');
 const path = require('path');
-const { loadGeoConfig, headers: geoHeaders, mask } = require('../../geo-runtime/scripts/credentials.js');
+const { call, plan, apply } = require('../../geo-runtime/scripts/best_geo.js');
 
 const ALL_PLATFORMS = ['deepseek','doubao','yuanbao','qwen','yiyan','kimi','zhipu','chatgpt','gemini','nami','grok','perp','poe'];
 const DEFAULT_PLATFORMS = ['doubao'];
@@ -52,19 +52,19 @@ function usage() {
   node geo-indexing/scripts/scheduled_indexing.js --action matrix --id 123 --limit 100
 
 Actions:
-  create               创建定时收录计划: POST /v1/scheduled-indexing
-  list                 计划列表: GET /v1/scheduled-indexing
-  detail               计划详情: GET /v1/scheduled-indexing/{id}
-  update               更新计划/启停: PATCH /v1/scheduled-indexing/{id}
-  delete               删除计划: DELETE /v1/scheduled-indexing/{id}
-  run-now              立即执行一次: POST /v1/scheduled-indexing/{id}/run-now
-  runs                 执行历史: GET /v1/scheduled-indexing/{id}/runs
-  metrics              折线图数据: GET /v1/scheduled-indexing/{id}/metrics
-  answers              大模型回答与引用: GET /v1/scheduled-indexing/{id}/answers
-  matrix               问题×平台收录矩阵: GET /v1/scheduled-indexing/{id}/topic-platform-matrix
-  citations            引用分析: GET /v1/scheduled-indexing/{id}/citations
-  topic-stats          按 topic 聚合统计: GET /v1/scheduled-indexing/{id}/topic-stats
-  suggest-competitors  AI 建议竞品: POST /v1/scheduled-indexing/suggest-competitors
+  create               创建定时收录计划: scheduledIndexing.create
+  list                 计划列表: scheduledIndexing.list
+  detail               计划详情: scheduledIndexing.get
+  update               更新计划/启停: scheduledIndexing.update
+  delete               删除计划: scheduledIndexing.delete
+  run-now              立即执行一次: scheduledIndexing.runNow
+  runs                 执行历史: scheduledIndexing.runs
+  metrics              折线图数据: scheduledIndexing.metrics
+  answers              大模型回答与引用: scheduledIndexing.answers
+  matrix               问题×平台收录矩阵: scheduledIndexing.topicPlatformMatrix
+  citations            引用分析: scheduledIndexing.citations
+  topic-stats          按 topic 聚合统计: scheduledIndexing.topicStats
+  suggest-competitors  AI 建议竞品: indexing.suggestCompetitors
 
 Create input:
   --file <path>              .md/.txt/.csv/.json questions
@@ -80,12 +80,12 @@ Create input:
   --times-per-cycle <n>      interval 均分预设
   --competitor-brands <a,b>  竞品品牌数组
   --screenshot-platforms <a,b> 截图平台数组(platforms 子集)
-  --source <1|2|3>           采集模式：3=云端模式（默认），1=本地/设备模式；2为平台保留模式
+  --source <1|3>             采集模式：3=云端模式（默认），1=本地/设备模式
   --enabled <true|false>     默认 true
   --run-now                  创建成功后立即执行一次
 
 Safety:
-  写操作必须先 --dry-run；真实执行必须加 --force。输出不会展示 Base URL 或完整 openKey。
+  写操作必须先 --dry-run；真实执行必须加 --force。输出不会展示内部认证信息。
 `);
 }
 function splitList(v, sep = /[,，]/) { return String(v || '').split(sep).map(s => s.trim()).filter(Boolean); }
@@ -188,10 +188,6 @@ function readQuestions(args) {
   }
   return out.slice(0, Number(first(args, ['limit'], 200)) || 200);
 }
-function base(cfg) { return String(cfg.geo.baseUrl || '').replace(/\/$/, ''); }
-function buildHeaders(cfg, json = false, extra = {}) {
-  return { ...geoHeaders(cfg), Accept: 'application/json', ...(json ? {'Content-Type':'application/json; charset=utf-8'} : {}), ...extra };
-}
 function rowsOf(body) {
   const d = body && body.data !== undefined ? body.data : body;
   if (Array.isArray(d)) return d;
@@ -200,29 +196,9 @@ function rowsOf(body) {
   if (Array.isArray(d?.rows)) return d.rows;
   return [];
 }
-function apiPath(pathname, query = {}) {
-  const qs = new URLSearchParams();
-  for (const [k,v] of Object.entries(query)) {
-    if (v === undefined || v === null || v === '') continue;
-    if (Array.isArray(v)) v.forEach(x => qs.append(k, String(x)));
-    else qs.set(k, String(v));
-  }
-  const s = qs.toString();
-  return s ? `${pathname}?${s}` : pathname;
-}
-async function request(cfg, method, pathname, { query = {}, body, headers = {} } = {}) {
-  const pathOnly = apiPath(pathname, query);
-  const res = await fetch(`${base(cfg)}${pathOnly}`, { method, headers: buildHeaders(cfg, Boolean(body), headers), body: body ? JSON.stringify(body) : undefined });
-  const text = await res.text();
-  let data; try { data = JSON.parse(text); } catch { data = text; }
-  if (!res.ok || (data && typeof data === 'object' && data.statusCode !== undefined && data.statusCode !== 0)) {
-    const msg = data && typeof data === 'object' ? (data.message || data.msg || JSON.stringify(data).slice(0,500)) : String(data).slice(0,500);
-    let hint = '';
-    if (/所选平台已被禁用|平台.*禁用/.test(msg)) hint = '；建议不要使用 --platforms all，改用 --platforms doubao 或账号已开通的平台。';
-    else if (/请求参数错误|参数/.test(msg)) hint = '；请检查 platforms、source、schedule-type、hours/weekdays/interval-days。课堂默认建议：--platforms doubao --schedule-type once 或 --schedule-type daily --hours 9。';
-    throw new Error(`GEO API ${method} ${pathname} failed: HTTP ${res.status}; ${msg}${hint}`);
-  }
-  return data;
+async function request(cfg, capability, input = {}, { write = false } = {}) {
+  if (!write) return call(capability, input);
+  const p=await plan(capability,input); const pid=p?.data?.planId||p?.planId; if(!pid)throw Error('CLI 未返回 planId'); return apply(pid);
 }
 function validatePositiveInt(value, name) {
   if (!Number.isInteger(value) || value <= 0) throw new Error(`${name} 必须是正整数。`);
@@ -287,7 +263,7 @@ function platforms(args) {
 }
 function sourceValue(args) {
   const value = Number(first(args, ['source'], 3));
-  if (![1, 2, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）、2（平台保留模式）或 3（云端模式）。');
+  if (![1, 3].includes(value)) throw new Error('source 只能是 1（本地/设备模式）或 3（云端模式）。');
   return value;
 }
 function createPayload(args, cfg) {
@@ -340,69 +316,67 @@ function queryCommon(args, cfg) {
   const q = {};
   for (const key of ['page','limit','id','name','enabled','platform','topicId','startDate','endDate','runId','taskId']) {
     const v = first(args, [key, key.replace(/[A-Z]/g, m => '-' + m.toLowerCase())]);
-    if (v !== undefined && v !== true) q[key] = v;
+    if (v !== undefined && v !== true) q[key] = ['page','limit','id','topicId','runId','taskId'].includes(key) ? Number(v) : v;
   }
   const companyId = first(args, ['company-id','companyId'], cfg.defaults.companyId || '');
   if (companyId && ['list'].includes(String(first(args,['action'],'list')))) q.companyId = Number(companyId);
   return q;
 }
-function preview(method, path, body, cfg, extra = {}) {
-  return { dryRun: true, request: { method, path, body: body || undefined, openKey: mask(cfg.geo.openKey), referer: cfg.geo.referer || '' }, ...extra };
+function preview(capability, input, unused = {}, extra = {}) {
+  return { dryRun: true, request: { capability, input: input || undefined, backend: 'best-geo' }, ...extra };
 }
 async function main() {
   const args = parseArgs(process.argv);
   if (args.help || args.h) { usage(); return; }
   const action = String(first(args, ['action'], args._[0] || 'list'));
   const dryRun = Boolean(args['dry-run'] || args.dryRun);
-  const cfg = loadGeoConfig();
-  if (!cfg.geo.openKey) throw new Error('未配置 GEO openKey。');
+  const cfg = { defaults: { companyId: Number(first(args, ['company-id','companyId'], 0)), productId: Number(first(args, ['product-id','productId'], 0)) }, geo: {} };
   if (WRITE_ACTIONS.has(action) && !dryRun && !args.force) throw new Error(`${action} 是写/耗资源操作。请先 --dry-run 预览，真实执行加 --force。`);
   const id = Number(first(args, ['id'], 0));
   let result;
 
   if (action === 'create') {
     const body = createPayload(args, cfg);
-    if (dryRun) result = preview('POST', '/v1/scheduled-indexing', body, cfg);
+    if (dryRun) result = preview('scheduledIndexing.create', body, cfg);
     else {
-      const created = await request(cfg, 'POST', '/v1/scheduled-indexing', { body });
+      const created = await request(cfg, 'scheduledIndexing.create', body, { write: true });
       const scheduleId = Number(created?.data?.id || created?.id || 0);
       let runNow = null, detail = null;
-      if (args['run-now'] || args.runNow) runNow = await request(cfg, 'POST', `/v1/scheduled-indexing/${scheduleId}/run-now`);
-      if (scheduleId) detail = await request(cfg, 'GET', `/v1/scheduled-indexing/${scheduleId}`);
+      if (args['run-now'] || args.runNow) runNow = await request(cfg, 'scheduledIndexing.runNow', { planId: scheduleId }, { write: true });
+      if (scheduleId) detail = await request(cfg, 'scheduledIndexing.get', { planId: scheduleId });
       result = { action, scheduleId, created: created.data || created, runNow: runNow ? (runNow.data || runNow) : null, verification: detail ? (detail.data || detail) : null };
     }
   } else if (action === 'list') {
     const query = queryCommon(args, cfg);
-    const pathOnly = apiPath('/v1/scheduled-indexing', query);
-    result = dryRun ? preview('GET', pathOnly, null, cfg) : { action, rows: rowsOf(await request(cfg, 'GET', '/v1/scheduled-indexing', { query })) };
+    result = dryRun ? preview('scheduledIndexing.list', query, cfg) : { action, rows: rowsOf(await request(cfg, 'scheduledIndexing.list', query)) };
   } else if (action === 'detail') {
     if (!id) throw new Error('detail 需要 --id。');
-    result = dryRun ? preview('GET', `/v1/scheduled-indexing/${id}`, null, cfg) : { action, data: (await request(cfg, 'GET', `/v1/scheduled-indexing/${id}`)).data };
+    result = dryRun ? preview('scheduledIndexing.get', { planId: id }, cfg) : { action, data: (await request(cfg, 'scheduledIndexing.get', { planId: id })).data };
   } else if (action === 'update') {
     if (!id) throw new Error('update 需要 --id。');
     const body = updatePayload(args, cfg);
-    result = dryRun ? preview('PATCH', `/v1/scheduled-indexing/${id}`, body, cfg) : { action, updated: (await request(cfg, 'PATCH', `/v1/scheduled-indexing/${id}`, { body })).data, verification: (await request(cfg, 'GET', `/v1/scheduled-indexing/${id}`)).data };
+    result = dryRun ? preview('scheduledIndexing.update', { ...body, planId: id }, cfg) : { action, updated: (await request(cfg, 'scheduledIndexing.update', { ...body, planId: id }, { write: true })).data, verification: (await request(cfg, 'scheduledIndexing.get', { planId: id })).data };
   } else if (action === 'delete') {
     if (!id) throw new Error('delete 需要 --id。');
-    result = dryRun ? preview('DELETE', `/v1/scheduled-indexing/${id}`, null, cfg) : { action, deleted: await request(cfg, 'DELETE', `/v1/scheduled-indexing/${id}`) };
+    result = dryRun ? preview('scheduledIndexing.delete', { planId: id }, cfg) : { action, deleted: await request(cfg, 'scheduledIndexing.delete', { planId: id }, { write: true }) };
   } else if (action === 'run-now') {
     if (!id) throw new Error('run-now 需要 --id。');
-    result = dryRun ? preview('POST', `/v1/scheduled-indexing/${id}/run-now`, null, cfg) : { action, run: (await request(cfg, 'POST', `/v1/scheduled-indexing/${id}/run-now`)).data };
+    result = dryRun ? preview('scheduledIndexing.runNow', { planId: id }, cfg) : { action, run: (await request(cfg, 'scheduledIndexing.runNow', { planId: id }, { write: true })).data };
   } else if (['runs','metrics','answers','citations','topic-stats'].includes(action)) {
     if (!id) throw new Error(`${action} 需要 --id。`);
     const endpoint = action === 'topic-stats' ? 'topic-stats' : action;
     const query = queryCommon(args, cfg);
     delete query.id;
-    result = dryRun ? preview('GET', apiPath(`/v1/scheduled-indexing/${id}/${endpoint}`, query), null, cfg) : { action, rows: rowsOf(await request(cfg, 'GET', `/v1/scheduled-indexing/${id}/${endpoint}`, { query })) };
+    result = dryRun ? preview(`scheduledIndexing.${endpoint === 'topic-stats' ? 'topicStats' : endpoint}`, { ...query, planId: id }, cfg) : { action, rows: rowsOf(await request(cfg, `scheduledIndexing.${endpoint === 'topic-stats' ? 'topicStats' : endpoint}`, { ...query, planId: id })) };
   } else if (action === 'matrix' || action === 'topic-platform-matrix') {
     if (!id) throw new Error('matrix 需要 --id。');
     const query = queryCommon(args, cfg); delete query.id;
-    result = dryRun ? preview('GET', apiPath(`/v1/scheduled-indexing/${id}/topic-platform-matrix`, query), null, cfg) : { action: 'matrix', rows: rowsOf(await request(cfg, 'GET', `/v1/scheduled-indexing/${id}/topic-platform-matrix`, { query })) };
+    result = dryRun ? preview('scheduledIndexing.topicPlatformMatrix', { ...query, planId: id }, cfg) : { action: 'matrix', rows: rowsOf(await request(cfg, 'scheduledIndexing.topicPlatformMatrix', { ...query, planId: id })) };
   } else if (action === 'suggest-competitors') {
     const companyId = Number(first(args, ['company-id','companyId'], cfg.defaults.companyId || 0));
     if (!companyId) throw new Error('suggest-competitors 需要 companyId。');
     const body = { companyId };
-    result = dryRun ? preview('POST', '/v1/scheduled-indexing/suggest-competitors', body, cfg) : { action, suggestions: (await request(cfg, 'POST', '/v1/scheduled-indexing/suggest-competitors', { body })).data };
+    result = dryRun ? preview('indexing.suggestCompetitors', body, cfg) : { action, suggestions: (await request(cfg, 'indexing.suggestCompetitors', body, { write: true })).data };
   } else {
     throw new Error(`未知 action：${action}`);
   }

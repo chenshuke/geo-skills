@@ -8,7 +8,7 @@ metadata:
   category: router
 ---
 
-> **外部依赖**: 部分子技能需要 GEO 平台 openKey
+> **外部依赖**: 需要 Best GEO CLI 授权；不需要在技能中另配认证材料
 
 # GEO工作流统一入口 (GEO Workflow Hub)
 
@@ -151,7 +151,7 @@ metadata:
 ---
 
 ### ⑫ geo-troubleshooter — 故障排查
-> 把 openKey、公司产品、文章上传、发布、收录、引用源等失败场景诊断成“问题/原因/证据/下一步/人工确认”
+> 把 CLI 授权、公司产品、文章上传、发布、收录、引用源等失败场景诊断成“问题/原因/证据/下一步/人工确认”
 
 **适用场景**：学员不知道哪里错了、任务失败、接口有数据但结果不符合预期、需要下一步处理建议。
 
@@ -194,7 +194,7 @@ metadata:
 ## 🔄 配置引导（首次使用必须执行）
 
 与 geo-hub 共享配置流程，自动执行：
-1. 读取 `~/.geo-skills/credentials/geo-config.json` 获取 openKey
+1. 执行 `best-geo auth status` 检查授权
 2. 检查并引导选择 companyId 和 productId
 
 ---

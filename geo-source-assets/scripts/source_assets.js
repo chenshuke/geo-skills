@@ -5,7 +5,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { loadGeoConfig, headers: geoHeaders, mask } = require('../../geo-runtime/scripts/credentials.js');
+const { call } = require('../../geo-runtime/scripts/best_geo.js');
 const { unwrapRows } = require('../../geo-runtime/scripts/json_helpers.js');
 
 const CSV_FIELDS = [
@@ -410,23 +410,16 @@ function writeReports(dir, rows, dryRun = false) {
   }
   return files;
 }
-async function requestGeo(cfg, endpoint, query = {}) {
-  const qs = new URLSearchParams();
-  for (const [key, value] of Object.entries(query)) if (value !== undefined && value !== null && value !== '') qs.set(key, String(value));
-  const base = String(cfg.geo.baseUrl || '').replace(/\/$/, '');
-  const suffix = qs.toString() ? `?${qs}` : '';
-  const res = await fetch(`${base}${endpoint}${suffix}`, { headers: { ...geoHeaders(cfg), Accept: 'application/json' } });
-  const text = await res.text();
-  let body; try { body = JSON.parse(text); } catch { body = text; }
-  if (!res.ok || (body && typeof body === 'object' && body.statusCode !== undefined && body.statusCode !== 0)) {
-    const msg = body && typeof body === 'object' ? (body.message || body.msg || JSON.stringify(body).slice(0,500)) : String(body).slice(0,500);
-    throw new Error(`GEO API GET ${endpoint} failed: HTTP ${res.status}; ${msg}`);
+async function requestGeo(cfg, capability, query = {}) {
+  if (capability === 'scheduledIndexing.answers') {
+    const input={...query};
+    for (const key of ['page','limit','runId','topicId','taskId']) if (input[key] !== undefined) input[key]=Number(input[key]);
+    return call('scheduledIndexing.answers',input);
   }
-  return body;
+  return call(capability,{...query,page:query.page===undefined?undefined:Number(query.page),limit:query.limit===undefined?undefined:Number(query.limit)});
 }
 async function fetchAnswers(args, scheduleId) {
-  const cfg = loadGeoConfig();
-  if (!cfg.geo.openKey) throw new Error('未配置 GEO openKey。');
+  const cfg = {};
   const id = Number(scheduleId || first(args, ['schedule-id','scheduleId','id'], 0));
   if (!id) throw new Error('fetch 需要 --schedule-id。');
   const qs = new URLSearchParams({ page: String(first(args, ['page'], 1)), limit: String(first(args, ['limit'], 200)) });
@@ -434,16 +427,15 @@ async function fetchAnswers(args, scheduleId) {
     const v = first(args, [arg]); if (v !== undefined && v !== true) qs.set(key, String(v));
   }
   const [body, detail] = await Promise.all([
-    requestGeo(cfg, `/v1/scheduled-indexing/${id}/answers`, Object.fromEntries(qs)),
-    requestGeo(cfg, `/v1/scheduled-indexing/${id}`),
+    requestGeo(cfg, 'scheduledIndexing.answers', { planId: id, ...Object.fromEntries(qs) }),
+    requestGeo(cfg, 'scheduledIndexing.get', { planId: id }),
   ]);
   const plan = detail?.data?.schedule || detail?.schedule || detail?.data || detail || {};
-  return { rows: unwrapRows(body), meta: { scheduleId: id, scheduleName: plan.name || `监测任务${id}` }, request: { path: `/v1/scheduled-indexing/${id}/answers?${qs}`, openKey: mask(cfg.geo.openKey), referer: cfg.geo.referer || '' } };
+  return { rows: unwrapRows(body), meta: { scheduleId: id, scheduleName: plan.name || `监测任务${id}` }, request: { capability: 'scheduledIndexing.answers' } };
 }
 async function listSchedules(args) {
-  const cfg = loadGeoConfig();
-  if (!cfg.geo.openKey) throw new Error('未配置 GEO openKey。');
-  const body = await requestGeo(cfg, '/v1/scheduled-indexing', { companyId: cfg.defaults?.companyId || undefined, page: 1, limit: first(args, ['limit'], 50) });
+  const cfg = {};
+  const body = await requestGeo(cfg, 'scheduledIndexing.list', { companyId: cfg.defaults?.companyId || undefined, page: 1, limit: first(args, ['limit'], 50) });
   return unwrapRows(body).map(row => ({ id: row.id, name: row.name || '', platforms: row.platforms || [], enabled: row.enabled, updatedAt: row.updatedAt || row.createdAt || '' }));
 }
 function renderMultiTaskSummary(results) {

@@ -1,0 +1,9 @@
+# 默认由仓库所有者审核全部变更。
+# 如果后续建立 GitHub Organization 团队，可将下一行替换为 @组织名/geo-maintainers。
+* @chenshuke
+
+# 安装、迁移和安全相关文件必须由仓库所有者复核。
+/.github/ @chenshuke
+/upgrade-geo-skills.js @chenshuke
+/geo-runtime/ @chenshuke
+/geo-config/ @chenshuke

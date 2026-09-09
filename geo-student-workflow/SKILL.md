@@ -1,6 +1,6 @@
 ---
 name: geo-student-workflow
-description: "GEO 课程/新手统一入口，支持三种模式：快速闭环模式、20问题上榜战役模式、持续运营飞轮模式。Use when the user says 我是新学员、从0跑一个GEO项目、私教班、快速跑通GEO闭环、4980、大师班、9800、20个问题上榜、20问题实战、带项目拿结果、持续运营飞轮、不断优化知识库和关键词池、一步一步带我做GEO、线下课练习、不要给我太多脚本参数、帮我完整跑一遍GEO. This skill selects the right mode, guides step by step, and routes to geo-config, geo-account, geo-knowledge, geo-brand-diagnosis, geo-keyword-pool, geo-content-production, geo-content-audit, geo-content-to-publish-pipeline, geo-publish, geo-indexing, geo-source-assets, geo-analysis, geo-troubleshooter without exposing internal Base URL."
+description: "GEO 课程/新手统一入口，支持三种模式：快速闭环模式、20问题上榜战役模式、持续运营飞轮模式。Use when the user says 我是新学员、从0跑一个GEO项目、私教班、快速跑通GEO闭环、4980、大师班、9800、20个问题上榜、20问题实战、带项目拿结果、持续运营飞轮、不断优化知识库和关键词池、一步一步带我做GEO、线下课练习、不要给我太多脚本参数、帮我完整跑一遍GEO. This skill selects the right mode, guides step by step, and routes to geo-config, geo-account, geo-knowledge, geo-brand-diagnosis, geo-keyword-pool, geo-content-production, geo-content-audit, geo-content-to-publish-pipeline, geo-publish, geo-indexing, geo-source-assets, geo-analysis, geo-troubleshooter without exposing internal service details."
 ---
 
 # GEO 课程/新手统一入口
@@ -24,9 +24,9 @@ description: "GEO 课程/新手统一入口，支持三种模式：快速闭环�
 
 ## 通用安全原则
 
-- 面向新手时不要一开始展示脚本参数、接口字段、Base URL 或内部实现。
+- 面向新手时不要一开始展示脚本参数、内部字段或实现细节。
 - API 写操作必须先预览/确认；真实执行后必须回查。
-- 不暴露内部 Base URL；可以展示 Referer、脱敏 openKey、companyId/productId、articleId、publishedUrl、scheduleId 等业务证据。
+- 不暴露内部服务地址、CLI 凭证或密钥；可以展示 companyId/productId、articleId、publishedUrl、scheduleId 等业务证据。
 - 如果失败，立即切到 `geo-troubleshooter`，固定输出“问题/原因/证据/下一步/是否人工确认”。
 - 遇到行业差异或重复问题，最后建议助教/内部团队用 `geo-skill-evolution` 沉淀。
 
@@ -34,7 +34,7 @@ description: "GEO 课程/新手统一入口，支持三种模式：快速闭环�
 
 如果信息不足，先收集 5 项：
 
-1. openKey：用于初始化平台；展示时必须脱敏。
+1. Best GEO CLI：用于初始化平台授权。
 2. 项目/品牌名：用于项目目录和报告名。
 3. 行业/业务：用于关键词和内容方向。
 4. 已有资料位置：本地文件夹、文档、网页摘录均可；没有就先建空知识库。
@@ -43,7 +43,7 @@ description: "GEO 课程/新手统一入口，支持三种模式：快速闭环�
 推荐开场：
 
 ```text
-我会先帮你选模式，再一步步跑。请给我：openKey、品牌名、行业、已有资料位置、这次目标/班型。如果资料还没有，也可以说“暂无资料”。
+我会先帮你选模式，再一步步跑。请给我：品牌名、行业、已有资料位置、这次目标/班型；CLI 授权状态会在本机检查。如果资料还没有，也可以说“暂无资料”。
 ```
 
 ## 模式一：快速闭环模式（私教班）
@@ -57,7 +57,7 @@ description: "GEO 课程/新手统一入口，支持三种模式：快速闭环�
 ### 默认执行顺序
 
 1. `geo-runtime`：检查技能安装和运行环境。
-2. `geo-config` + `geo-account`：写入 openKey，配置默认公司/产品，确认账号资源。
+2. `geo-config` + `geo-account`：检查 CLI 授权，配置默认公司/产品，确认账号资源。
 3. `geo-knowledge`：初始化项目文件夹，整理完整事实知识库，提炼核心优势与可信证据；分别输出信息补充清单和待补强证据清单。
 4. `geo-content-production`：生成少量关键词方案、标题方案和内容。
 5. `geo-content-audit`：做发布前质量检查。

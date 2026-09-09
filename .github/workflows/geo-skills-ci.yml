@@ -1,0 +1,44 @@
+name: GEO Skills CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate-geo-skills
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: JavaScript syntax
+        shell: bash
+        run: find geo-* -path '*/scripts/*.js' -type f -print0 | xargs -0 -n1 node --check
+
+      - name: Diff whitespace
+        run: git diff --check
+
+      - name: Legacy API and credential scan
+        shell: bash
+        run: |
+          if rg -n '/v1/|Authorization: Bearer|GEO_OPENKEY|geo-config\.json|product-topic|topic-task-select|video/import|oss-mode|openKey|Open Key|GEO_BASE_URL|credentials\.js|api_request\.js|configure_openkey\.js' . --glob '!node_modules/**' --glob '!*.tar.gz' --glob '!*.lock'; then
+            echo '检测到历史 GEO API 或旧凭据痕迹'
+            exit 1
+          fi
+
+      - name: Publication regression
+        run: node geo-runtime/scripts/regression_publication_chain.js
+
+      - name: Upgrade installer dry-run
+        run: node upgrade-geo-skills.js --json

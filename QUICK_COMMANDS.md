@@ -1,6 +1,6 @@
 # GEO Skills 快速命令卡片
 
-> 面向学员和不同 AI 模型：优先复制这些命令，减少手写 API / curl / 编码错误。
+> 面向学员和不同 AI 模型：所有平台操作统一通过 Best GEO CLI，不再手写旧 API / curl。
 
 
 ## 学员顺序速记
@@ -34,10 +34,11 @@ node geo-runtime/scripts/doctor.js --json
 node geo-runtime/scripts/regression_publication_chain.js
 ```
 
-## 查看配置（不展示真实 openKey）
+## 查看 CLI 授权与默认项目
 
 ```bash
-node geo-runtime/scripts/credentials.js
+best-geo auth status
+node geo-runtime/scripts/doctor.js --json
 ```
 
 ## 首次设置公司和产品
@@ -52,12 +53,11 @@ node geo-config/scripts/setup_defaults.js --create-company --company-name "公�
 node geo-config/scripts/setup_defaults.js --create-product --company-id <公司ID> --product-name "产品名" --keywords "关键词1,关键词2" --target-words "目标词1,目标词2" --product-type 1 --dry-run
 ```
 
-## 通用 API（替代 curl）
+## Best GEO CLI capability 调用（只读示例）
 
 ```bash
-node geo-runtime/scripts/api_request.js --method GET --path /v1/article --use-defaults --query page=1 --query limit=10
-node geo-runtime/scripts/api_request.js --method POST --path /v1/article --body-file payload.json --dry-run
-node geo-runtime/scripts/api_request.js --method POST --path /v1/article --body-file payload.json --force
+best-geo call articles.list --input '{"page":1,"limit":10}'
+best-geo call companies.list --input '{"page":1,"limit":20}'
 ```
 
 ## 图片和封面
@@ -100,11 +100,8 @@ node geo-indexing/scripts/scheduled_indexing.js --action create --file questions
 node geo-indexing/scripts/scheduled_indexing.js --action run-now --id 123 --dry-run
 node geo-indexing/scripts/scheduled_indexing.js --action answers --id 123 --limit 50
 
-# 本地深层用户问题导入产品主题库
-node geo-indexing/scripts/import_questions.js --target product-topic --file deep_questions.md --tags "深层用户问题,手动导入" --dry-run
-
-# 从平台主题生成任务中选择搜索问题插入
-node geo-indexing/scripts/import_questions.js --target topic-task-select --task-id 123 --selected-ids 0,2,5 --dry-run
+# 直接将搜索问题写入 GEO 项目（先 dry-run）
+node geo-indexing/scripts/import_questions.js --target questions --file deep_questions.md --product-id <项目ID> --dry-run
 ```
 
 

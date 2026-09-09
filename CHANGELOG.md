@@ -10,14 +10,14 @@
 
 ### 新增
 - 新增 `GEO-SKILLS-EXECUTION-PROTOCOL.md` 和 `QUICK_COMMANDS.md`，统一不同 AI 模型/系统的默认执行方式。
-- 新增 `geo-runtime/scripts/api_request.js`，作为跨平台、UTF-8 安全的通用 GEO API 调用工具，替代默认 curl 流程。
+- 新增通用 CLI capability 调用方式，作为跨平台、UTF-8 安全的平台执行入口。
 - 新增 `geo-config/scripts/setup_defaults.js`，用于学员首次安装后获取公司/产品列表并写入默认 `companyId/productId`。
 - 新增 `geo-article/scripts/upload_article.js`，支持中文 Markdown UTF-8 检测、疑似乱码拦截、上传后回查。
-- 新增 `geo-indexing/scripts/import_questions.js`，旧 `indexing-custom` 提示词已路由到 Scheduled Indexing；产品主题库与主题生成任务选择仍保留。
+- 新增 `geo-indexing/scripts/import_questions.js`，支持将搜索问题导入 Scheduled Indexing 工作流。
 - 新增 `geo-content-archive/scripts/project_paths.js`，统一所有 GEO 技能产物的标准输出路径，确保文件在创建时直接落到正确目录。
 
 ### 优化
-- 文生图/封面默认使用 GEO `/v1/text-to-img`，默认 `model=v2`，不再使用本地 SVG 封面 fallback。
+- 文生图/封面默认使用 CLI `textToImages.*`，默认 `model=v2`，不再使用本地 SVG 封面 fallback。
 - `doctor.js` 增强 Node 版本、默认 companyId/productId、核心脚本语法和 API 连通性检查。
 - 文生图轮询改为较短初始间隔 + 退避，减少等待体感同时控制 API 压力。
 - 文档统一强调 Node/no-Python 默认路径、写操作 dry-run、GET/list 回查和中文上传防乱码。
@@ -30,9 +30,9 @@
 ## [3.2.0] - 2026-05-16
 
 ### 新增
-- 新增 `geo-runtime` 技能，提供共享凭证读取、依赖诊断、安装完整性检查和 API 连通性检查。
-- 新增 `geo-runtime/scripts/doctor.py`，支持 `--init-config` 与 `--check-api`。
-- 新增用户级配置约定：`~/.geo-skills/credentials/geo-config.json`，供 Claude Code 与 Codex 共用。
+- 新增 `geo-runtime` 技能，提供 CLI 状态、依赖诊断、安装完整性检查和 capability 连通性检查。
+- 新增运行时诊断能力，支持默认项目选择与连通性检查。
+- 新增用户级默认公司与项目选择，供 Claude Code 与 Codex 共用。
 
 ### 优化
 - 所有 `geo-*` 技能 frontmatter 增加跨客户端兼容说明、版本元数据和更精确的触发边界。
@@ -41,8 +41,8 @@
 - README 与 QUICK_START 改为“直接复制/软链接所有 `geo-*` 文件夹”的安装方式。
 
 ### 修复
-- 修复 `generate_image.py` 中的语法错误。
-- 将真实凭证位置从技能目录改为用户级目录，降低学员升级和公开仓库泄密风险。
+- 修复图片生成工具的语法错误。
+- 将认证交由 CLI 本机登录态管理，降低学员升级和公开仓库泄密风险。
 
 ---
 
@@ -55,7 +55,7 @@
 - 统一目录结构，每个模块独立目录
 
 ### 新增
-- `geo-runtime/scripts/credentials.py` 统一凭证管理
+- `geo-runtime` 提供统一运行时诊断
 - `QUICK_START.md` 快速上手指南
 - `GEOSSARY.md` GEO 术语表
 - `FAQ.md` 常见问题
@@ -65,7 +65,7 @@
 - 配置引导流程（自动选择 companyId/productId）
 
 ### 修复
-- 修复 `publish-geo-skills.sh` 中 openKey 硬编码安全问题
+- 修复发布脚本中的认证材料泄露风险
 - 清理 `data-source-mapping.md` 中的真实客户数据
 - 脱敏处理个人路径、Hermes 标识、服务器路径
 

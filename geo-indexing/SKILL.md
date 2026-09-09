@@ -9,7 +9,13 @@ metadata:
   category: api
 ---
 
-> **外部依赖**: GEO 平台 openKey（需先完成 geo-config 配置）
+## 执行后端（Best GEO CLI）
+
+> 搜索问题统一使用 `questions.create`；收录监测统一使用 `scheduledIndexing.*`。
+
+Scheduled Indexing、Sentiment、回答、引用、矩阵和统计统一通过 `best-geo` CLI；本技能负责问题导入前检查、结果解释和分析，不读取旧凭证或直接调用历史 HTTP 接口。
+
+> **认证**: 由 `best-geo auth` 管理；不在技能中配置或读取认证材料。
 
 # GEO Scheduled Indexing 收录检测管理
 
@@ -17,12 +23,11 @@ metadata:
 
 ## 通用安全规则
 
-- Base URL 属于内部接口配置：脚本可以读取、测试和写入配置文件，但默认回复、日志、dry-run、JSON 预览中不得展示具体 Base URL。
-- 用户侧可以展示 Referer、脱敏 openKey、companyId/productId、接口路径（如 `/v1/scheduled-indexing`），但不要展示接口域名。
-- 真实 openKey 只能读取自 `~/.geo-skills/credentials/geo-config.json` 或环境变量，回复和日志中必须脱敏展示。
+- 内部服务配置不属于技能输入；默认回复、日志、dry-run、JSON 预览中不得展示服务地址。
+- 用户侧只展示 capability、companyId/productId 和文件路径，不展示内部认证信息。
 - 创建、更新、删除、立即执行、AI 建议竞品等写入/耗资源操作必须先 `--dry-run`，真实执行必须加 `--force`。
-- 写入后必须 GET 回查确认，不只相信 POST/PATCH/DELETE 返回值。
-- 默认优先使用 Node 脚本；`curl` 只作为低级调试，不作为中文正文或批量写操作默认方案。
+- 写入后必须用 get/list capability 回查确认，不只相信写入返回值。
+- 默认优先使用 Node 脚本；不使用直接 HTTP 命令作为中文正文或批量写操作流程。
 
 ## 单问题课堂指令规则
 
@@ -54,41 +59,40 @@ node geo-indexing/scripts/scheduled_indexing.js \
 node geo-content-archive/scripts/project_paths.js --artifact indexing-report --project-dir "项目目录" --json
 ```
 
-## 当前接口总览（Scheduled Indexing）
+## 当前 CLI capability 总览（Scheduled Indexing）
 
-| 动作 | 方法 | 路径 |
+| 动作 | capability |
 |---|---:|---|
-| 获取定时收录计划列表 | GET | `/v1/scheduled-indexing` |
-| 创建定时收录计划 | POST | `/v1/scheduled-indexing` |
-| 获取计划详情 | GET | `/v1/scheduled-indexing/{id}` |
-| 更新计划 / enabled 开关 | PATCH | `/v1/scheduled-indexing/{id}` |
-| 删除计划（不可恢复） | DELETE | `/v1/scheduled-indexing/{id}` |
-| 立即执行一次 | POST | `/v1/scheduled-indexing/{id}/run-now` |
-| 执行历史列表 | GET | `/v1/scheduled-indexing/{id}/runs` |
-| 趋势指标 / 折线图数据 | GET | `/v1/scheduled-indexing/{id}/metrics` |
-| AI 完整回答与引用来源 | GET | `/v1/scheduled-indexing/{id}/answers` |
-| 问题×平台收录矩阵 | GET | `/v1/scheduled-indexing/{id}/topic-platform-matrix` |
-| 引用分析（渠道引用 + 内容引用） | GET | `/v1/scheduled-indexing/{id}/citations` |
-| topic 聚合统计 | GET | `/v1/scheduled-indexing/{id}/topic-stats` |
-| topic 统计 Excel 导出 | GET | `/v1/scheduled-indexing/{id}/topic-stats/export` |
-| AI 建议竞品 | POST | `/v1/scheduled-indexing/suggest-competitors` |
+| 获取定时收录计划列表 | `scheduledIndexing.list` |
+| 创建定时收录计划 | `scheduledIndexing.create` |
+| 获取计划详情 | `scheduledIndexing.get` |
+| 更新计划 / enabled 开关 | `scheduledIndexing.update` |
+| 删除计划（不可恢复） | `scheduledIndexing.delete` |
+| 立即执行一次 | `scheduledIndexing.runNow` |
+| 执行历史列表 | `scheduledIndexing.runs` |
+| 趋势指标 / 折线图数据 | `scheduledIndexing.metrics` |
+| AI 完整回答与引用来源 | `scheduledIndexing.answers` |
+| 问题×平台收录矩阵 | `scheduledIndexing.topicPlatformMatrix` |
+| 引用分析 | `scheduledIndexing.citations` |
+| topic 聚合统计 | `scheduledIndexing.topicStats` |
+| AI 建议竞品 | `indexing.suggestCompetitors` |
 | 发布 URL 命中检测 | 本地脚本 | `geo-indexing/scripts/published_url_match.js` 读取 answers.searchedSites |
 
-> 旧自定义收录接口 `/v1/ai-indexing-task/custom/import`、`/v1/ai-indexing-task/custom`、`/v1/ai-indexing/custom` 仅作为内部人工回滚入口保留，学员和 Agent 默认禁止使用；正常查收录必须走 Scheduled Indexing。
+需要只上传用户搜索问题时，运行 `import_questions.js --target questions`；需要创建监测计划时使用 `--target scheduled-indexing`。
 
 ## 常见“参数不正确”排查规则
 
 学员创建收录计划时，Agent 必须优先使用保守参数，避免把平台接口错误暴露给新手：
 
 1. **不要默认 `--platforms all`**：`all` 会包含账号未开通或已禁用的平台，容易报“所选平台已被禁用”。课堂默认用 `--platforms doubao`，多平台必须由用户或账号资源确认后再加。
-2. **`source` 合法值是 `1/2/3`**：课堂默认 `3` 云端模式；如确需本地/设备模式，显式传 `--source 1`；`2` 是平台保留模式，学员不要使用。
+2. **`source` 合法值是 `1/3`**：课堂默认 `3` 云端模式；如确需本地/设备模式，显式传 `--source 1`。
 3. **`scheduleConfig` 必须完整**：
    - `once`：一次性计划，payload 只传 `{"type":"once"}`，不得附带空的 `hours: []`；
    - `daily`：建议 `--hours 9`；
    - `weekly`：必须传 `--weekdays`，例如 `--weekdays 1,3,5`；
    - `interval`：必须传 `--interval-days`。
 4. **`screenshotPlatforms` 必须是 `platforms` 子集**，不能单独传未选择的平台。
-5. 创建前先 dry-run，看 payload 里是否是 `/v1/scheduled-indexing`、`platforms: ["doubao"]`、`source: 3`、`scheduleConfig` 合法。
+5. 创建前先 dry-run，看 payload 里的 capability、`platforms: ["doubao"]`、`source: 3`、`scheduleConfig` 是否合法。
 
 ## 推荐脚本
 
@@ -120,13 +124,7 @@ node geo-indexing/scripts/scheduled_indexing.js \
 兼容旧提示词：
 
 ```bash
-# 旧 --target indexing-custom 会被 import_questions.js 自动路由到 /v1/scheduled-indexing
-node geo-indexing/scripts/import_questions.js \
-  --target indexing-custom \
-  --file questions.md \
-  --name "示例品牌A-收录计划" \
-  --platforms doubao \
-  --dry-run
+# 搜索问题导入和监测计划创建已拆分为两个 CLI capability 流程；不再支持历史 custom target。
 ```
 
 ### 2. 查询计划、执行、结果
@@ -196,7 +194,7 @@ node geo-indexing/scripts/published_url_match.js \
   --project-dir "项目_品牌GEO"
 ```
 
-输出到 `07_监测分析/收录监测/URL命中回查/`。兼容 `geo-publish` 标准化 JSON，也兼容平台原始 `/v1/publication` 多层回包（如 `data.data.data[]`）。无 publishedUrl 的记录会输出 `manual_required` / `pending` / `task_mapping_only`，不会中断。
+输出到 `07_监测分析/收录监测/URL命中回查/`。兼容 `geo-publish` 标准化 JSON 和历史发布回包结构。无 publishedUrl 的记录会输出 `manual_required` / `pending` / `task_mapping_only`，不会中断。
 
 命中层级：
 
@@ -222,7 +220,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 
 ## 创建计划 payload
 
-`POST /v1/scheduled-indexing`：
+`scheduledIndexing.create` 输入：
 
 ```json
 {
@@ -243,7 +241,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 |---|---|
 | `platforms` | AI 平台数组。课堂默认建议只用 `doubao`；`all` 只有在账号已开通全部平台时才能用，否则会报“所选平台已被禁用” |
 | `screenshotPlatforms` | 截图平台数组，必须是 `platforms` 子集 |
-| `source` | 采集模式：`3` 云端模式（默认），`1` 本地/设备模式；API 也保留 `2`，课堂不使用 |
+| `source` | 采集模式：`3` 云端模式（默认），`1` 本地/设备模式 |
 | `competitorBrands` | 竞品品牌数组，仅用于 `(竞)` 标记 |
 
 `scheduleConfig` 支持：
@@ -260,13 +258,13 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 
 - 默认使用云端模式：`source: 3`。脚本在创建计划时会显式写入 `source=3`，用户不需要额外传参。
 - 如需本地/设备模式，创建或更新计划时显式传 `--source 1`。API 文档还保留 `source=2`，课堂/学员不要使用。
-- 两种模式都走同一套 Scheduled Indexing 查询接口；区别只在创建/更新计划时的 `source` 字段。
+- 两种模式都走同一套 Scheduled Indexing capability；区别只在创建/更新计划时的 `source` 字段。
 
 ## 查询字段重点
 
 ### answers
 
-`GET /v1/scheduled-indexing/{id}/answers` 返回大模型回答和引用来源，核心字段：
+`scheduledIndexing.answers` 返回大模型回答和引用来源，核心字段：
 
 | 字段 | 说明 |
 |---|---|
@@ -282,7 +280,7 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 
 ### matrix
 
-`GET /v1/scheduled-indexing/{id}/topic-platform-matrix` 返回问题×平台状态：
+`scheduledIndexing.topicPlatformMatrix` 返回问题×平台状态：
 
 - `pending`
 - `indexed`
@@ -299,18 +297,19 @@ node geo-indexing/scripts/scheduled_indexing.js --action delete --id 123 --force
 
 ## 支持平台
 
-`deepseek`、`doubao`、`yuanbao`、`qwen`、`yiyan`、`kimi`、`zhipu`、`chatgpt`、`gemini`、`nami`、`grok`、`perp`、`poe`。注意：平台枚举“支持”不等于每个 openKey 都“已开通”；学员默认用 `doubao`，需要多平台时再显式传账号已开通的平台。
+`deepseek`、`doubao`、`yuanbao`、`qwen`、`yiyan`、`kimi`、`zhipu`、`chatgpt`、`gemini`、`nami`、`grok`、`perp`、`poe`。平台是否可用以 CLI 返回的账号和 capability 权限为准。
 
-## 产品主题库接口仍保留
+## 直接上传搜索问题
 
-如果只是把本地深层问题沉淀到产品主题库，而不是创建收录检测计划，仍使用：
+如果只需要把本地问题写入 GEO 项目的搜索问题库，而不是创建收录计划：
 
 ```bash
 node geo-indexing/scripts/import_questions.js \
-  --target product-topic \
+  --target questions \
+  --product-id 93 \
   --file deep_questions.md \
   --tags "深层用户问题,手动导入" \
   --dry-run
 ```
 
-底层接口：`POST /v1/geo-product-topic`。
+底层 capability：`questions.create`。

@@ -105,22 +105,18 @@ Windows PowerShell：
 node "$env:USERPROFILE\.codex\skills\geo-config\scripts\setup_defaults.js" --list
 ```
 
-## 3. 配置 openKey
+## 3. 登录 Best GEO CLI
 
-真实密钥统一放在：
-
-```text
-macOS / Linux: ~/.geo-skills/credentials/geo-config.json
-Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
-```
+先完成 CLI 登录并检查状态：
 
 你可以对 AI 说：
 
 ```text
-使用 geo-config 帮我初始化 GEO 平台 openKey 配置。
+best-geo auth login
+best-geo auth status
 ```
 
-配置好 openKey 后，再对 AI 说：
+登录后，再对 AI 说：
 
 ```text
 使用 geo-config 帮我获取公司和产品列表，并设置默认 companyId/productId。
@@ -132,21 +128,7 @@ Windows: %USERPROFILE%\.geo-skills\credentials\geo-config.json
 使用 geo-config 帮我创建公司和产品；先 dry-run 给我确认，不要直接写入。
 ```
 
-配置模板：
-
-```json
-{
-  "geo": {
-    "baseUrl": "<内部接口地址>",
-    "openKey": "your-openKey-here",
-    "referer": "https://geo.bihuoai.com/"
-  },
-  "defaults": {
-    "companyId": 0,
-    "productId": 0
-  }
-}
-```
+不需要手工维护平台配置文件；默认公司/项目由 CLI 或 `~/.best-geo/geo-skill-defaults.json` 管理。
 
 ## 4. 常用提问
 
@@ -204,9 +186,8 @@ node geo-content-archive/scripts/project_paths.js --project-dir "项目_品牌GE
 
 ## 5. 安全提醒
 
-- 不要把真实 openKey 写入任何 `geo-*` 技能目录。
+- 不要把 CLI 登录凭证写入任何 `geo-*` 技能目录。
 - 删除、发布、批量导入前，必须让 AI 先预览并等待你确认。
-- 如果 AI 输出了完整 openKey，请立即停止并重新生成密钥。
 
 ## 6. 排障
 
@@ -214,7 +195,7 @@ node geo-content-archive/scripts/project_paths.js --project-dir "项目_品牌GE
 |------|----------|
 | 找不到 GEO 技能 | 确认所有 `geo-*` 文件夹都在技能目录第一层 |
 | 缺少 `geo-runtime` | 重新复制 `geo-runtime/` |
-| 401 / 403 | 重新获取 openKey 并更新 `~/.geo-skills/credentials/geo-config.json` |
+| 401 / 403 | 运行 `best-geo auth status`，必要时重新 `best-geo auth login` |
 | Python 模块缺失 | `无需安装 Python；优先使用 node geo-runtime/scripts/doctor.js` |
 | 封面生成失败 | 先用 `--dry-run` 检查配置；再确认 GEO 文生图额度和 defaults.productId |
 | 中文文章上传乱码 | 使用 `node geo-article/scripts/upload_article.js --file "文章.md" --dry-run` 检查 UTF-8，不要用 `curl -d` 上传中文正文 |

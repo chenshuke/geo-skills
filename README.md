@@ -20,10 +20,10 @@
 
 - Node.js 18 或更高版本
 - Claude Code、Codex 或其他兼容 Agent Skills 的客户端
-- GEO 平台账号和 openKey
+- Best GEO CLI 1.0.0+，并完成 `best-geo auth login`
 - 不要求安装 Python、pip、Pillow 或其他 Python 依赖
 
-图片上传、文章上传、知识库同步和 GEO API 操作均优先使用 Node.js 脚本完成。
+图片、视频、文章、知识库、问题导入和 GEO 平台操作统一通过 Best GEO CLI capability 完成，不需要在技能中单独配置凭证。
 
 ## 安装
 
@@ -42,6 +42,28 @@ cp -R geo-* ~/.codex/skills/
 mkdir -p ~/.claude/skills
 cp -R geo-* ~/.claude/skills/
 ```
+
+### 从旧版升级（推荐）
+
+线下课学员如果已经安装过旧版 GEO Skills，不要再直接复制覆盖。使用仓库自带升级器：它会先检测 Best GEO CLI；如果没有安装，会自动安装 `best-geo@latest`，然后备份旧版、删除目标目录中的旧 `geo-*` 技能，最后安装当前版本，避免新旧技能同时被客户端发现。
+
+```bash
+# 先预演，不修改文件
+node upgrade-geo-skills.js
+
+# 确认预演结果后执行升级（默认 Codex + Claude Code）
+node upgrade-geo-skills.js --apply
+```
+
+如需升级其他 Agent Skills 目录：
+
+```bash
+node upgrade-geo-skills.js --apply --targets codex,claude,agents
+# 或指定任意目录
+node upgrade-geo-skills.js --apply --target-dir /path/to/skills
+```
+
+升级器会在 `~/.geo-skills-backups/upgrade-时间戳/` 保存可恢复备份，并尝试生成 `.tar.gz` 压缩包。它不会读取、迁移或输出旧平台密钥；CLI 只安装程序包，不会自动登录。升级后在同一台机器运行 `best-geo auth status`，必要时执行 `best-geo auth login`。
 
 如果你会持续修改技能，建议使用软链接。这样更新仓库后，客户端会直接使用最新文件：
 
@@ -82,32 +104,18 @@ node ~/.codex/skills/geo-runtime/scripts/doctor.js
 node ~/.codex/skills/geo-runtime/scripts/doctor.js --init-config
 ```
 
-## 配置 GEO 平台
+## 配置 GEO 平台（Best GEO CLI）
 
-配置文件放在用户目录，不要放进 Git 仓库：
+认证统一由 CLI 管理：
 
-```text
-macOS / Linux: ~/.geo-skills/credentials/geo-config.json
-Windows:       %USERPROFILE%\.geo-skills\credentials\geo-config.json
+```bash
+best-geo auth login
+best-geo auth status
 ```
 
-配置格式：
+不需要手工维护平台配置，也不要在技能中填写认证信息。默认公司/项目由 CLI 或 `geo-config` 通过 capability 选择。
 
-```json
-{
-  "geo": {
-    "baseUrl": "<GEO平台接口地址>",
-    "openKey": "your-openKey-here",
-    "referer": "<GEO平台Referer>"
-  },
-  "defaults": {
-    "companyId": 0,
-    "productId": 0
-  }
-}
-```
-
-`companyId` 和 `productId` 不确定时，不要猜。让 `geo-config` 读取公司和产品列表，再选择正确的项目。
+`companyId` 和 `productId` 不确定时，不要猜。让 `geo-config` 读取公司和项目列表，再选择正确的项目。
 
 ## 三个总入口
 
@@ -150,11 +158,11 @@ Windows:       %USERPROFILE%\.geo-skills\credentials\geo-config.json
 | 技能 | 用途 |
 |---|---|
 | `geo-runtime` | 环境、Node.js、配置和凭证检查 |
-| `geo-config` | 初始化 openKey、接口配置、公司和产品选择 |
+| `geo-config` | CLI 授权检查、公司和产品选择 |
 | `geo-hub` | GEO 平台 API 总入口和路由 |
-| `geo-account` | 查询公司、产品、账号、套餐、配额和资源 |
+| `geo-account` | 查询公司、项目、账号和图片/视频素材 |
 | `geo-article` | 上传、查询、审核和删除文章/素材 |
-| `geo-oss-upload` | 将本地图片上传为 GEO OSS URL，支持 Markdown 替换；Node.js 实现 |
+| `geo-oss-upload` | 将本地图片/视频写入 GEO 素材库并取得 URL |
 | `geo-knowledge-sync` | 本地知识库与 GEO 平台知识库双向上传/下载 |
 | `geo-publish` | 创建发布任务、查询发布状态和获取 publishedUrl |
 | `geo-indexing` | 创建和查询 Scheduled Indexing 上榜监测任务 |
@@ -254,9 +262,9 @@ Windows:       %USERPROFILE%\.geo-skills\credentials\geo-config.json
 
 ## 安全和操作规则
 
-- 不要把真实 openKey 提交到 GitHub。
+- 不要把真实认证材料提交到 GitHub。
 - 上传、删除、发布、批量导入等写操作先执行 `--dry-run`，得到用户确认后再执行。
-- 不要在回复、日志或报告中输出完整 openKey 或内部 Base URL。
+- 不要在回复、日志或报告中输出完整认证材料或内部服务地址。
 - 文章和图片优先使用 Node.js 脚本，不要求学员安装 Python。
 - 发布任务创建后不要重复运行完整流水线，优先复用原来的 `pipeline-state.json`。
 - 任何报告都应区分事实、推断和待验证信息，不要编造企业数据。

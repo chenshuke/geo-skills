@@ -3,14 +3,18 @@ name: geo-knowledge-sync
 description: "GEO 平台知识库双向同步技能。支持列出和查看平台知识库，把本地 Markdown、TXT、JSON、CSV、HTML、YAML、XML 文件或整个知识库目录上传为新知识库/追加到已有知识库，以及把平台知识库元数据和可下载文件保存到本地。Use when the user says 上传知识库、同步知识库、把本地知识库传到GEO平台、下载平台知识库、备份知识库、知识库列表、追加知识库文件。所有运行脚本使用 Node.js；写入平台前必须预览并经用户确认。"
 ---
 
+## 执行后端（Best GEO CLI）
+
+平台知识库的列表、详情、创建、更新和追加文件统一通过 `best-geo` CLI；本技能负责本地资料准备、同步预览和回查，不读取旧凭证或直接请求历史 HTTP 接口。
+
 # GEO 知识库同步
 
-在本地项目知识库与 GEO 平台 `/v1/knowledge-base` 之间双向同步。继续使用 `geo-knowledge` 整理和提炼本地资料；本技能只负责平台传输和备份。
+在本地项目知识库与 GEO 平台知识库之间双向同步。继续使用 `geo-knowledge` 整理和提炼本地资料；本技能只负责平台传输和备份。
 
 ## 前置规则
 
-1. 按 `../geo-config/SKILL.md` 读取 openKey、companyId、productId；默认 ID 为 0 时先让用户选择。
-2. 不显示 Base URL 和完整 openKey。
+1. 通过 `best-geo auth status` 检查授权；companyId、productId 从 CLI 返回或本地默认值选择，不读取认证材料。
+2. 不显示内部服务地址或完整认证材料。
 3. 上传是平台写操作：先运行预览，不带 `--force` 不得提交。
 4. 上传后必须 GET 详情回查知识库名称、文件数和状态。
 5. 不编造平台没有返回的文档内容。下载时没有 `fileUrl` 的文档只记录元数据和缺失原因。
@@ -62,4 +66,3 @@ node geo-knowledge-sync/scripts/knowledge_sync.js \
 输出 `knowledge-base.json`、`manifest.md` 和平台实际提供下载地址的文档文件。
 
 需要核对字段时读取 `references/api.md`。
-

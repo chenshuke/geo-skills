@@ -75,7 +75,7 @@ HTML 是主要交付件，面向企业负责人阅读；默认不生成 Excel、
 - `geo-content-audit` 的缺口或审核结果；
 - 用户提出的业务目标、区域、客户和时间约束。
 
-调用平台 API 前必须遵守 `../geo-config/SKILL.md`，确认 openKey、companyId、productId。已有导出 JSON 时优先使用本地数据，避免重复请求。
+调用平台数据前必须遵守 `../geo-config/SKILL.md`，确认 Best GEO CLI 授权、companyId 和 productId。已有导出 JSON 时优先使用本地数据，避免重复请求。
 
 如果没有品牌诊断或监测结果：
 

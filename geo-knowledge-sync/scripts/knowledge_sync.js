@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
-const { loadGeoConfig, headers: geoHeaders, mask } = require('../../geo-runtime/scripts/credentials.js');
+const { call, plan, apply } = require('../../geo-runtime/scripts/best_geo.js');
 const { unwrapRows } = require('../../geo-runtime/scripts/json_helpers.js');
 
 const TEXT_EXTS = new Set(['.md','.txt','.json','.csv','.html','.htm','.yaml','.yml','.xml']);
@@ -32,28 +32,11 @@ function usage() { console.log(`Usage:
 
 Uploads preview by default. Add --force only after user confirmation.`); }
 function cfgChecked() {
-  const cfg = loadGeoConfig();
-  if (!cfg.geo.openKey) throw new Error('未配置 GEO openKey。');
-  if (!Number(cfg.defaults.companyId)) throw new Error('未设置默认 companyId，请先使用 geo-config 选择公司。');
-  return cfg;
+  return { defaults: { companyId: Number(first(parseArgs(process.argv), ['company-id','companyId'], 0)) } };
 }
-function apiPathOnly(endpoint, query) {
-  const qs = new URLSearchParams();
-  for (const [k,v] of Object.entries(query || {})) if (v !== undefined && v !== '' && v !== null) qs.set(k, String(v));
-  return endpoint + (qs.toString() ? `?${qs}` : '');
-}
-async function request(cfg, method, endpoint, { query = {}, body } = {}) {
-  const base = String(cfg.geo.baseUrl || '').replace(/\/$/, '');
-  const relative = apiPathOnly(endpoint, query);
-  const headers = { ...geoHeaders(cfg), Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json; charset=utf-8';
-  const res = await fetch(base + relative, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
-  const text = await res.text(); let data; try { data = JSON.parse(text); } catch { data = text; }
-  if (!res.ok || (data && typeof data === 'object' && data.statusCode !== undefined && data.statusCode !== 0)) {
-    const msg = data && typeof data === 'object' ? (data.message || data.msg || JSON.stringify(data).slice(0,500)) : String(data).slice(0,500);
-    throw new Error(`${method} ${endpoint} 失败：HTTP ${res.status}；${msg}`);
-  }
-  return { data, request: { method, path: relative, openKey: mask(cfg.geo.openKey) } };
+async function request(cfg, capability, input, { write = false } = {}) {
+  if (!write) return {data:await call(capability,input),request:{capability}};
+  const p=await plan(capability,input);const pid=p?.data?.planId||p?.planId;if(!pid)throw Error('CLI 未返回 planId');return {data:await apply(pid),request:{capability}};
 }
 function dataObject(body) { return body?.data?.data || body?.data || body; }
 function collectFiles(inputPaths, maxBytes) {
@@ -80,13 +63,15 @@ function deepId(body) {
   return Number(candidates.find(Boolean) || 0);
 }
 async function listAction(cfg, args) {
-  const query = { page: first(args,['page'],1), limit: first(args,['limit'],30), companyId: cfg.defaults.companyId, productId: first(args,['product-id','productId'], cfg.defaults.productId || undefined), name: first(args,['name'],undefined), status: first(args,['status'],undefined) };
-  const res = await request(cfg, 'GET', '/v1/knowledge-base', { query });
+  const rawStatus = first(args,['status'],undefined);
+  const query = { page: Number(first(args,['page'],1)), limit: Number(first(args,['limit'],30)), name: first(args,['name'],undefined), status: rawStatus === undefined ? undefined : Number(rawStatus) };
+  const companyId=Number(cfg.defaults.companyId||0); const productId=Number(first(args,['product-id','productId'],0)); if(companyId)query.companyId=companyId; if(productId)query.productId=productId;
+  const res = await request(cfg, 'knowledge.list', query);
   const rows = unwrapRows(res.data).map(x => ({ id:x.id, name:x.name, companyId:x.companyId, productId:x.productId, status:x.status, tags:x.tags || [], documentCount:(x.documents || []).length, createdAt:x.createdAt }));
   console.log(JSON.stringify({ rows, request: res.request }, null, 2));
 }
 async function detailAction(cfg, id) {
-  const res = await request(cfg, 'GET', `/v1/knowledge-base/${id}`);
+  const res = await request(cfg, 'knowledge.get', { id: Number(id) });
   console.log(JSON.stringify({ knowledgeBase: dataObject(res.data), request: res.request }, null, 2));
 }
 async function uploadAction(cfg, args) {
@@ -98,19 +83,19 @@ async function uploadAction(cfg, args) {
   if (!files.length) throw new Error('没有可上传文件。支持文本文件/目录，或使用 --source-url。');
   const tags = splitList(first(args,['tags'],''));
   const payload = id ? { files } : { name:first(args,['name'], path.basename(path.resolve(sources[0] || '知识库'))), companyId:Number(first(args,['company-id','companyId'],cfg.defaults.companyId)), productId:Number(first(args,['product-id','productId'],cfg.defaults.productId || 0)) || null, tags, files };
-  const preview = { dryRun:!args.force, action:id?'append':'create', endpoint:id?`/v1/knowledge-base/${id}/files`:'/v1/knowledge-base', knowledgeBaseId:id||undefined, name:payload.name, companyId:payload.companyId, productId:payload.productId, tags, files:files.map(f => ({ name:f.name, type:/^https?:\/\//i.test(f.file)?'url':'text', size:f.file.length })) };
+  const preview = { dryRun:!args.force, action:id?'append':'create', capability:id?'knowledge.addFiles':'knowledge.create', knowledgeBaseId:id||undefined, name:payload.name, companyId:payload.companyId, productId:payload.productId, tags, files:files.map(f => ({ name:f.name, type:/^https?:\/\//i.test(f.file)?'url':'text', size:f.file.length })) };
   if (!args.force) { console.log(JSON.stringify(preview,null,2)); return; }
-  const created = await request(cfg,'POST',id?`/v1/knowledge-base/${id}/files`:'/v1/knowledge-base',{body:payload});
+  const created = await request(cfg, id ? 'knowledge.addFiles' : 'knowledge.create', id ? { knowledgeBaseId: id, files } : payload, { write: true });
   const knowledgeBaseId = id || deepId(created.data);
   if (!knowledgeBaseId) throw new Error('上传返回中没有知识库ID，无法完成回查。');
-  const verified = await request(cfg,'GET',`/v1/knowledge-base/${knowledgeBaseId}`);
+  const verified = await request(cfg,'knowledge.get',{ id: knowledgeBaseId });
   const kb = dataObject(verified.data);
   console.log(JSON.stringify({ ok:true, knowledgeBaseId, name:kb.name, status:kb.status, documentCount:(kb.documents||[]).length, documents:(kb.documents||[]).map(d=>({id:d.id,name:d.name,fileName:d.fileName,status:d.status})) },null,2));
 }
 async function downloadAction(cfg, args) {
   const id = Number(first(args,['knowledge-base-id','knowledgeBaseId','id'],0));
   if (!id) throw new Error('download 需要 --knowledge-base-id。');
-  const res = await request(cfg,'GET',`/v1/knowledge-base/${id}`); const kb = dataObject(res.data);
+  const res = await request(cfg,'knowledge.get',{ id }); const kb = dataObject(res.data);
   const baseOut = path.resolve(String(first(args,['output-dir','outputDir'],path.join('02_知识库','平台下载'))));
   const out = path.join(baseOut, `知识库_${id}_${safeName(kb.name,'未命名')}`); fs.mkdirSync(out,{recursive:true});
   fs.writeFileSync(path.join(out,'knowledge-base.json'),JSON.stringify(kb,null,2),'utf8');

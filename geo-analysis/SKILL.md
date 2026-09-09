@@ -32,7 +32,7 @@ metadata:
 **触发场景**：收录监测完成后，需分析引用偏好、评估证据链完整度、确定发布渠道。
 
 **核心框架（六步）**：
-1. **数据采集**：先用 `GET /v1/scheduled-indexing` 选择计划，再调用 `GET /v1/scheduled-indexing/{id}/answers` 分页读取完整回答和引用来源；需要状态矩阵时调用 `/topic-platform-matrix`，需要统计趋势时调用 `/topic-stats` 与 `/metrics`
+1. **数据采集**：先用 `scheduledIndexing.list/get` 选择计划，再调用 `scheduledIndexing.answers` 分页读取回答和引用来源；需要矩阵时调用 `scheduledIndexing.topicPlatformMatrix`，需要趋势时调用 `scheduledIndexing.topicStats` 与 `scheduledIndexing.metrics`
 2. **来源分类**：通过域名模式匹配将引用URL分为8种类型（专业平台/权威媒体/论坛社区/自媒体/评测导购/百科/聚合内容/品牌官网），支持 `--platform-profiles` 导入动态画像替代硬编码表
 3. **平台证据画像**：按平台分组计算来源分布、引用性格标签、Top域名、收录率
 4. **证据链评分**：四维评分——多样性(30%) + 权威性(30%) + 收录率(25%) + 品牌存在感(15%)，综合评级 A/B/C/D
@@ -145,7 +145,7 @@ metadata:
 └── "截图/HTML转图片"             → html-to-png
 ```
 
-**配置前置**：调用涉及 API 的子技能前，需先从 `~/.geo-skills/credentials/geo-config.json` 读取配置（openKey、baseUrl、referer），并确认 companyId 和 productId。
+**配置前置**：调用平台数据前先执行 `best-geo auth status`，并确认 CLI 返回的 companyId 和 productId；不读取旧凭证文件。
 
 ---
 

@@ -2,9 +2,7 @@
 /**
  * GEO cover generation wrapper.
  *
- * Default path is GEO platform text-to-image (/v1/text-to-img) via
- * generate_image.js. No SVG fallback is used because SVG is not suitable for
- * the publishing chain.
+ * Default path is Best GEO CLI text-to-image via generate_image.js.
  */
 const path = require('path');
 const cp = require('child_process');
@@ -29,7 +27,7 @@ function usage() {
   console.log(`Usage:
   node geo-content-production/scripts/generate_cover.js --title "文章标题" [options]
 
-This command generates a cover through GEO /v1/text-to-img. It does not output SVG.
+This command generates a cover through Best GEO CLI. It does not output SVG.
 
 Options:
   --title <text>             文章标题，必填；也可直接传 --prompt
@@ -43,7 +41,6 @@ Options:
   --project-dir <dir>        GEO 项目根目录；未传 output 时自动写入 04_内容创作/{日期}/covers/
   --batch <YYYY-MM-DD>       内容批次日期，默认今天
   --json-out <file>          保存完整结果 JSON
-  --oss-mode <local|auto|translate|none>  默认 local：下载后用 /v1/oss/pre 上传并验证
   --dry-run                  只打印 payload，不创建任务
 
 Examples:
@@ -96,7 +93,6 @@ const passthrough = [
   ['geo-config','geo-config'], ['config','config'],
   ['timeout-ms','timeout-ms'], ['interval-ms','interval-ms'], ['max-interval-ms','max-interval-ms'],
   ['output','output'], ['output-dir','output-dir'], ['project-dir','project-dir'], ['projectDir','projectDir'], ['batch','batch'], ['date','date'], ['json-out','json-out'],
-  ['oss-mode','oss-mode'], ['ossMode','ossMode'],
 ];
 for (const [src, dest] of passthrough) if (args[src] !== undefined && args[src] !== true && args[src] !== false) forwarded.push(`--${dest}`, String(args[src]));
 if (args.model === undefined) forwarded.push('--model', 'v2');
