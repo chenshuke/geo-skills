@@ -3,6 +3,8 @@ name: geo-brand-diagnosis
 description: "GEO 品牌认知与产品推荐双模式诊断技能。读取 GEO 平台已有 Scheduled Indexing 监测任务中的真实问题、AI 回答、竞品和 searchedSites，根据问题是否包含品牌名自动区分品牌认知诊断、产品推荐/获客诊断或混合诊断。品牌模式判断 AI 是否把品牌身份、业务、优势、证据和边界说对；产品模式统计品牌提及、候选、明确推荐、优先推荐、我方引用、竞品占位和多次运行稳定性，并生成面向企业负责人的 HTML 报告。Use when the user asks 品牌诊断、品牌AI诊断、产品推荐诊断、获客诊断、推荐率分析、AI是否认识/描述/推荐品牌、为什么不推荐、竞品分析或GEO诊断报告。"
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 品牌认知与产品推荐诊断
 
 ## 目标

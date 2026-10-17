@@ -3,6 +3,8 @@ name: geo-skill-evolution
 description: "GEO 技能自进化和经验沉淀技能，主要给内部团队/助教/交付负责人使用，暂不作为普通学员主入口。Use when the user says 技能自进化、把客户问题沉淀成技能、把行业差异沉淀、学员遇到新问题、复盘这次实操、把失败案例变成规则、更新技能前先做改进方案、生成回归测试、沉淀行业 playbook、不同客户/行业/学员问题不一样怎么办. Produces skill improvement proposals, regression tests, routing updates, safety checks, and GitHub release checklist; does not expose real customer names or internal service details."
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 技能自进化
 
 把客户、行业、学员在 GEO 实操中遇到的新问题，沉淀成可复用的技能改进：**问题样本 → 归因 → 应改哪个技能 → 脚本/说明/路由建议 → 回归测试 → 发布前验收**。

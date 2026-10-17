@@ -4,9 +4,11 @@ description: "GEO 内容生产和图片生成技能。Use when the user says 规
 license: MIT
 metadata:
   suite: geo-skills
-  version: "3.2.3"
+  version: "3.3.0"
   category: workflow
 ---
+
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
 
 # GEO 内容生产技能
 
@@ -17,7 +19,9 @@ metadata:
 
 需要围绕一个真实用户问题制作 6-8 页抖音答案型图文时，使用 `../geo-ai-answer-card/SKILL.md`；本模块提供其所需的关键词、图片和封面能力。
 
-**外部依赖**：图片生成使用 Best GEO CLI 的 `textToImages.*`；认证由 CLI 管理。
+**外部依赖**：图片生成统一调用 `../fangxin-image-gen/SKILL.md`，默认模型固定为 `gpt-image-2.5`。禁止调用 Best GEO CLI 的 `textToImages.*`。答案卡必须由模型直接生成包含文字与构图的完整页面，禁止先生成背景再程序叠字。
+
+`fangxin-image-gen` 是单独安装的外部技能，不在本仓库内。执行前检查该技能及其运行环境是否可用；缺失时保留文案和提示词，暂停图片生成并交给助教配置可用入口。普通学员不需要安装 Python，也不要引导其安装 Python、pip 或直接运行下文的 `.py` 示例。
 
 ---
 
@@ -552,6 +556,8 @@ L3用户问题：{填写P0问题}
 ---
 
 ## 四、图片生成
+
+> **当前强制规则（覆盖本节历史说明）**：所有新图片任务必须调用 `../fangxin-image-gen/scripts/generate.py`，并显式传入 `--model gpt-image-2.5`。下方残留的 Best GEO `textToImages.*` 接口、`v1/v2` 模型和相关脚本仅是历史资料，不得执行；后续维护时应逐步移除这些旧说明。
 
 本模块包含两个子技能，用于GEO文章配图和封面生成。
 

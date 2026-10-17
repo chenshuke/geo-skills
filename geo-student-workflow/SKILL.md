@@ -3,6 +3,8 @@ name: geo-student-workflow
 description: "GEO 课程/新手统一入口，支持三种模式：快速闭环模式、20问题上榜战役模式、持续运营飞轮模式。Use when the user says 我是新学员、从0跑一个GEO项目、私教班、快速跑通GEO闭环、4980、大师班、9800、20个问题上榜、20问题实战、带项目拿结果、持续运营飞轮、不断优化知识库和关键词池、一步一步带我做GEO、线下课练习、不要给我太多脚本参数、帮我完整跑一遍GEO. This skill selects the right mode, guides step by step, and routes to geo-config, geo-account, geo-knowledge, geo-brand-diagnosis, geo-keyword-pool, geo-content-production, geo-content-audit, geo-content-to-publish-pipeline, geo-publish, geo-indexing, geo-source-assets, geo-analysis, geo-troubleshooter without exposing internal service details."
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 课程/新手统一入口
 
 本技能是课程交付的一句话入口，不新增分裂流程；用**一个入口**按学员阶段选择**三种模式**，底层复用同一套 GEO Skills。

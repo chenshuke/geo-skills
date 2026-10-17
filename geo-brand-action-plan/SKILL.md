@@ -3,6 +3,8 @@ name: geo-brand-action-plan
 description: "GEO 品牌落地方案与执行路线技能。基于品牌 AI 诊断、Scheduled Indexing 监测回答、竞品、引用来源、品牌知识库和已发布内容，输出可执行的 GEO 落地方案：用户问题、AI 目标判断、已有/缺少证据、内容标题与形式、发布平台、执行顺序、复测时间和指标。Use when the user says 品牌落地方案、GEO执行方案、诊断后怎么做、AI如何认识/推荐优化、内容发布计划、品牌GEO路线图、问题到内容到复测闭环。默认做方案和任务拆解，不自动创作全文、不自动上传或发布。"
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 品牌落地方案
 
 ## 目标

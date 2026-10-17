@@ -3,6 +3,8 @@ name: geo-source-assets
 description: "GEO 引用源资产库技能。支持选择单个或多个 Scheduled Indexing 监测任务，按任务、运行批次、问题和 AI 平台独立提取 searchedSites，生成对应信源 CSV、Markdown、HTML 和多任务汇总报告。Use when the user says 引用源报告、选择监测任务分析信源、品牌监测引用来源、产品推荐任务引用来源、单个/多个任务信源分析、引用源资产库。Use after geo-indexing or geo-analysis; do not create articles or publish tasks."
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 引用源资产库
 
 把 AI 回答里的 `searchedSites` 沉淀为长期可运营的信源资产库，帮助学员从“发文章”升级到“让 AI 引用逐步偏向我方可控资产”。

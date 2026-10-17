@@ -11,6 +11,17 @@ const cp = require('child_process');
 
 const HOME = os.homedir();
 const stamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
+const minimumCliVersion = '2.0.4';
+
+function supportedVersion(value) {
+  const actual = String(value || '').match(/^(\d+)\.(\d+)\.(\d+)$/);
+  if (!actual) return false;
+  const minimum = minimumCliVersion.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if (Number(actual[i + 1]) !== minimum[i]) return Number(actual[i + 1]) > minimum[i];
+  }
+  return true;
+}
 
 function parseArgs(argv) {
   const out = { apply: false, json: false, installCli: true, targets: ['codex', 'claude'], targetDirs: [] };
@@ -44,20 +55,23 @@ function usage() {
 
 function detectCli() {
   const command = process.platform === 'win32' ? 'best-geo.cmd' : 'best-geo';
-  try {
-    const output = cp.execFileSync(command, ['version', '--check'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-    return { installed: true, command, output: output.trim().slice(0, 500) };
-  } catch (error) {
-    return { installed: false, command, output: String(error.stderr || '').trim().slice(0, 500) };
-  }
+  const result = cp.spawnSync(command, ['version'], { encoding: 'utf8', timeout: 15000 });
+  if (result.error?.code === 'ENOENT') return { installed: false, command, supported: false };
+  if (result.error) throw new Error(`CLI 本机检测失败，不会自动重装：${result.error.message}`);
+  let payload;
+  try { payload = JSON.parse(result.stdout); }
+  catch { throw new Error('CLI 已存在但返回内容无法解析，不会自动重装；请先检查 best-geo version。'); }
+  const version = payload?.data?.version || payload?.data?.current;
+  if (result.status !== 0 || !payload.ok || !version) throw new Error(`CLI 本机检测异常（${payload.code || 'UNKNOWN'}），不会自动重装。`);
+  return { installed: true, supported: supportedVersion(version), version, command };
 }
 
 function installCli() {
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  console.log('未检测到 Best GEO CLI，正在安装 best-geo@latest...');
-  cp.execFileSync(npm, ['install', '--global', 'best-geo@latest'], { stdio: 'inherit' });
+  console.error('Best GEO CLI 缺失或版本过旧，正在安装 best-geo@latest...');
+  cp.execFileSync(npm, ['install', '--global', 'best-geo@latest'], { stdio: ['ignore', 2, 2] });
   const result = detectCli();
-  if (!result.installed) throw new Error('Best GEO CLI 安装命令已结束，但安装后仍无法执行 best-geo version --check。');
+  if (!result.installed || !result.supported) throw new Error(`CLI 安装后检测未通过，需要 ${minimumCliVersion}+。`);
   return result;
 }
 
@@ -67,7 +81,7 @@ function expand(p) {
 
 function managedDirs(sourceDir) {
   return fs.readdirSync(sourceDir, { withFileTypes: true })
-    .filter(e => e.isDirectory() && /^geo-[a-z0-9-]+$/i.test(e.name))
+    .filter(e => e.isDirectory() && (e.name === 'best-geo' || /^geo-[a-z0-9-]+$/i.test(e.name)))
     .map(e => e.name)
     .sort();
 }
@@ -91,7 +105,7 @@ function knownLegacyPaths() {
 function existingManaged(target) {
   if (!fs.existsSync(target)) return [];
   return fs.readdirSync(target, { withFileTypes: true })
-    .filter(e => /^geo-/i.test(e.name))
+    .filter(e => e.name === 'best-geo' || /^geo-/i.test(e.name))
     .map(e => e.name)
     .sort();
 }
@@ -104,12 +118,12 @@ function copyEntry(src, dest) {
 function makeBackup(sourceEntries, targetEntries, legacyEntries, backupDir) {
   fs.mkdirSync(backupDir, { recursive: true });
   const manifest = { createdAt: new Date().toISOString(), sourceEntries, targets: [], legacy: [] };
-  for (const { target, names } of targetEntries) {
-    const rel = path.join('targets', path.basename(target));
+  for (const [index, { target, names }] of targetEntries.entries()) {
+    const rel = path.join('targets', String(index));
     const snap = path.join(backupDir, rel);
     fs.mkdirSync(snap, { recursive: true });
     for (const name of names) copyEntry(path.join(target, name), path.join(snap, name));
-    manifest.targets.push({ target, names });
+    manifest.targets.push({ target, names, snapshot: rel });
   }
   for (const legacy of legacyEntries) {
     const safe = legacy.replace(/[^a-zA-Z0-9._-]+/g, '_');
@@ -130,10 +144,15 @@ function archiveBackup(backupDir, archivePath) {
 }
 
 function restoreFromBackup(backupDir, manifest) {
-  for (const { target, names } of manifest.targets) {
-    const snap = path.join(backupDir, 'targets', path.basename(target));
+  for (const { target, names, snapshot } of manifest.targets) {
+    const snap = path.join(backupDir, snapshot);
     fs.mkdirSync(target, { recursive: true });
+    for (const name of manifest.sourceEntries) fs.rmSync(path.join(target, name), { recursive: true, force: true });
     for (const name of names) copyEntry(path.join(snap, name), path.join(target, name));
+  }
+  for (const legacy of manifest.legacy) {
+    const safe = legacy.replace(/[^a-zA-Z0-9._-]+/g, '_');
+    if (!fs.existsSync(legacy)) copyEntry(path.join(backupDir, 'legacy', safe), legacy);
   }
 }
 
@@ -152,14 +171,15 @@ function main() {
     if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))) throw new Error(`源目录不能位于安装目标内：${sourceDir} -> ${target}`);
   }
   const targetEntries = targets.map(target => ({ target, names: existingManaged(target) }));
-  const legacyEntries = knownLegacyPaths().filter(fs.existsSync);
+  const legacyEntries = args.targetDirs.length ? [] : knownLegacyPaths().filter(fs.existsSync);
   const backupDir = expand(args.backupDir || path.join(HOME, '.geo-skills-backups', `upgrade-${stamp}`));
   const cli = detectCli();
-  const plan = { sourceDir, skills: names, targets: targetEntries, legacy: legacyEntries, backupDir, cli: { installed: cli.installed, installRequired: !cli.installed, package: 'best-geo@latest', autoInstall: args.installCli }, willMutate: args.apply };
+  const plan = { sourceDir, skills: names, targets: targetEntries, legacy: legacyEntries, backupDir, cli: { installed: cli.installed, version: cli.version, installRequired: !cli.supported, minimumVersion: minimumCliVersion, package: 'best-geo@latest', autoInstall: args.installCli }, willMutate: args.apply };
   if (!args.apply) return console.log(args.json ? JSON.stringify(plan, null, 2) : `${JSON.stringify(plan, null, 2)}\n\n这是预演，没有修改任何文件。确认后加 --apply 执行。`);
 
-  if (!cli.installed) {
-    if (!args.installCli) throw new Error('未检测到 Best GEO CLI；当前使用了 --no-cli-install，未继续升级。');
+  if (fs.existsSync(backupDir) || fs.existsSync(`${backupDir}.tar.gz`)) throw new Error(`备份路径已存在，请指定新的 --backup-dir：${backupDir}`);
+  if (!cli.supported) {
+    if (!args.installCli) throw new Error(`CLI 缺失或低于 ${minimumCliVersion}，且指定了 --no-cli-install；未继续升级。`);
     installCli();
   }
 
@@ -177,7 +197,7 @@ function main() {
     restoreFromBackup(backupDir, manifest);
     throw new Error(`升级失败，已尝试从备份恢复：${error.message}`);
   }
-  const result = { ...plan, cli: { installed: true, command: detectCli().command, installPerformed: !cli.installed }, applied: true, backupDir, archive: archive || null, removedLegacy: legacyEntries };
+  const result = { ...plan, cli: { ...detectCli(), installPerformed: !cli.supported }, applied: true, backupDir, archive: archive || null, removedLegacy: legacyEntries };
   console.log(args.json ? JSON.stringify(result, null, 2) : `升级完成。\n备份目录：${backupDir}\n备份压缩包：${archive || '系统未找到 tar，已保留备份目录'}\n已安装 ${names.length} 个 GEO 技能到 ${targets.length} 个目标。`);
 }
 

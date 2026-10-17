@@ -40,5 +40,8 @@ jobs:
       - name: Publication regression
         run: node geo-runtime/scripts/regression_publication_chain.js
 
+      - name: CLI installer isolated regression
+        run: node --test tests/upgrade-cli.test.js
+
       - name: Upgrade installer dry-run
         run: node upgrade-geo-skills.js --json

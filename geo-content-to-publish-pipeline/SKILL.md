@@ -3,6 +3,8 @@ name: geo-content-to-publish-pipeline
 description: "GEO 内容到发布总控流水线技能。Use when the user says 一条龙/一步到位/总控/流水线/从关键词到发布/从标题方案生成文章并发布/内容审核后上传/批量生成封面/OSS图片/文章上传审核/发布任务预览/发布确认清单. Orchestrates geo-content-production, geo-content-audit, geo-article, geo-account, and geo-publish; always dry-run/preview before creating real publication tasks."
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 内容到发布总控流水线
 
 用于把“关键词/标题/文章/封面/上传/审核/账号/发布预览”串成一个可恢复的交付链路，减少多技能之间来回切换。
@@ -17,9 +19,21 @@ description: "GEO 内容到发布总控流水线技能。Use when the user says 
 
 ## 推荐流程
 
+### Agent 案件模型
+
+持续 GEO 优化按 `项目 × 用户问题 × AI 平台` 建立独立案件。项目知识库可以共享，但不同 AI 平台的监测、逆向分析、策略、内容和复测不得混用。
+
+每个阶段使用一次独立、可重试的 Codex 执行；长期记忆由案件档案和版本化产物保存，不依赖无限增长的聊天上下文。推荐阶段为：
+
+`监测 → 逆向分析 → 优化策略 → 内容方案 → 用户内容 → 媒体生成 → 发布审核 → 发布 → 复测 → 经验沉淀`
+
+阶段之间只通过明确产物传递：逆向分析是内部材料，不能直接当文章；策略负责把证据竞争转换成目标和差距；内容方案负责定义用户、角度和证据；用户内容必须重新组织为可直接消费的表达。
+
+标准化任务和产物的身份、版本、来源、状态与审批边界，不强制不同行业使用相同分析结论或正文模板。
+
 1. 先确认 `best-geo auth status`，再读取或选择默认 companyId/productId。
 2. 用 `geo-content-production` 读取知识库、关键词方案、标题方案，生成 Top N 文章草稿。
-3. 用 `geo-content-audit` 审核文章；未达标先优化，不要上传。
+3. 用 `geo-content-audit` 审核用户成品；内部分析稿、知识库清单、仅有封面的图文任务均不得上传。
 4. 用本技能脚本统一处理封面、上传、审核、账号查询和发布预览：
 
 ```bash
