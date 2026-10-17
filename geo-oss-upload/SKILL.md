@@ -3,6 +3,8 @@ name: geo-oss-upload
 description: "通过 Best GEO CLI 将本地图片或 MP4 视频上传到 GEO 素材库并获取 URL；支持 Markdown 本地图片映射。Use when the user asks to upload an image, video, cover, screenshot, or local media file to GEO."
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 素材上传
 
 本技能不使用预签名上传流程，也不读取平台认证材料。素材上传统一通过 Best GEO CLI：

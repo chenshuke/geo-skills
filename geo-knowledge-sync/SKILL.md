@@ -3,6 +3,8 @@ name: geo-knowledge-sync
 description: "GEO 平台知识库双向同步技能。支持列出和查看平台知识库，把本地 Markdown、TXT、JSON、CSV、HTML、YAML、XML 文件或整个知识库目录上传为新知识库/追加到已有知识库，以及把平台知识库元数据和可下载文件保存到本地。Use when the user says 上传知识库、同步知识库、把本地知识库传到GEO平台、下载平台知识库、备份知识库、知识库列表、追加知识库文件。所有运行脚本使用 Node.js；写入平台前必须预览并经用户确认。"
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 ## 执行后端（Best GEO CLI）
 
 平台知识库的列表、详情、创建、更新和追加文件统一通过 `best-geo` CLI；本技能负责本地资料准备、同步预览和回查，不读取旧凭证或直接请求历史 HTTP 接口。

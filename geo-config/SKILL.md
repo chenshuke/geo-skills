@@ -9,6 +9,8 @@ metadata:
   category: api
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO CLI 配置
 
 认证统一由 Best GEO CLI 管理，不再配置、保存或读取旧平台凭证文件。
