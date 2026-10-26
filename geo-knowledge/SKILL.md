@@ -3,7 +3,7 @@ name: geo-knowledge
 description: "GEO 本地知识库、资料治理和优势证据提炼技能。Use when the user asks 创建知识库项目、整理客户资料、扫描分类素材、把 Word/PDF/Excel/图片/ZIP 整合为企业/产品/个人知识库、提炼核心优势与强背书证据、建立可信证据库、生成信息补充清单或待补强证据清单。输出本地 Markdown，不上传 GEO 平台；平台知识库上传下载使用 geo-knowledge-sync，AI 实际引用来源治理使用 geo-source-assets。"
 ---
 
-> **本地知识库规则**：本技能只整理本地文件，不需要平台项目，也不调用平台接口。用户明确要求同步时再交给 `geo-knowledge-sync`；任何平台操作统一使用 Best GEO CLI 2，并从 `projects.list` 选择 `projectId`。
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能默认只整理本地文件，不调用平台接口；用户明确要求同步时再交给 `../geo-knowledge-sync/SKILL.md`。任何平台读写先读取 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准，并显式使用 `projectId`。
 
 # GEO 知识库管理
 
