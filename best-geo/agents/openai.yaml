@@ -1,0 +1,4 @@
+interface:
+  display_name: "必火GEO-CLI平台操作"
+  short_description: "通过 Best GEO CLI 2 管理项目、内容、素材、监测和发布。"
+  default_prompt: "使用 $best-geo，先检查版本与 capability，再按 GEO 项目完成我的操作。"

@@ -3,6 +3,8 @@ name: geo-troubleshooter
 description: "GEO 故障排查和新手友好诊断技能。Use when the user says 排查失败、哪里出问题、为什么不能用、认证失败、companyId/productId 错、文章上传失败、发布任务创建成功但没有发布、发布状态人工处理、收录任务没跑完、answers 有数据但 matrix 没数据、searchedSites 有来源但 articleIndexed=false、AI 提到竞品不提我方、AI 推荐我方但引用源不是我方资产、下一步怎么处理、需要人工确认吗. Outputs fixed diagnosis format: 问题是什么/可能原因/证据在哪里/下一步怎么处理/是否需要人工确认."
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 故障排查
 
 把 GEO 技能执行中的失败或异常，转换成新手能理解的固定诊断：**问题是什么 → 可能原因 → 证据在哪里 → 下一步怎么处理 → 是否需要人工确认**。

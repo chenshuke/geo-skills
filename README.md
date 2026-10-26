@@ -1,5 +1,17 @@
 # GEO Skills
 
+## 2026-10-17 更新：Best GEO CLI 2
+
+本次同步最新内容生产、答案卡、发布审核、案件流程和两层逆向分析规则，并随包提供 `best-geo` 官方技能（对应 CLI 2.0.4）。新版平台操作使用统一 `projectId`；旧包装脚本尚未全部适配，执行前请阅读 [CLI 兼容说明](CLI-COMPATIBILITY.md)，直接通过新版技能和当前 capability 调用平台。
+
+```bash
+npm install --global best-geo@2.0.4
+node upgrade-geo-skills.js
+node upgrade-geo-skills.js --apply
+```
+
+安装需要 Node.js 20+。升级器同时安装 `best-geo` 技能和全部 `geo-*`，不只复制 `geo-*`。
+
 面向 Claude Code、Codex 以及其他 Agent Skills 客户端的 GEO（Generative Engine Optimization，生成式引擎优化）运营技能包。
 
 这套技能把 GEO 工作拆成可以直接调用的模块：品牌定位、知识库、问题规划、内容创作、发布、AI 收录监测、引用来源分析、品牌诊断和下一轮优化。
@@ -18,9 +30,9 @@
 
 ## 环境要求
 
-- Node.js 18 或更高版本
+- Node.js 20 或更高版本
 - Claude Code、Codex 或其他兼容 Agent Skills 的客户端
-- Best GEO CLI 1.0.0+，并完成 `best-geo auth login`
+- Best GEO CLI 2.0.4+，并完成 `best-geo auth login`
 - 不要求安装 Python、pip、Pillow 或其他 Python 依赖
 
 图片、视频、文章、知识库、问题导入和 GEO 平台操作统一通过 Best GEO CLI capability 完成，不需要在技能中单独配置凭证。
@@ -32,15 +44,15 @@
 ```bash
 git clone https://github.com/chenshuke/geo-skills.git
 cd geo-skills
-mkdir -p ~/.codex/skills
-cp -R geo-* ~/.codex/skills/
+node upgrade-geo-skills.js --targets codex
+node upgrade-geo-skills.js --apply --targets codex
 ```
 
 ### 安装到 Claude Code
 
 ```bash
-mkdir -p ~/.claude/skills
-cp -R geo-* ~/.claude/skills/
+node upgrade-geo-skills.js --targets claude
+node upgrade-geo-skills.js --apply --targets claude
 ```
 
 ### 从旧版升级（推荐）
@@ -69,14 +81,14 @@ node upgrade-geo-skills.js --apply --target-dir /path/to/skills
 
 ```bash
 mkdir -p ~/.codex/skills ~/.claude/skills
-for d in geo-*; do
+for d in best-geo geo-*; do
   [ -d "$d" ] || continue
   ln -sfn "$(pwd)/$d" ~/.codex/skills/"$d"
   ln -sfn "$(pwd)/$d" ~/.claude/skills/"$d"
 done
 ```
 
-Windows 用户可以把所有 `geo-*` 文件夹复制到：
+Windows 用户也可以运行上述 Node.js 升级器。手动安装时，必须把 `best-geo` 和所有 `geo-*` 文件夹一起复制到：
 
 ```text
 %USERPROFILE%\.codex\skills\
@@ -88,20 +100,21 @@ Windows 用户可以把所有 `geo-*` 文件夹复制到：
 安装后，直接对 AI 说：
 
 ```text
-使用 geo-runtime 检查我的 GEO Skills 是否安装成功。
+使用 best-geo 检查本机 CLI 版本和 capabilities，再核对 CLI 2 兼容说明。
 ```
 
-然后初始化平台配置：
+然后选择已授权的 GEO 项目：
 
 ```text
-使用 geo-config 帮我初始化 GEO 平台配置。
+使用 best-geo 列出已授权的 GEO 项目，让我选择后显式使用 projectId。
 ```
 
-也可以直接运行检查脚本：
+CLI 2 也可以直接检查：
 
 ```bash
-node ~/.codex/skills/geo-runtime/scripts/doctor.js
-node ~/.codex/skills/geo-runtime/scripts/doctor.js --init-config
+best-geo version
+best-geo version --check
+best-geo capabilities
 ```
 
 ## 配置 GEO 平台（Best GEO CLI）
@@ -113,9 +126,9 @@ best-geo auth login
 best-geo auth status
 ```
 
-不需要手工维护平台配置，也不要在技能中填写认证信息。默认公司/项目由 CLI 或 `geo-config` 通过 capability 选择。
+不需要手工维护平台配置，也不要在技能中填写认证信息。通过 `best-geo call projects.list` 选择已授权的 GEO 项目，项目操作每次显式传入 `projectId`。
 
-`companyId` 和 `productId` 不确定时，不要猜。让 `geo-config` 读取公司和项目列表，再选择正确的项目。
+`projectId` 不确定时，不要猜。通过 `projects.list` 读取已授权的 GEO 项目，让用户选择；不要从旧公司或产品编号推导。
 
 ## 三个总入口
 
@@ -276,7 +289,8 @@ best-geo auth status
 确认客户端读取的是 `~/.codex/skills` 或 `~/.claude/skills`，并检查目录下是否存在对应的 `geo-*` 文件夹。然后运行：
 
 ```bash
-node ~/.codex/skills/geo-runtime/scripts/doctor.js
+best-geo version
+best-geo capabilities
 ```
 
 ### 不知道该调用哪个技能

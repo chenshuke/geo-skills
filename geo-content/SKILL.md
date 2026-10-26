@@ -9,6 +9,8 @@ metadata:
   category: router
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 内容创作（总入口）
 
 > **通用兼容**：适用于 Claude Code、Codex 和兼容 Agent Skills 的工具；建议完整安装同级 `geo-*` 技能，运行诊断请使用 `../geo-runtime/SKILL.md`。

@@ -8,6 +8,8 @@ metadata:
   category: router
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 > **外部依赖**: 需要 Best GEO CLI 授权；不需要在技能中另配认证材料
 
 # GEO工作流统一入口 (GEO Workflow Hub)

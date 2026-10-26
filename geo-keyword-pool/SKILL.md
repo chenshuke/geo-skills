@@ -3,6 +3,8 @@ name: geo-keyword-pool
 description: "GEO 关键词池和状态机技能。Use when the user says 关键词池、关键词状态机、批量导入问题、P0/P1/P2/P3优先级、planned/baseline_done/need_content/published/postpublish_monitoring/source_gap/stable/regression/blocked、下一步动作、不知道先优化哪个关键词、每个关键词推进到哪一步、多关键词GEO闭环、关键词运营总表. Do not write full articles; route content creation to geo-content-production and indexing checks to geo-indexing."
 ---
 
+> **CLI 2 平台操作优先规则（2026-10-17）**：本技能负责业务流程；平台读写先读取同级 `../best-geo/SKILL.md` 和 `../best-geo/references/cli-compatibility.md`，以当前 capability/schema 为准。CLI 2 显式使用 `projectId`，不要执行下文仍带 `companyId/productId` 的旧参数示例或包装脚本。
+
 # GEO 关键词池 / 状态机
 
 把零散问题、关键词方案、标题方案、收录结果和发布结果，沉淀成一个长期可推进的关键词池，解决学员最常见的问题：**不知道先优化哪个关键词，也不知道每个关键词现在推进到哪一步**。
